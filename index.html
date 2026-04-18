@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myriam Kayali — Art</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F4EDE0;
+    --cream-dark: #EAE0CE;
+    --terracotta: #B85C38;
+    --terracotta-light: #D4795A;
+    --umber: #1E0F07;
+    --brown-mid: #6B4226;
+    --brown-light: #A07858;
+    --linen: #F9F4EC;
+    --nav-h: 72px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--cream);
+    color: var(--umber);
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: var(--cream);
+    border-bottom: 1px solid rgba(107,66,38,0.15);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px;
+    transition: box-shadow 0.3s;
+  }
+  nav.scrolled { box-shadow: 0 2px 24px rgba(30,15,7,0.08); }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--umber);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .nav-logo span { font-style: italic; color: var(--terracotta); }
+
+  .nav-links {
+    display: flex; gap: 36px; list-style: none;
+  }
+  .nav-links a {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brown-mid);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    position: relative;
+    padding-bottom: 2px;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -2px; left: 0; right: 100%;
+    height: 1px; background: var(--terracotta);
+    transition: right 0.3s ease;
+  }
+  .nav-links a:hover { color: var(--terracotta); }
+  .nav-links a:hover::after { right: 0; }
+
+  /* ── SECTIONS ── */
+  section { min-height: 100vh; display: none; }
+  section.active { display: block; }
+
+  /* ── HOME ── */
+  #home {
+    padding-top: var(--nav-h);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - var(--nav-h));
+  }
+
+  .hero-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 48px 80px 80px;
+  }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 28px;
+  }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(52px, 6vw, 86px);
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--umber);
+    margin-bottom: 32px;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--terracotta);
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: var(--brown-light);
+    max-width: 380px;
+    line-height: 1.8;
+    margin-bottom: 52px;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--linen);
+    background: var(--umber);
+    border: 1px solid var(--umber);
+    padding: 14px 36px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
+  }
+  .btn-primary:hover {
+    background: var(--terracotta);
+    border-color: var(--terracotta);
+  }
+
+  .btn-secondary {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--umber);
+    background: transparent;
+    border: 1px solid var(--umber);
+    padding: 14px 36px;
+    text-decoration: none;
+    cursor: pointer;
+    margin-left: 16px;
+    transition: background 0.25s, color 0.25s;
+  }
+  .btn-secondary:hover {
+    background: var(--cream-dark);
+  }
+
+  .hero-image {
+    position: relative;
+    background: var(--cream-dark);
+    overflow: hidden;
+  }
+  .hero-image .painting-slot {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .painting-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #D4B896 0%, #C49A6C 30%, #9B6B3A 60%, #6B3A1F 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .painting-placeholder::after {
+    content: 'Replace with your painting';
+    position: absolute;
+    bottom: 24px; left: 50%; transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .painting-placeholder img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-float-tag {
+    position: absolute;
+    bottom: 40px; left: -1px;
+    background: var(--cream);
+    border: 1px solid rgba(107,66,38,0.15);
+    padding: 20px 28px;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .hero-float-tag .tag-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 4px;
+  }
+  .hero-float-tag .tag-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--umber);
+    font-style: italic;
+  }
+
+  .home-strip {
+    background: var(--umber);
+    padding: 20px 80px;
+    display: flex;
+    align-items: center;
+    gap: 64px;
+    overflow-x: auto;
+  }
+  .strip-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    white-space: nowrap;
+  }
+  .strip-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--terracotta-light);
+    line-height: 1;
+  }
+  .strip-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(244,237,224,0.5);
+  }
+  .strip-div {
+    width: 1px;
+    height: 40px;
+    background: rgba(244,237,224,0.15);
+    flex-shrink: 0;
+  }
+
+  /* ── ABOUT ── */
+  #about {
+    padding: calc(var(--nav-h) + 80px) 80px 100px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .about-image-wrap {
+    position: sticky;
+    top: calc(var(--nav-h) + 40px);
+  }
+
+  .about-img-main {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: linear-gradient(160deg, #C49A6C 0%, #9B6B3A 50%, #5A3018 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .about-img-main img { width:100%; height:100%; object-fit: cover; }
+
+  .about-img-accent {
+    position: absolute;
+    bottom: -24px; right: -24px;
+    width: 55%;
+    aspect-ratio: 1/1;
+    background: var(--cream-dark);
+    border: 6px solid var(--cream);
+    overflow: hidden;
+  }
+  .about-img-accent-inner {
+    width: 100%; height: 100%;
+    background: linear-gradient(45deg, #D4B896 0%, #A07858 100%);
+  }
+  .about-img-accent-inner img { width:100%; height:100%; object-fit:cover; }
+
+  .about-content { padding-top: 40px; }
+
+  .section-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(38px, 4vw, 58px);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--umber);
+    margin-bottom: 32px;
+  }
+  .section-title em { font-style: italic; }
+
+  .about-content p {
+    font-size: 15px;
+    color: var(--brown-mid);
+    line-height: 1.9;
+    margin-bottom: 20px;
+    max-width: 520px;
+  }
+
+  .about-quote {
+    border-left: 2px solid var(--terracotta);
+    padding-left: 24px;
+    margin: 40px 0;
+  }
+  .about-quote blockquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--umber);
+    line-height: 1.5;
+  }
+
+  /* ── COLLECTION ── */
+  #collection {
+    padding: calc(var(--nav-h) + 60px) 60px 100px;
+  }
+
+  .collection-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 60px;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .filter-tab {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    background: none;
+    border: 1px solid transparent;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-tab.active, .filter-tab:hover {
+    border-color: var(--umber);
+    color: var(--umber);
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .gallery-item {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--cream-dark);
+  }
+  .gallery-item:nth-child(4n+1) { grid-column: span 2; }
+  .gallery-item:nth-child(4n+1) .gallery-img { aspect-ratio: 16/9; }
+
+  .gallery-img {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .gallery-img-placeholder {
+    width: 100%;
+    aspect-ratio: 3/4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(107,66,38,0.4);
+    transition: transform 0.6s ease;
+  }
+  .gallery-item:nth-child(4n+1) .gallery-img-placeholder { aspect-ratio: 16/9; }
+
+  .gallery-item:hover .gallery-img,
+  .gallery-item:hover .gallery-img-placeholder { transform: scale(1.04); }
+
+  .gallery-overlay {
+    position: absolute; inset: 0;
+    background: rgba(30,15,7,0);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 28px;
+    transition: background 0.4s;
+  }
+  .gallery-item:hover .gallery-overlay { background: rgba(30,15,7,0.55); }
+
+  .gallery-info {
+    transform: translateY(8px);
+    opacity: 0;
+    transition: all 0.35s ease;
+  }
+  .gallery-item:hover .gallery-info { transform: translateY(0); opacity: 1; }
+
+  .gallery-info .g-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    font-style: italic;
+    color: #F4EDE0;
+    line-height: 1.2;
+  }
+  .gallery-info .g-meta {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(244,237,224,0.65);
+    margin-top: 6px;
+  }
+
+  .painting-colors {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 2px;
+  }
+  .pc { height: 100%; }
+
+  /* Gallery placeholders backgrounds */
+  .gp-1 { background: linear-gradient(135deg, #C49A6C, #7A4A2A); }
+  .gp-2 { background: linear-gradient(160deg, #D4AE8A, #9B5A35); }
+  .gp-3 { background: linear-gradient(45deg, #B8906A, #6B3A1F); }
+  .gp-4 { background: linear-gradient(120deg, #C8A080, #8A5030); }
+  .gp-5 { background: linear-gradient(200deg, #DDB890, #A06040); }
+  .gp-6 { background: linear-gradient(80deg, #C09060, #704020); }
+  .gp-7 { background: linear-gradient(160deg, #D8B898, #985840); }
+
+  /* ── PRINTS ── */
+  #prints {
+    padding: calc(var(--nav-h) + 80px) 80px 100px;
+    background: var(--linen);
+  }
+
+  .prints-header {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 80px;
+  }
+  .prints-header p {
+    font-size: 15px;
+    color: var(--brown-light);
+    line-height: 1.8;
+    margin-top: 20px;
+  }
+
+  .prints-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+
+  .print-card {
+    background: var(--cream);
+    border: 1px solid rgba(107,66,38,0.12);
+  }
+
+  .print-img {
+    width: 100%;
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    position: relative;
+  }
+  .print-img-bg {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s ease;
+  }
+  .print-card:hover .print-img-bg { transform: scale(1.04); }
+
+  .print-badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: var(--terracotta);
+    color: var(--linen);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+  }
+
+  .print-info {
+    padding: 24px;
+  }
+  .print-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--umber);
+    margin-bottom: 6px;
+  }
+  .print-edition {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    margin-bottom: 20px;
+  }
+  .print-sizes {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .size-tag {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    border: 1px solid rgba(107,66,38,0.25);
+    padding: 4px 10px;
+    cursor: pointer;
+    color: var(--brown-mid);
+    transition: all 0.2s;
+  }
+  .size-tag:hover, .size-tag.active {
+    background: var(--umber);
+    border-color: var(--umber);
+    color: var(--cream);
+  }
+  .print-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(107,66,38,0.12);
+    padding-top: 20px;
+  }
+  .print-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--umber);
+  }
+  .btn-order {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--linen);
+    background: var(--umber);
+    border: none;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-order:hover { background: var(--terracotta); }
+
+  /* ── COMMISSION ── */
+  #commission {
+    padding: calc(var(--nav-h) + 80px) 80px 100px;
+  }
+
+  .commission-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    align-items: start;
+  }
+
+  .process-steps {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .process-step {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 24px;
+    padding: 28px 0;
+    border-bottom: 1px solid rgba(107,66,38,0.12);
+  }
+  .process-step:first-child { border-top: 1px solid rgba(107,66,38,0.12); }
+
+  .step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    color: rgba(184,92,56,0.25);
+    line-height: 1;
+  }
+
+  .step-content .step-title {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--umber);
+    margin-bottom: 8px;
+  }
+  .step-content p {
+    font-size: 14px;
+    color: var(--brown-light);
+    line-height: 1.7;
+  }
+
+  .commission-form {
+    background: var(--cream-dark);
+    padding: 48px;
+    position: sticky;
+    top: calc(var(--nav-h) + 40px);
+  }
+
+  .form-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--umber);
+    margin-bottom: 32px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--brown-mid);
+    margin-bottom: 8px;
+  }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--umber);
+    background: var(--cream);
+    border: 1px solid rgba(107,66,38,0.2);
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus { border-color: var(--terracotta); }
+  .form-group textarea { resize: vertical; min-height: 100px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .form-submit {
+    width: 100%;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--linen);
+    background: var(--umber);
+    border: none;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.25s;
+    margin-top: 8px;
+  }
+  .form-submit:hover { background: var(--terracotta); }
+
+  /* ── CONTACT ── */
+  #contact {
+    padding: calc(var(--nav-h) + 80px) 80px 100px;
+    background: var(--umber);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    align-content: center;
+  }
+
+  .contact-left { padding: 40px 0; }
+
+  .contact-left .section-eyebrow { color: var(--terracotta-light); }
+
+  .contact-left .section-title { color: var(--cream); }
+
+  .contact-left p {
+    font-size: 15px;
+    color: rgba(244,237,224,0.55);
+    line-height: 1.8;
+    max-width: 400px;
+    margin-bottom: 48px;
+  }
+
+  .contact-details { display: flex; flex-direction: column; gap: 24px; }
+  .contact-detail {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .contact-icon {
+    width: 40px; height: 40px;
+    border: 1px solid rgba(244,237,224,0.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+  .contact-detail-text .d-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(244,237,224,0.4);
+    margin-bottom: 2px;
+  }
+  .contact-detail-text .d-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    color: var(--cream);
+  }
+
+  .contact-social {
+    display: flex;
+    gap: 12px;
+    margin-top: 48px;
+  }
+  .social-link {
+    width: 42px; height: 42px;
+    border: 1px solid rgba(244,237,224,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    color: rgba(244,237,224,0.6);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+  }
+  .social-link:hover {
+    border-color: var(--terracotta-light);
+    color: var(--terracotta-light);
+  }
+
+  .contact-form {
+    padding: 48px;
+    background: rgba(244,237,224,0.04);
+    border: 1px solid rgba(244,237,224,0.08);
+  }
+
+  .contact-form label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(244,237,224,0.4);
+    margin-bottom: 8px;
+  }
+  .contact-form input,
+  .contact-form textarea {
+    width: 100%;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--cream);
+    background: rgba(244,237,224,0.06);
+    border: 1px solid rgba(244,237,224,0.12);
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 20px;
+  }
+  .contact-form input:focus,
+  .contact-form textarea:focus { border-color: var(--terracotta-light); }
+  .contact-form textarea { resize: vertical; min-height: 120px; }
+  .contact-form input::placeholder,
+  .contact-form textarea::placeholder { color: rgba(244,237,224,0.2); }
+
+  .contact-form-submit {
+    width: 100%;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--umber);
+    background: var(--cream);
+    border: none;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .contact-form-submit:hover { background: var(--cream-dark); }
+
+  /* ── FOOTER (inside contact) ── */
+  .site-footer {
+    background: var(--umber);
+    border-top: 1px solid rgba(244,237,224,0.08);
+    padding: 24px 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    display: none;
+  }
+  .footer-copy {
+    font-size: 12px;
+    color: rgba(244,237,224,0.3);
+    letter-spacing: 0.08em;
+  }
+  .footer-sig {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: rgba(244,237,224,0.25);
+  }
+
+  /* ── TRANSITIONS ── */
+  section { animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 0 24px; }
+    .nav-links { gap: 20px; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-image { min-height: 50vh; }
+    .hero-text { padding: 60px 24px; }
+    #about { grid-template-columns: 1fr; padding: 100px 24px 60px; }
+    .about-image-wrap { position: relative; top: auto; }
+    #collection { padding: calc(var(--nav-h) + 40px) 16px 60px; }
+    .gallery-grid { grid-template-columns: repeat(2,1fr); }
+    .gallery-item:nth-child(4n+1) { grid-column: span 1; }
+    .gallery-item:nth-child(4n+1) .gallery-img-placeholder { aspect-ratio: 3/4; }
+    #prints { padding: 100px 24px 60px; }
+    .prints-grid { grid-template-columns: 1fr; }
+    #commission { padding: 100px 24px 60px; }
+    .commission-layout { grid-template-columns: 1fr; gap: 40px; }
+    .commission-form { position: relative; top: auto; padding: 28px; }
+    #contact { grid-template-columns: 1fr; padding: 100px 24px 60px; gap: 40px; }
+    .home-strip { padding: 20px 24px; }
+    .collection-header { flex-direction: column; align-items: flex-start; gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="main-nav">
+  <a class="nav-logo" onclick="showSection('home')">Myriam <span>Kayali</span></a>
+  <ul class="nav-links">
+    <li><a onclick="showSection('home')">Home</a></li>
+    <li><a onclick="showSection('about')">About</a></li>
+    <li><a onclick="showSection('collection')">Collection</a></li>
+    <li><a onclick="showSection('prints')">Prints</a></li>
+    <li><a onclick="showSection('commission')">Commission</a></li>
+    <li><a onclick="showSection('contact')">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ══ HOME ══ -->
+<section id="home" class="active">
+  <div class="hero">
+    <div class="hero-text">
+      <p class="hero-eyebrow">Contemporary Figurative Painting</p>
+      <h1 class="hero-title">Art that<br>speaks<br><em>quietly</em></h1>
+      <p class="hero-sub">Original oil paintings exploring the human form, emotion, and the warmth of everyday intimacy. Based in Lebanon.</p>
+      <div>
+        <a class="btn-primary" onclick="showSection('collection')">View Collection</a>
+        <a class="btn-secondary" onclick="showSection('commission')">Commission a Work</a>
+      </div>
+    </div>
+    <div class="hero-image">
+      <div class="painting-slot">
+        <div class="painting-placeholder">
+          <!-- Replace inner content with: <img src="your-painting.jpg" alt="Featured painting"> -->
+        </div>
+      </div>
+      <div class="hero-float-tag">
+        <p class="tag-label">Featured work</p>
+        <p class="tag-title">Original painting — 2024</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-strip">
+    <div class="strip-item">
+      <span class="strip-num">12+</span>
+      <span class="strip-label">Years of practice</span>
+    </div>
+    <div class="strip-div"></div>
+    <div class="strip-item">
+      <span class="strip-num">80+</span>
+      <span class="strip-label">Original works</span>
+    </div>
+    <div class="strip-div"></div>
+    <div class="strip-item">
+      <span class="strip-num">30+</span>
+      <span class="strip-label">Collections worldwide</span>
+    </div>
+    <div class="strip-div"></div>
+    <div class="strip-item">
+      <span class="strip-num">∞</span>
+      <span class="strip-label">Commissions open</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ABOUT ══ -->
+<section id="about">
+  <div class="about-image-wrap">
+    <div class="about-img-main">
+      <!-- Replace with: <img src="your-portrait-or-studio.jpg" alt="Myriam Kayali in her studio"> -->
+      <div class="about-img-accent">
+        <div class="about-img-accent-inner">
+          <!-- Replace with: <img src="your-painting-detail.jpg" alt="Painting detail"> -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="about-content">
+    <p class="section-eyebrow">The artist</p>
+    <h2 class="section-title">Myriam<br><em>Kayali</em></h2>
+
+    <p>My work lives at the intersection of stillness and presence. Through figurative painting, I explore what it means to be human — the weight of a gaze, the curve of a shoulder, the quiet dignity of an unguarded moment.</p>
+
+    <p>Rooted in the landscapes and light of Lebanon, my palette draws from the warmth of the Mediterranean — ochres, terracottas, deep umbers — applied with a directness that I hope feels both intimate and enduring.</p>
+
+    <div class="about-quote">
+      <blockquote>"I paint to remember that the ordinary is extraordinary — that a face, a gesture, a body at rest holds entire worlds."</blockquote>
+    </div>
+
+    <p>I work primarily in oil on linen, with a process that values slowness and revision. Each painting undergoes weeks or months of sustained attention before it is complete.</p>
+
+    <p>My work has been collected by private collectors across Europe and the Middle East. I also accept commissions for portraits and figurative works — please reach out.</p>
+
+    <a class="btn-primary" onclick="showSection('commission')" style="margin-top:16px; display:inline-block;">Commission a Painting</a>
+  </div>
+</section>
+
+<!-- ══ COLLECTION ══ -->
+<section id="collection">
+  <div class="collection-header">
+    <div>
+      <p class="section-eyebrow">Works</p>
+      <h2 class="section-title">The <em>Collection</em></h2>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active">All</button>
+      <button class="filter-tab">Portraits</button>
+      <button class="filter-tab">Figures</button>
+      <button class="filter-tab">Studies</button>
+    </div>
+  </div>
+
+  <div class="gallery-grid">
+    <div class="gallery-item">
+      <div class="gallery-img-placeholder gp-1">
+        <!-- <img class="gallery-img" src="painting1.jpg" alt="Untitled I"> -->
+      </div>
+      <div class="gallery-overlay">
+        <div class="gallery-info">
+          <p class="g-title">Untitled I</p>
+          <p class="g-meta">Oil on linen · 90 × 120 cm · 2024</p>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-img-placeholder gp-2">
+        <!-- <img class="gallery-img" src="painting2.jpg" alt="Morning Light"> -->
+      </div>
+      <div class="gallery-overlay">
+        <div class="gallery-info">
+          <p class="g-title">Morning Light</p>
+          <p class="g-meta">Oil on linen · 60 × 80 cm · 2024</p>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-img-placeholder gp-3">
+        <!-- <img class="gallery-img" src="painting3.jpg" alt="Study in Ochre"> -->
+      </div>
+      <div class="gallery-overlay">
+        <div class="gallery-info">
+          <p class="g-title">Study in Ochre</p>
+          <p class="g-meta">Oil on panel · 40 × 50 cm · 2023</p>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-img-placeholder gp-4">
+        <!-- <img class="gallery-img" src="painting4.jpg" alt="Figure with Shadow"> -->
+      </div>
+      <div class="gallery-overlay">
+        <div class="gallery-info">
+          <p class="g-title">Figure with Shadow</p>
+          <p class="g-meta">Oil on linen · 70 × 100 cm · 2023</p>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-img-placeholder gp-5">
+        <!-- <img class="gallery-img" src="painting5.jpg" alt="Seated"> -->
+      </div>
+      <div class="gallery-overlay">
+        <div class="gallery-info">
+          <p class="g-title">Seated</p>
+          <p class="g-meta">Oil on linen · 80 × 100 cm · 2023</p>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-img-placeholder gp-6">
+        <!-- <img class="gallery-img" src="painting6.jpg" alt="Portrait in Umber"> -->
+      </div>
+      <div class="gallery-overlay">
+        <div class="gallery-info">
+          <p class="g-title">Portrait in Umber</p>
+          <p class="g-meta">Oil on panel · 50 × 70 cm · 2022</p>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-img-placeholder gp-7">
+        <!-- <img class="gallery-img" src="painting7.jpg" alt="Repose"> -->
+      </div>
+      <div class="gallery-overlay">
+        <div class="gallery-info">
+          <p class="g-title">Repose</p>
+          <p class="g-meta">Oil on linen · 100 × 130 cm · 2022</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRINTS ══ -->
+<section id="prints">
+  <div class="prints-header">
+    <p class="section-eyebrow">Limited Editions</p>
+    <h2 class="section-title">Fine Art <em>Prints</em></h2>
+    <p>Archival giclée prints on 310gsm cotton rag paper. Each edition is strictly limited, signed and numbered by hand. Printed with museum-grade inks for a lifespan of 75+ years.</p>
+  </div>
+
+  <div class="prints-grid">
+    <div class="print-card">
+      <div class="print-img">
+        <div class="print-img-bg gp-1" style="height:100%">
+          <!-- <img src="print1.jpg" style="width:100%;height:100%;object-fit:cover"> -->
+        </div>
+        <span class="print-badge">Edition of 25</span>
+      </div>
+      <div class="print-info">
+        <h3 class="print-title">Untitled I</h3>
+        <p class="print-edition">Limited edition · Signed &amp; numbered</p>
+        <div class="print-sizes">
+          <span class="size-tag active">A3</span>
+          <span class="size-tag">50×70</span>
+          <span class="size-tag">70×100</span>
+        </div>
+        <div class="print-footer">
+          <span class="print-price">$180</span>
+          <button class="btn-order" onclick="showSection('contact')">Order Print</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="print-card">
+      <div class="print-img">
+        <div class="print-img-bg gp-3" style="height:100%">
+          <!-- <img src="print2.jpg" style="width:100%;height:100%;object-fit:cover"> -->
+        </div>
+        <span class="print-badge">Edition of 15</span>
+      </div>
+      <div class="print-info">
+        <h3 class="print-title">Study in Ochre</h3>
+        <p class="print-edition">Limited edition · Signed &amp; numbered</p>
+        <div class="print-sizes">
+          <span class="size-tag active">A3</span>
+          <span class="size-tag">50×70</span>
+          <span class="size-tag">70×100</span>
+        </div>
+        <div class="print-footer">
+          <span class="print-price">$220</span>
+          <button class="btn-order" onclick="showSection('contact')">Order Print</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="print-card">
+      <div class="print-img">
+        <div class="print-img-bg gp-5" style="height:100%">
+          <!-- <img src="print3.jpg" style="width:100%;height:100%;object-fit:cover"> -->
+        </div>
+        <span class="print-badge" style="background: var(--brown-mid);">Sold Out</span>
+      </div>
+      <div class="print-info">
+        <h3 class="print-title">Seated</h3>
+        <p class="print-edition">Limited edition · Signed &amp; numbered</p>
+        <div class="print-sizes">
+          <span class="size-tag" style="opacity:0.4; cursor:default">A3</span>
+          <span class="size-tag" style="opacity:0.4; cursor:default">50×70</span>
+        </div>
+        <div class="print-footer">
+          <span class="print-price" style="color: var(--brown-light);">Sold Out</span>
+          <button class="btn-order" style="background: var(--brown-light); cursor:default" onclick="showSection('contact')">Notify Me</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ COMMISSION ══ -->
+<section id="commission">
+  <div class="commission-layout">
+    <div>
+      <p class="section-eyebrow">Bespoke Work</p>
+      <h2 class="section-title">Commission<br>a <em>Painting</em></h2>
+      <p style="font-size:15px;color:var(--brown-light);line-height:1.8;max-width:480px;margin-top:16px;">
+        I welcome commissions for portraits, figures, and intimate scenes. Each commission is a conversation — you bring the subject and the feeling; I bring the years and the eye.
+      </p>
+
+      <div class="process-steps">
+        <div class="process-step">
+          <span class="step-num">01</span>
+          <div class="step-content">
+            <p class="step-title">Initial Inquiry</p>
+            <p>Send me a brief description of your vision — the subject, size, and any references that speak to you. I'll respond within 3 days.</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <span class="step-num">02</span>
+          <div class="step-content">
+            <p class="step-title">Consultation &amp; Quote</p>
+            <p>We'll have a conversation to align on the scope, reference materials, and timeline. A detailed quote follows.</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <span class="step-num">03</span>
+          <div class="step-content">
+            <p class="step-title">Deposit &amp; Begin</p>
+            <p>A 50% deposit secures your place. I'll share progress photos at key stages for your feedback.</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <span class="step-num">04</span>
+          <div class="step-content">
+            <p class="step-title">Delivery</p>
+            <p>Upon final approval, the balance is due. Your painting is carefully packed and shipped worldwide.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="commission-form">
+      <p class="form-title">Start a Commission</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" placeholder="Family name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Subject Matter</label>
+        <select>
+          <option value="" disabled selected>Select a type</option>
+          <option>Portrait (single)</option>
+          <option>Portrait (couple / family)</option>
+          <option>Figure study</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Approximate Size</label>
+          <select>
+            <option value="" disabled selected>Size range</option>
+            <option>Small (up to 50×70 cm)</option>
+            <option>Medium (up to 80×100 cm)</option>
+            <option>Large (100 cm+)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Budget Range</label>
+          <select>
+            <option value="" disabled selected>Approx. budget</option>
+            <option>$500 – $1,000</option>
+            <option>$1,000 – $2,500</option>
+            <option>$2,500 – $5,000</option>
+            <option>$5,000+</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tell Me About Your Vision</label>
+        <textarea placeholder="Describe the subject, mood, references, and anything that matters to you..."></textarea>
+      </div>
+      <button class="form-submit" onclick="showSection('contact')">Send Inquiry →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CONTACT ══ -->
+<section id="contact">
+  <div class="contact-left">
+    <p class="section-eyebrow">Get in Touch</p>
+    <h2 class="section-title" style="color:var(--cream)">Let's<br><em>connect</em></h2>
+    <p>Whether you have a question about a work, a commission inquiry, or simply want to say hello — I'd love to hear from you.</p>
+
+    <div class="contact-details">
+      <div class="contact-detail">
+        <div class="contact-icon" style="color:var(--cream);font-family:'Cormorant Garamond',serif;font-style:italic">@</div>
+        <div class="contact-detail-text">
+          <p class="d-label">Email</p>
+          <p class="d-value">hello@myriamkayali.com</p>
+        </div>
+      </div>
+      <div class="contact-detail">
+        <div class="contact-icon" style="color:var(--cream);font-family:'Cormorant Garamond',serif;">♦</div>
+        <div class="contact-detail-text">
+          <p class="d-label">Based in</p>
+          <p class="d-value">Beirut, Lebanon</p>
+        </div>
+      </div>
+      <div class="contact-detail">
+        <div class="contact-icon" style="color:var(--cream);font-family:'Cormorant Garamond',serif;">◇</div>
+        <div class="contact-detail-text">
+          <p class="d-label">Response time</p>
+          <p class="d-value">Within 2–3 business days</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-social">
+      <a class="social-link" title="Instagram">Ig</a>
+      <a class="social-link" title="Pinterest">Pt</a>
+      <a class="social-link" title="LinkedIn">Li</a>
+    </div>
+  </div>
+
+  <div class="contact-form">
+    <p class="form-title" style="color:var(--cream);margin-bottom:28px;font-family:'Cormorant Garamond',serif;font-size:26px;font-style:italic;font-weight:400">Send a message</p>
+    <label>Name</label>
+    <input type="text" placeholder="Your name">
+    <label>Email</label>
+    <input type="email" placeholder="your@email.com">
+    <label>Subject</label>
+    <input type="text" placeholder="What is this about?">
+    <label>Message</label>
+    <textarea placeholder="Write your message here..."></textarea>
+    <button class="contact-form-submit">Send Message →</button>
+  </div>
+</section>
+
+<script>
+  function showSection(id) {
+    document.querySelectorAll('section').forEach(s => {
+      s.classList.remove('active');
+      s.style.display = 'none';
+    });
+    const target = document.getElementById(id);
+    if (target) {
+      target.style.display = id === 'contact' ? 'grid' : 'block';
+      if (id === 'about') target.style.display = 'grid';
+      target.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('main-nav');
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.size-tag').forEach(tag => {
+    tag.addEventListener('click', function() {
+      const card = this.closest('.print-info');
+      card.querySelectorAll('.size-tag').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  showSection('home');
+</script>
+</body>
+</html>
