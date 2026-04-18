@@ -974,84 +974,8 @@
     </div>
   </div>
 
-  <div class="gallery-grid">
-    <div class="gallery-item">
-      <div class="gallery-img-placeholder gp-1">
-        <!-- <img class="gallery-img" src="painting1.jpg" alt="Untitled I"> -->
-      </div>
-      <div class="gallery-overlay">
-        <div class="gallery-info">
-          <p class="g-title">Untitled I</p>
-          <p class="g-meta">Oil on linen · 90 × 120 cm · 2024</p>
-        </div>
-      </div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-img-placeholder gp-2">
-        <!-- <img class="gallery-img" src="painting2.jpg" alt="Morning Light"> -->
-      </div>
-      <div class="gallery-overlay">
-        <div class="gallery-info">
-          <p class="g-title">Morning Light</p>
-          <p class="g-meta">Oil on linen · 60 × 80 cm · 2024</p>
-        </div>
-      </div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-img-placeholder gp-3">
-        <!-- <img class="gallery-img" src="painting3.jpg" alt="Study in Ochre"> -->
-      </div>
-      <div class="gallery-overlay">
-        <div class="gallery-info">
-          <p class="g-title">Study in Ochre</p>
-          <p class="g-meta">Oil on panel · 40 × 50 cm · 2023</p>
-        </div>
-      </div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-img-placeholder gp-4">
-        <!-- <img class="gallery-img" src="painting4.jpg" alt="Figure with Shadow"> -->
-      </div>
-      <div class="gallery-overlay">
-        <div class="gallery-info">
-          <p class="g-title">Figure with Shadow</p>
-          <p class="g-meta">Oil on linen · 70 × 100 cm · 2023</p>
-        </div>
-      </div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-img-placeholder gp-5">
-        <!-- <img class="gallery-img" src="painting5.jpg" alt="Seated"> -->
-      </div>
-      <div class="gallery-overlay">
-        <div class="gallery-info">
-          <p class="g-title">Seated</p>
-          <p class="g-meta">Oil on linen · 80 × 100 cm · 2023</p>
-        </div>
-      </div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-img-placeholder gp-6">
-        <!-- <img class="gallery-img" src="painting6.jpg" alt="Portrait in Umber"> -->
-      </div>
-      <div class="gallery-overlay">
-        <div class="gallery-info">
-          <p class="g-title">Portrait in Umber</p>
-          <p class="g-meta">Oil on panel · 50 × 70 cm · 2022</p>
-        </div>
-      </div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-img-placeholder gp-7">
-        <!-- <img class="gallery-img" src="painting7.jpg" alt="Repose"> -->
-      </div>
-      <div class="gallery-overlay">
-        <div class="gallery-info">
-          <p class="g-title">Repose</p>
-          <p class="g-meta">Oil on linen · 100 × 130 cm · 2022</p>
-        </div>
-      </div>
-    </div>
+  <div class="gallery-grid" id="gallery-grid">
+    <!-- Populated dynamically from admin dashboard -->
   </div>
 </section>
 
@@ -1282,6 +1206,56 @@
 </section>
 
 <script>
+  const STORAGE_KEY = 'mk_paintings';
+  let activeFilter = 'All';
+
+  function getPaintings() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function renderGallery(filter) {
+    activeFilter = filter || activeFilter;
+    const grid = document.getElementById('gallery-grid');
+    if (!grid) return;
+
+    let paintings = getPaintings();
+    if (activeFilter !== 'All') {
+      paintings = paintings.filter(p => p.category === activeFilter);
+    }
+
+    const fallback = [
+      { id:'f1', title:'Untitled I', year:2024, medium:'Oil on linen', category:'Portrait', width:90, height:120, imageData:null, available:true },
+      { id:'f2', title:'Morning Light', year:2024, medium:'Oil on linen', category:'Figure', width:60, height:80, imageData:null, available:true },
+      { id:'f3', title:'Study in Ochre', year:2023, medium:'Oil on panel', category:'Study', width:40, height:50, imageData:null, available:true },
+      { id:'f4', title:'Figure with Shadow', year:2023, medium:'Oil on linen', category:'Figure', width:70, height:100, imageData:null, available:true },
+      { id:'f5', title:'Seated', year:2023, medium:'Oil on linen', category:'Figure', width:80, height:100, imageData:null, available:false },
+      { id:'f6', title:'Portrait in Umber', year:2022, medium:'Oil on panel', category:'Portrait', width:50, height:70, imageData:null, available:true },
+      { id:'f7', title:'Repose', year:2022, medium:'Oil on linen', category:'Figure', width:100, height:130, imageData:null, available:true },
+    ];
+
+    const source = paintings.length > 0 ? paintings : fallback;
+    const gpColors = ['gp-1','gp-2','gp-3','gp-4','gp-5','gp-6','gp-7'];
+
+    grid.innerHTML = source.map((p, i) => {
+      const dims = (p.width && p.height) ? `${p.width} × ${p.height} cm · ` : '';
+      const meta = `${p.medium ? p.medium + ' · ' : ''}${dims}${p.year}`;
+      const imgContent = p.imageData
+        ? `<img class="gallery-img" src="${p.imageData}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease">`
+        : `<div class="gallery-img-placeholder ${gpColors[i % gpColors.length]}"></div>`;
+
+      return `<div class="gallery-item">
+        ${imgContent}
+        <div class="gallery-overlay">
+          <div class="gallery-info">
+            <p class="g-title">${p.title}</p>
+            <p class="g-meta">${meta}</p>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   function showSection(id) {
     document.querySelectorAll('section').forEach(s => {
       s.classList.remove('active');
@@ -1293,6 +1267,7 @@
       if (id === 'about') target.style.display = 'grid';
       target.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (id === 'collection') renderGallery();
     }
   }
 
@@ -1305,6 +1280,7 @@
     tab.addEventListener('click', function() {
       document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
       this.classList.add('active');
+      renderGallery(this.textContent.trim());
     });
   });
 
