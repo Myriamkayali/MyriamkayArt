@@ -846,7 +846,7 @@ function renderList() {
             <p class="pc-title">${p.title}</p>
             <p class="pc-meta">${p.year}${p.medium ? ' · ' + p.medium : ''}</p>
             <div class="pc-badges">
-              ${p.available ? '<span class="pc-badge avail">Available</span>' : '<span class="pc-badge sold">Not for sale</span>'}
+              ${p.status === 'Sold' ? '<span class="pc-badge sold">Sold</span>' : p.available ? '<span class="pc-badge avail">Available</span>' : '<span class="pc-badge" style="background:rgba(244,237,224,0.05);color:var(--muted)">Private</span>'}
               ${p.featured ? '<span class="pc-badge feat">Featured</span>' : ''}
               ${(Array.isArray(p.category) ? p.category : [p.category]).filter(Boolean).map(c => `<span class="pc-badge cat">${c}</span>`).join('')}
             </div>
@@ -940,12 +940,21 @@ function renderForm() {
       <hr class="form-divider">
       <p class="form-section-title">Visibility & Status</p>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
-        <div class="toggle-row" onclick="toggleSwitch('sw-avail')">
-          <div class="toggle-switch ${p.available?'on':''}" id="sw-avail"></div>
-          <span class="toggle-label">Available for sale</span>
-          <span class="toggle-sub">Shows as available in the gallery</span>
+        <div>
+          <p class="form-section-title" style="margin-bottom:10px">Availability</p>
+          <div style="display:flex;gap:8px" id="status-selector">
+            ${['Available','Sold','Private'].map(s => {
+              const current = p.status || (p.available ? 'Available' : 'Private');
+              const active = current === s;
+              return `<button type="button" onclick="setStatus('${s}')" id="status-${s}"
+                style="flex:1;padding:10px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border:1px solid ${active ? (s==='Available'?'var(--terra)':s==='Sold'?'#c0392b':'var(--border2)') : 'var(--border)'};background:${active ? (s==='Available'?'rgba(184,92,56,0.15)':s==='Sold'?'rgba(192,57,43,0.15)':'rgba(244,237,224,0.06)') : 'transparent'};color:${active ? (s==='Available'?'var(--terra-light)':s==='Sold'?'#e74c3c':'var(--cream-dim)') : 'var(--muted)'};transition:all 0.15s">
+                ${s}
+              </button>`;
+            }).join('')}
+          </div>
+          <input type="hidden" id="f-status" value="${p.status || (p.available ? 'Available' : 'Private')}">
         </div>
-        <div class="toggle-row" onclick="toggleSwitch('sw-feat')">
+        <div class="toggle-row" onclick="toggleSwitch('sw-feat')" style="margin-top:4px">
           <div class="toggle-switch ${p.featured?'on':''}" id="sw-feat"></div>
           <span class="toggle-label">Featured work</span>
           <span class="toggle-sub">Highlighted on the homepage</span>
@@ -1015,7 +1024,8 @@ function savePainting() {
     price: document.getElementById('f-price').value || '',
     description: document.getElementById('f-desc').value.trim(),
     featured: document.getElementById('sw-feat').classList.contains('on'),
-    available: document.getElementById('sw-avail').classList.contains('on'),
+    status: document.getElementById('f-status').value,
+    available: document.getElementById('f-status').value === 'Available',
     imageData: imageData || null,
   };
 
@@ -1163,6 +1173,21 @@ function showToast(msg, type = 'success') {
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function setStatus(s) {
+  document.getElementById('f-status').value = s;
+  ['Available','Sold','Private'].forEach(opt => {
+    const btn = document.getElementById('status-' + opt);
+    if (!btn) return;
+    const active = opt === s;
+    const color = opt === 'Available' ? 'var(--terra)' : opt === 'Sold' ? '#c0392b' : 'var(--border2)';
+    const bg    = opt === 'Available' ? 'rgba(184,92,56,0.15)' : opt === 'Sold' ? 'rgba(192,57,43,0.15)' : 'rgba(244,237,224,0.06)';
+    const text  = opt === 'Available' ? 'var(--terra-light)' : opt === 'Sold' ? '#e74c3c' : 'var(--cream-dim)';
+    btn.style.borderColor = active ? color : 'var(--border)';
+    btn.style.background  = active ? bg    : 'transparent';
+    btn.style.color       = active ? text  : 'var(--muted)';
+  });
 }
 
 function toggleCategory(event, label) {

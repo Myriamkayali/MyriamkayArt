@@ -462,6 +462,19 @@
     pointer-events: none;
   }
 
+  .gallery-sold-badge {
+    position: absolute;
+    top: 14px; left: 14px;
+    background: rgba(30,15,7,0.75);
+    color: rgba(244,237,224,0.7);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
   .gp-1 { background: linear-gradient(135deg, #C49A6C, #7A4A2A); }
   .gp-2 { background: linear-gradient(160deg, #D4AE8A, #9B5A35); }
   .gp-3 { background: linear-gradient(45deg, #B8906A, #6B3A1F); }
@@ -1253,7 +1266,7 @@
 
       return `<div class="gallery-item">
         ${imgContent}
-        ${p.available ? '<span class="gallery-avail-badge">Available</span>' : ''}
+        ${p.status === 'Sold' ? '<span class="gallery-sold-badge">Sold</span>' : p.available ? '<span class="gallery-avail-badge">Available</span>' : ''}
         <div class="gallery-overlay">
           <div class="gallery-info">
             <p class="g-title">${p.title}</p>
