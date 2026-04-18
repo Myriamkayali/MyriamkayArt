@@ -903,7 +903,7 @@ function renderForm() {
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="category-checkboxes">
             ${['Beirut Diaries','On the Line','Mixed Arts','Landscape & Abstract','Commission'].map(c => {
               const checked = Array.isArray(p.category) ? p.category.includes(c) : p.category === c;
-              return `<label style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border:1px solid ${checked ? 'var(--terra)' : 'var(--border)'};cursor:pointer;font-size:12px;color:var(--cream-dim);transition:all 0.15s;user-select:none" onclick="toggleCategory(this)">
+              return `<label style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border:1px solid ${checked ? 'var(--terra)' : 'var(--border)'};cursor:pointer;font-size:12px;color:var(--cream-dim);transition:all 0.15s;user-select:none" onclick="toggleCategory(event, this)">
                 <input type="checkbox" value="${c}" ${checked ? 'checked' : ''} style="display:none">
                 <span style="width:10px;height:10px;border-radius:50%;background:${checked ? 'var(--terra)' : 'transparent'};border:1px solid ${checked ? 'var(--terra)' : 'var(--border2)'};flex-shrink:0;transition:all 0.15s"></span>
                 ${c}
@@ -1000,6 +1000,7 @@ function savePainting() {
   if (!year)  { showToast('Please enter a year.', 'error'); return; }
 
   const categories = [...document.querySelectorAll('#category-checkboxes input:checked')].map(i => i.value);
+  const urlInput = document.getElementById('url-input');
   if (urlInput && urlInput.value.trim().startsWith('http')) imageData = urlInput.value.trim();
 
   const paintings = getPaintings();
@@ -1026,9 +1027,10 @@ function savePainting() {
   }
 
   savePaintings(paintings);
+  const wasEditing = !!editingId;
   editingId = null;
   imageData = null;
-  showToast(editingId ? 'Painting updated!' : 'Painting added to gallery!', 'success');
+  showToast(wasEditing ? 'Painting updated!' : 'Painting added to gallery!', 'success');
   showScreen('list');
 }
 
@@ -1163,7 +1165,8 @@ function showToast(msg, type = 'success') {
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-function toggleCategory(label) {
+function toggleCategory(event, label) {
+  event.preventDefault();
   const cb = label.querySelector('input');
   const dot = label.querySelector('span');
   cb.checked = !cb.checked;
