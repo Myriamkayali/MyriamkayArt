@@ -848,7 +848,7 @@ function renderList() {
             <div class="pc-badges">
               ${p.available ? '<span class="pc-badge avail">Available</span>' : '<span class="pc-badge sold">Not for sale</span>'}
               ${p.featured ? '<span class="pc-badge feat">Featured</span>' : ''}
-              ${p.category ? '<span class="pc-badge cat">' + p.category + '</span>' : ''}
+              ${(Array.isArray(p.category) ? p.category : [p.category]).filter(Boolean).map(c => `<span class="pc-badge cat">${c}</span>`).join('')}
             </div>
           </div>
         </div>`;
@@ -898,11 +898,18 @@ function renderForm() {
           <label class="form-label">Year *</label>
           <input class="form-input" id="f-year" type="number" value="${p.year}" placeholder="2024">
         </div>
-        <div class="form-group">
-          <label class="form-label">Category</label>
-          <select class="form-select" id="f-category">
-            ${['Portrait','Figure','Study','Other'].map(c => `<option${p.category===c?' selected':''}>${c}</option>`).join('')}
-          </select>
+        <div class="form-group full">
+          <label class="form-label">Collections (select all that apply)</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="category-checkboxes">
+            ${['Beirut Diaries','On the Line','Mixed Arts','Landscape & Abstract','Commission'].map(c => {
+              const checked = Array.isArray(p.category) ? p.category.includes(c) : p.category === c;
+              return `<label style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border:1px solid ${checked ? 'var(--terra)' : 'var(--border)'};cursor:pointer;font-size:12px;color:var(--cream-dim);transition:all 0.15s;user-select:none" onclick="toggleCategory(this)">
+                <input type="checkbox" value="${c}" ${checked ? 'checked' : ''} style="display:none">
+                <span style="width:10px;height:10px;border-radius:50%;background:${checked ? 'var(--terra)' : 'transparent'};border:1px solid ${checked ? 'var(--terra)' : 'var(--border2)'};flex-shrink:0;transition:all 0.15s"></span>
+                ${c}
+              </label>`;
+            }).join('')}
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Medium</label>
@@ -992,7 +999,7 @@ function savePainting() {
   if (!title) { showToast('Please enter a title.', 'error'); return; }
   if (!year)  { showToast('Please enter a year.', 'error'); return; }
 
-  const urlInput = document.getElementById('url-input');
+  const categories = [...document.querySelectorAll('#category-checkboxes input:checked')].map(i => i.value);
   if (urlInput && urlInput.value.trim().startsWith('http')) imageData = urlInput.value.trim();
 
   const paintings = getPaintings();
@@ -1001,7 +1008,7 @@ function savePainting() {
     title,
     year: parseInt(year),
     medium: document.getElementById('f-medium').value.trim(),
-    category: document.getElementById('f-category').value,
+    category: categories,
     width: document.getElementById('f-width').value || '',
     height: document.getElementById('f-height').value || '',
     price: document.getElementById('f-price').value || '',
@@ -1154,6 +1161,16 @@ function showToast(msg, type = 'success') {
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function toggleCategory(label) {
+  const cb = label.querySelector('input');
+  const dot = label.querySelector('span');
+  cb.checked = !cb.checked;
+  const on = cb.checked;
+  label.style.borderColor = on ? 'var(--terra)' : 'var(--border)';
+  dot.style.background = on ? 'var(--terra)' : 'transparent';
+  dot.style.borderColor = on ? 'var(--terra)' : 'var(--border2)';
 }
 
 // init
