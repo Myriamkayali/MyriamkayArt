@@ -755,8 +755,18 @@ function getPaintings() {
 }
 
 function savePaintings(paintings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(paintings));
-  updateBadge();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(paintings));
+    updateBadge();
+    return true;
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      showToast('Storage full — image is too large for the browser to save. Try a smaller or compressed image.', 'error');
+    } else {
+      showToast('Failed to save. Please try again.', 'error');
+    }
+    return false;
+  }
 }
 
 function updateBadge() {
@@ -1035,7 +1045,8 @@ function savePainting() {
     paintings.unshift(painting);
   }
 
-  savePaintings(paintings);
+  const saved = savePaintings(paintings);
+  if (!saved) return;
   const wasEditing = !!editingId;
   editingId = null;
   imageData = null;
