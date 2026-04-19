@@ -889,7 +889,7 @@ function renderForm() {
         <input type="file" accept="image/*" onchange="handleFile(this)">
         <div class="upload-icon">↑</div>
         <p class="upload-text">Drop image here or click to browse</p>
-        <p class="upload-sub">JPG, PNG, WEBP</p>
+        <p class="upload-sub">JPG, PNG, WEBP — stored in Vercel Blob</p>
        </div>
        <span class="url-toggle" onclick="toggleUrlInput()">Or paste an image URL instead</span>
        <div id="url-input-wrap" style="display:none; margin-top:10px">
@@ -991,19 +991,30 @@ function previewUrl(url) {
   if (url.startsWith('http')) { imageData = url; }
 }
 
-function handleFile(input) {
+async function handleFile(input) {
   const file = input.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    imageData = e.target.result;
+
+  document.getElementById('img-section').innerHTML =
+    `<div style="padding:24px;text-align:center;color:var(--muted);font-family:'Jost',sans-serif;font-size:13px">Uploading…</div>`;
+
+  const body = new FormData();
+  body.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body });
+    if (!res.ok) throw new Error('Upload failed');
+    const { url } = await res.json();
+    imageData = url;
     document.getElementById('img-section').innerHTML = `
       <div class="image-preview-wrap">
-        <img class="image-preview" src="${imageData}" alt="Preview">
+        <img class="image-preview" src="${url}" alt="Preview">
         <button class="remove-img" onclick="removeImage()">×</button>
       </div>`;
-  };
-  reader.readAsDataURL(file);
+  } catch {
+    showToast('Image upload failed. Please try again.', 'error');
+    renderForm();
+  }
 }
 
 function removeImage() {

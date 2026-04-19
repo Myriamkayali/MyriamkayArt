@@ -76,6 +76,12 @@ CSS custom properties defined on `:root`:
 
 Fonts: **Cormorant Garamond** (headings) and **Jost** (body) from Google Fonts.
 
+## Image Storage — Vercel Blob
+
+Images uploaded in the admin are sent to `POST /api/upload` (an Edge function at `api/upload.js`), which stores them in Vercel Blob and returns a public URL. That URL is saved in the painting's `imageData` field in localStorage instead of a base64 string.
+
+**Required env variable in Vercel dashboard:** `BLOB_READ_WRITE_TOKEN`
+
 ## Deployment
 
-Push to `main` — the repo is served as a GitHub Pages static site. No CI pipeline.
+Deploy to Vercel (required for the `/api/upload` Edge function and Blob storage). Push to `main` triggers a deploy automatically once the project is connected.
