@@ -698,6 +698,7 @@ const DEFAULT_PIN = '1234';
 let currentPin = '';
 let editingId = null;
 let imageData = null;
+let additionalImages = [];
 let confirmCallback = null;
 
 // ── PIN ──────────────────────────────────────────
@@ -849,6 +850,8 @@ function renderList() {
             ${imgHtml}
             <div class="painting-card-actions">
               <button class="card-btn" onclick="editPainting('${p.id}')">Edit</button>
+              <button class="card-btn" onclick="movePainting('${p.id}',-1)" title="Move up">↑</button>
+              <button class="card-btn" onclick="movePainting('${p.id}',1)" title="Move down">↓</button>
               <button class="card-btn del-btn" onclick="confirmDelete('${p.id}', '${p.title.replace(/'/g,"\\'")}')">Delete</button>
             </div>
           </div>
@@ -875,9 +878,10 @@ function renderForm() {
 
   if (editingId) {
     const found = getPaintings().find(x => x.id === editingId);
-    if (found) { p = found; imageData = found.imageData || null; }
+    if (found) { p = found; imageData = found.imageData || null; additionalImages = found.additionalImages ? found.additionalImages.slice() : []; }
   } else {
     imageData = null;
+    additionalImages = [];
   }
 
   const imgSection = imageData
@@ -946,6 +950,19 @@ function renderForm() {
       <hr class="form-divider">
       <p class="form-section-title">Image</p>
       <div id="img-section">${imgSection}</div>
+
+      <hr class="form-divider">
+      <p class="form-section-title">Additional Images</p>
+      <div id="additional-images-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        ${(p.additionalImages||[]).map((src,i) => `
+          <div style="position:relative;display:inline-block">
+            <img src="${src}" style="width:80px;height:80px;object-fit:cover;display:block;">
+            <button onclick="removeAdditionalImage(${i})" style="position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(20,10,5,0.75);border:none;color:var(--cream);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">×</button>
+          </div>`).join('')}
+      </div>
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;padding:9px 18px;border:1px solid var(--border);color:var(--terra-light);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--terra)'" onmouseout="this.style.borderColor='var(--border)'">
+        <input type="file" accept="image/*" onchange="handleAdditionalFile(this)" style="display:none"> + Add Image
+      </label>
 
       <hr class="form-divider">
       <p class="form-section-title">Visibility & Status</p>
@@ -1029,6 +1046,31 @@ function removeImage() {
   renderForm();
 }
 
+async function handleAdditionalFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.disabled = true;
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: file,
+      headers: { 'content-type': file.type || 'application/octet-stream', 'x-filename': encodeURIComponent(file.name) },
+    });
+    if (!res.ok) throw new Error();
+    const { url } = await res.json();
+    additionalImages.push(url);
+    renderForm();
+  } catch {
+    showToast('Image upload failed. Please try again.', 'error');
+    input.disabled = false;
+  }
+}
+
+function removeAdditionalImage(idx) {
+  additionalImages.splice(idx, 1);
+  renderForm();
+}
+
 function savePainting() {
   const title = document.getElementById('f-title').value.trim();
   const year  = document.getElementById('f-year').value;
@@ -1054,6 +1096,7 @@ function savePainting() {
     status: document.getElementById('f-status').value,
     available: document.getElementById('f-status').value === 'Available',
     imageData: imageData || null,
+    additionalImages: additionalImages.slice(),
   };
 
   if (editingId) {
@@ -1068,6 +1111,7 @@ function savePainting() {
   const wasEditing = !!editingId;
   editingId = null;
   imageData = null;
+  additionalImages = [];
   showToast(wasEditing ? 'Painting updated!' : 'Painting added to gallery!', 'success');
   showScreen('list');
 }
@@ -1080,6 +1124,7 @@ function editPainting(id) {
 function cancelEdit() {
   editingId = null;
   imageData = null;
+  additionalImages = [];
   showScreen('list');
 }
 
@@ -1094,6 +1139,17 @@ function deletePainting(id) {
   const paintings = getPaintings().filter(p => p.id !== id);
   savePaintings(paintings);
   showToast('Painting removed.', 'error');
+  renderList();
+}
+
+function movePainting(id, dir) {
+  const paintings = getPaintings();
+  const idx = paintings.findIndex(p => p.id === id);
+  if (idx === -1) return;
+  const target = idx + dir;
+  if (target < 0 || target >= paintings.length) return;
+  [paintings[idx], paintings[target]] = [paintings[target], paintings[idx]];
+  savePaintings(paintings);
   renderList();
 }
 
