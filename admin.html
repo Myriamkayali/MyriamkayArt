@@ -998,12 +998,19 @@ async function handleFile(input) {
   document.getElementById('img-section').innerHTML =
     `<div style="padding:24px;text-align:center;color:var(--muted);font-family:'Jost',sans-serif;font-size:13px">Uploading…</div>`;
 
-  const body = new FormData();
-  body.append('file', file);
-
   try {
-    const res = await fetch('/api/upload', { method: 'POST', body });
-    if (!res.ok) throw new Error('Upload failed');
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: file,
+      headers: {
+        'content-type': file.type || 'application/octet-stream',
+        'x-filename': encodeURIComponent(file.name),
+      },
+    });
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({}));
+      throw new Error(error || 'Upload failed');
+    }
     const { url } = await res.json();
     imageData = url;
     document.getElementById('img-section').innerHTML = `

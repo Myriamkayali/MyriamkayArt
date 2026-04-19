@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@vercel/blob": "^2.3.3",
-    "multiparty": "^4.2.3"
+    "@vercel/blob": "^2.3.3"
   }
 }
