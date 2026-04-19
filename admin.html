@@ -879,7 +879,7 @@ function renderForm() {
         <input type="file" accept="image/*" onchange="handleFile(this)">
         <div class="upload-icon">↑</div>
         <p class="upload-text">Drop image here or click to browse</p>
-        <p class="upload-sub">JPG, PNG, WEBP — max 5MB</p>
+        <p class="upload-sub">JPG, PNG, WEBP</p>
        </div>
        <span class="url-toggle" onclick="toggleUrlInput()">Or paste an image URL instead</span>
        <div id="url-input-wrap" style="display:none; margin-top:10px">
@@ -984,7 +984,6 @@ function previewUrl(url) {
 function handleFile(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 6 * 1024 * 1024) { showToast('Image too large. Please use under 5MB.', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
     imageData = e.target.result;
