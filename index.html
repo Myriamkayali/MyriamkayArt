@@ -221,38 +221,32 @@
     font-style: italic;
   }
 
-  .home-strip {
+  .marquee-strip {
     background: var(--umber);
-    padding: 20px 80px;
-    display: flex;
-    align-items: center;
-    gap: 64px;
-    overflow-x: auto;
-  }
-  .strip-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    padding: 16px 0;
+    overflow: hidden;
     white-space: nowrap;
   }
-  .strip-num {
+  .marquee-track {
+    display: inline-block;
+    animation: marquee 28s linear infinite;
     font-family: 'Cormorant Garamond', serif;
-    font-size: 32px;
+    font-size: 18px;
+    font-style: italic;
     font-weight: 300;
+    color: rgba(244,237,224,0.75);
+    letter-spacing: 0.04em;
+  }
+  .marquee-track span { margin: 0 28px; }
+  .marquee-track .mdot {
+    font-size: 8px;
     color: var(--terracotta-light);
-    line-height: 1;
+    vertical-align: middle;
+    margin: 0 4px;
   }
-  .strip-label {
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: rgba(244,237,224,0.5);
-  }
-  .strip-div {
-    width: 1px;
-    height: 40px;
-    background: rgba(244,237,224,0.15);
-    flex-shrink: 0;
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
   }
 
   /* ── ABOUT ── */
@@ -911,7 +905,7 @@
     <div class="hero-text">
       <p class="hero-eyebrow">Contemporary Figurative Painting</p>
       <h1 class="hero-title">Art that<br>speaks<br><em>quietly</em></h1>
-      <p class="hero-sub">Original oil paintings exploring the human form, emotion, and the warmth of everyday intimacy. Based in Lebanon.</p>
+      <p class="hero-sub">Paintings inspired by memory, place, and everyday rituals. Contemporary art rooted in the Levant, nostalgia, and the sacred in the mundane.</p>
       <div>
         <a class="btn-primary" onclick="showSection('collection')">View Collection</a>
         <a class="btn-secondary" onclick="showSection('commission')">Commission a Work</a>
@@ -929,26 +923,28 @@
       </div>
     </div>
   </div>
-
-  <div class="home-strip">
-    <div class="strip-item">
-      <span class="strip-num">12+</span>
-      <span class="strip-label">Years of practice</span>
-    </div>
-    <div class="strip-div"></div>
-    <div class="strip-item">
-      <span class="strip-num">80+</span>
-      <span class="strip-label">Original works</span>
-    </div>
-    <div class="strip-div"></div>
-    <div class="strip-item">
-      <span class="strip-num">30+</span>
-      <span class="strip-label">Collections worldwide</span>
-    </div>
-    <div class="strip-div"></div>
-    <div class="strip-item">
-      <span class="strip-num">∞</span>
-      <span class="strip-label">Commissions open</span>
+  <div class="marquee-strip">
+    <div class="marquee-track">
+      <span>Memory &amp; Place</span>
+      <span class="mdot">◆</span>
+      <span>Original Paintings</span>
+      <span class="mdot">◆</span>
+      <span>Rooted in Beirut</span>
+      <span class="mdot">◆</span>
+      <span>Nostalgia &amp; Light</span>
+      <span class="mdot">◆</span>
+      <span>The Sacred in the Mundane</span>
+      <span class="mdot">◆</span>
+      <span>Memory &amp; Place</span>
+      <span class="mdot">◆</span>
+      <span>Original Paintings</span>
+      <span class="mdot">◆</span>
+      <span>Rooted in Beirut</span>
+      <span class="mdot">◆</span>
+      <span>Nostalgia &amp; Light</span>
+      <span class="mdot">◆</span>
+      <span>The Sacred in the Mundane</span>
+      <span class="mdot">◆</span>
     </div>
   </div>
 </section>
@@ -1010,76 +1006,14 @@
 
 <!-- ══ PRINTS ══ -->
 <section id="prints">
-  <div class="prints-header">
-    <p class="section-eyebrow">Limited Editions</p>
-    <h2 class="section-title">Fine Art <em>Prints</em></h2>
-    <p>Archival giclée prints on 310gsm cotton rag paper. Each edition is strictly limited, signed and numbered by hand. Printed with museum-grade inks for a lifespan of 75+ years.</p>
-  </div>
-
-  <div class="prints-grid">
-    <div class="print-card">
-      <div class="print-img">
-        <div class="print-img-bg gp-1" style="height:100%">
-          <!-- <img src="print1.jpg" style="width:100%;height:100%;object-fit:cover"> -->
-        </div>
-        <span class="print-badge">Edition of 25</span>
-      </div>
-      <div class="print-info">
-        <h3 class="print-title">Untitled I</h3>
-        <p class="print-edition">Limited edition · Signed &amp; numbered</p>
-        <div class="print-sizes">
-          <span class="size-tag active">A3</span>
-          <span class="size-tag">50×70</span>
-          <span class="size-tag">70×100</span>
-        </div>
-        <div class="print-footer">
-          <span class="print-price">$180</span>
-          <button class="btn-order" onclick="showSection('contact')">Order Print</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="print-card">
-      <div class="print-img">
-        <div class="print-img-bg gp-3" style="height:100%">
-          <!-- <img src="print2.jpg" style="width:100%;height:100%;object-fit:cover"> -->
-        </div>
-        <span class="print-badge">Edition of 15</span>
-      </div>
-      <div class="print-info">
-        <h3 class="print-title">Study in Ochre</h3>
-        <p class="print-edition">Limited edition · Signed &amp; numbered</p>
-        <div class="print-sizes">
-          <span class="size-tag active">A3</span>
-          <span class="size-tag">50×70</span>
-          <span class="size-tag">70×100</span>
-        </div>
-        <div class="print-footer">
-          <span class="print-price">$220</span>
-          <button class="btn-order" onclick="showSection('contact')">Order Print</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="print-card">
-      <div class="print-img">
-        <div class="print-img-bg gp-5" style="height:100%">
-          <!-- <img src="print3.jpg" style="width:100%;height:100%;object-fit:cover"> -->
-        </div>
-        <span class="print-badge" style="background: var(--brown-mid);">Sold Out</span>
-      </div>
-      <div class="print-info">
-        <h3 class="print-title">Seated</h3>
-        <p class="print-edition">Limited edition · Signed &amp; numbered</p>
-        <div class="print-sizes">
-          <span class="size-tag" style="opacity:0.4; cursor:default">A3</span>
-          <span class="size-tag" style="opacity:0.4; cursor:default">50×70</span>
-        </div>
-        <div class="print-footer">
-          <span class="print-price" style="color: var(--brown-light);">Sold Out</span>
-          <button class="btn-order" style="background: var(--brown-light); cursor:default" onclick="showSection('contact')">Notify Me</button>
-        </div>
-      </div>
+  <div style="min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 40px;">
+    <p class="section-eyebrow" style="margin-bottom: 24px;">Fine Art Prints</p>
+    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Coming<br><em style="font-style:italic; color: var(--terracotta);">Soon</em></h2>
+    <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
+    <p style="font-size: 15px; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">A curated selection of fine art prints is on its way. Sign up to be notified when they become available.</p>
+    <div style="display: flex; gap: 0; max-width: 400px; width: 100%;">
+      <input type="email" placeholder="your@email.com" style="flex: 1; font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 300; color: var(--umber); background: var(--cream-dark); border: 1px solid rgba(107,66,38,0.2); border-right: none; padding: 13px 18px; outline: none;">
+      <button style="font-family: 'Jost', sans-serif; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--linen); background: var(--umber); border: 1px solid var(--umber); padding: 13px 24px; cursor: pointer; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='var(--terracotta)'" onmouseout="this.style.background='var(--umber)'">Notify Me</button>
     </div>
   </div>
 </section>
