@@ -782,6 +782,52 @@
     color: var(--terracotta-light);
   }
 
+  .instagram-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 48px;
+    padding: 18px 22px;
+    border: 1px solid rgba(244,237,224,0.12);
+    background: rgba(244,237,224,0.03);
+    text-decoration: none;
+    transition: all 0.25s;
+  }
+  .instagram-card:hover {
+    border-color: var(--terracotta-light);
+    background: rgba(184,92,56,0.06);
+  }
+  .ig-avatar {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(244,237,224,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cream);
+    flex-shrink: 0;
+  }
+  .ig-info { flex: 1; }
+  .ig-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(244,237,224,0.4);
+    margin-bottom: 3px;
+  }
+  .ig-handle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: var(--cream);
+  }
+  .ig-cta {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--terracotta-light);
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+  .instagram-card:hover .ig-cta { opacity: 0.7; }
+
   .contact-form {
     padding: 48px;
     background: rgba(244,237,224,0.04);
@@ -1110,13 +1156,6 @@
 
     <div class="contact-details">
       <div class="contact-detail">
-        <div class="contact-icon" style="color:var(--cream);font-family:'Cormorant Garamond',serif;font-style:italic">@</div>
-        <div class="contact-detail-text">
-          <p class="d-label">Email</p>
-          <p class="d-value">myriamkyl@gmail.com</p>
-        </div>
-      </div>
-      <div class="contact-detail">
         <div class="contact-icon" style="color:var(--cream);font-family:'Cormorant Garamond',serif;">♦</div>
         <div class="contact-detail-text">
           <p class="d-label">Based in</p>
@@ -1132,26 +1171,57 @@
       </div>
     </div>
 
-    <div class="contact-social">
-      <a class="social-link" href="https://instagram.com/myriamkay.art" target="_blank" title="Instagram">Ig</a>
-    </div>
+    <a class="instagram-card" href="https://instagram.com/myriamkay.art" target="_blank">
+      <div class="ig-avatar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+          <circle cx="12" cy="12" r="4"/>
+          <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="ig-info">
+        <p class="ig-label">Instagram</p>
+        <p class="ig-handle">@myriamkay.art</p>
+      </div>
+      <span class="ig-cta">View Profile →</span>
+    </a>
   </div>
 
   <div class="contact-form">
     <p class="form-title" style="color:var(--cream);margin-bottom:28px;font-family:'Cormorant Garamond',serif;font-size:26px;font-style:italic;font-weight:400">Send a message</p>
     <label>Name</label>
-    <input type="text" placeholder="Your name">
-    <label>Email</label>
-    <input type="email" placeholder="your@email.com">
+    <input id="ct-name" type="text" placeholder="Your name">
     <label>Subject</label>
-    <input type="text" placeholder="What is this about?">
+    <input id="ct-subject" type="text" placeholder="What is this about?">
     <label>Message</label>
-    <textarea placeholder="Write your message here..."></textarea>
-    <button class="contact-form-submit">Send Message →</button>
+    <textarea id="ct-message" placeholder="Write your message here..."></textarea>
+    <button class="contact-form-submit" onclick="sendContactWhatsApp()">Send Message →</button>
   </div>
 </section>
 
 <script>
+  function sendContactWhatsApp() {
+    const name    = document.getElementById('ct-name').value.trim();
+    const subject = document.getElementById('ct-subject').value.trim();
+    const message = document.getElementById('ct-message').value.trim();
+
+    if (!name || !message) {
+      alert('Please fill in your name and message.');
+      return;
+    }
+
+    const lines = [
+      `Hi Myriam!`,
+      subject ? `Subject: ${subject}` : null,
+      ``,
+      `Name: ${name}`,
+      ``,
+      message,
+    ].filter(l => l !== null).join('\n');
+
+    window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
+  }
+
   function sendCommissionWhatsApp() {
     const first  = document.getElementById('c-first').value.trim();
     const last   = document.getElementById('c-last').value.trim();
