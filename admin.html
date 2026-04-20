@@ -649,7 +649,46 @@ body {
   .image-preview { max-width: 100%; }
   .modal { width: 95%; }
 }
+
+  /* ── CROP MODAL ── */
+  #crop-modal {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(10,5,2,0.92);
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 24px;
+  }
+  #crop-modal.open { display: flex; }
+  #crop-modal .crop-inner {
+    background: var(--card); border-radius: 10px;
+    padding: 24px; max-width: 760px; width: 100%;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  #crop-modal .crop-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 20px;
+    color: var(--cream); margin: 0;
+  }
+  #crop-modal .crop-wrap {
+    max-height: 55vh; overflow: hidden;
+    background: #111; border-radius: 6px;
+  }
+  #crop-img { display: block; max-width: 100%; }
+  .crop-ratios {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .crop-ratio-btn {
+    padding: 5px 12px; border: 1px solid var(--border);
+    background: none; color: var(--cream-dim);
+    font-family: 'Jost',sans-serif; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; border-radius: 4px; transition: all 0.15s;
+  }
+  .crop-ratio-btn:hover, .crop-ratio-btn.active {
+    border-color: var(--terra); color: var(--terra-light);
+  }
+  .crop-actions { display: flex; gap: 10px; justify-content: flex-end; }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 </head>
 <body>
 
@@ -677,6 +716,26 @@ body {
     <button class="pin-btn del" onclick="pinDel()">⌫</button>
   </div>
   <p class="pin-error" id="pin-error">Incorrect PIN. Try again.</p>
+</div>
+
+<!-- CROP MODAL -->
+<div id="crop-modal">
+  <div class="crop-inner">
+    <p class="crop-title">Crop Image</p>
+    <div class="crop-wrap">
+      <img id="crop-img" src="" alt="crop">
+    </div>
+    <div class="crop-ratios">
+      <button class="crop-ratio-btn active" onclick="setCropRatio(NaN);this.closest('.crop-ratios').querySelectorAll('.crop-ratio-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Free</button>
+      <button class="crop-ratio-btn" onclick="setCropRatio(1);this.closest('.crop-ratios').querySelectorAll('.crop-ratio-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">1:1 Square</button>
+      <button class="crop-ratio-btn" onclick="setCropRatio(3/4);this.closest('.crop-ratios').querySelectorAll('.crop-ratio-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">3:4 Portrait</button>
+      <button class="crop-ratio-btn" onclick="setCropRatio(4/3);this.closest('.crop-ratios').querySelectorAll('.crop-ratio-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">4:3 Landscape</button>
+    </div>
+    <div class="crop-actions">
+      <button class="btn btn-ghost" onclick="cancelCrop()">Cancel</button>
+      <button class="btn btn-primary" onclick="applyCrop()">Apply Crop</button>
+    </div>
+  </div>
 </div>
 
 <!-- CONFIRM MODAL -->
@@ -1127,42 +1186,92 @@ function previewUrl(url) {
   if (url.startsWith('http')) { imageData = url; }
 }
 
-async function handleFile(input) {
+let cropperInstance = null;
+let cropTarget = null;
+
+function handleFile(input) {
   const file = input.files[0];
   if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => openCropModal(e.target.result, 'main');
+  reader.readAsDataURL(file);
+}
 
-  document.getElementById('img-section').innerHTML =
-    `<div style="padding:24px;text-align:center;color:var(--muted);font-family:'Jost',sans-serif;font-size:13px">Uploading…</div>`;
+function openCropModal(dataUrl, target) {
+  cropTarget = target;
+  const img = document.getElementById('crop-img');
+  img.src = dataUrl;
+  document.getElementById('crop-modal').classList.add('open');
+  // Reset ratio buttons
+  document.querySelectorAll('.crop-ratio-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  setTimeout(() => {
+    if (cropperInstance) cropperInstance.destroy();
+    cropperInstance = new Cropper(img, {
+      viewMode: 1,
+      autoCropArea: 0.95,
+      responsive: true,
+      movable: true,
+      zoomable: true,
+      scalable: false,
+      rotatable: false,
+    });
+  }, 80);
+}
+
+function setCropRatio(ratio) {
+  if (cropperInstance) cropperInstance.setAspectRatio(isNaN(ratio) ? NaN : ratio);
+}
+
+async function applyCrop() {
+  if (!cropperInstance) return;
+  const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 2400, maxHeight: 2400 });
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+  const target = cropTarget;
+  cancelCrop();
+
+  if (target === 'main') {
+    document.getElementById('img-section').innerHTML =
+      `<div style="padding:24px;text-align:center;color:var(--muted);font-family:'Jost',sans-serif;font-size:13px">Uploading…</div>`;
+  }
 
   try {
     const res = await fetch('/api/upload', {
       method: 'POST',
-      body: file,
-      headers: {
-        'content-type': file.type || 'application/octet-stream',
-        'x-filename': encodeURIComponent(file.name),
-      },
+      body: blob,
+      headers: { 'content-type': 'image/jpeg', 'x-filename': encodeURIComponent('painting.jpg') },
     });
     if (!res.ok) {
       const { error } = await res.json().catch(() => ({}));
       throw new Error(error || 'Upload failed');
     }
     const { url } = await res.json();
-    imageData = url;
-    document.getElementById('img-section').innerHTML = `
-      <div>
-        <div class="image-preview-wrap">
-          <img class="image-preview" src="${url}" alt="Preview">
-          <button class="remove-img" onclick="removeImage()" title="Remove image">×</button>
-        </div>
-        <label style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;padding:8px 16px;border:1px solid var(--border);color:var(--terra-light);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--terra)'" onmouseout="this.style.borderColor='var(--border)'">
-          <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none"> ↺ Replace Image
-        </label>
-      </div>`;
+
+    if (target === 'main') {
+      imageData = url;
+      document.getElementById('img-section').innerHTML = `
+        <div>
+          <div class="image-preview-wrap">
+            <img class="image-preview" src="${url}" alt="Preview">
+            <button class="remove-img" onclick="removeImage()" title="Remove image">×</button>
+          </div>
+          <label style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;padding:8px 16px;border:1px solid var(--border);color:var(--terra-light);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--terra)'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none"> ↺ Replace Image
+          </label>
+        </div>`;
+    } else {
+      additionalImages.push(url);
+      renderForm();
+    }
   } catch (e) {
-    showToast(e.message || 'Image upload failed. Please try again.', 'error');
-    renderForm();
+    showToast(e.message || 'Upload failed. Please try again.', 'error');
+    if (target === 'main') renderForm();
   }
+}
+
+function cancelCrop() {
+  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+  document.getElementById('crop-modal').classList.remove('open');
+  cropTarget = null;
 }
 
 function removeImage() {
@@ -1170,24 +1279,12 @@ function removeImage() {
   renderForm();
 }
 
-async function handleAdditionalFile(input) {
+function handleAdditionalFile(input) {
   const file = input.files[0];
   if (!file) return;
-  input.disabled = true;
-  try {
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: file,
-      headers: { 'content-type': file.type || 'application/octet-stream', 'x-filename': encodeURIComponent(file.name) },
-    });
-    if (!res.ok) throw new Error();
-    const { url } = await res.json();
-    additionalImages.push(url);
-    renderForm();
-  } catch (e) {
-    showToast(e.message || 'Image upload failed. Please try again.', 'error');
-    input.disabled = false;
-  }
+  const reader = new FileReader();
+  reader.onload = e => openCropModal(e.target.result, 'additional');
+  reader.readAsDataURL(file);
 }
 
 function removeAdditionalImage(idx) {

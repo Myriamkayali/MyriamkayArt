@@ -1472,6 +1472,13 @@
       { id:'f7', title:'Repose', year:2022, medium:'Oil on linen', category:'Figure', width:100, height:130, imageData:null, available:true },
     ];
 
+    // Available first, preserve admin order within groups
+    paintings.sort((a, b) => {
+      const aAvail = (a.status === 'Available' || a.available) ? 0 : 1;
+      const bAvail = (b.status === 'Available' || b.available) ? 0 : 1;
+      return aAvail - bAvail;
+    });
+
     galleryPaintings = paintings.length > 0 ? paintings : fallback;
     const gpColors = ['gp-1','gp-2','gp-3','gp-4','gp-5','gp-6','gp-7'];
 
