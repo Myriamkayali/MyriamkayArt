@@ -409,39 +409,6 @@
     letter-spacing: 0.01em;
   }
 
-  /* Reorder / drag mode */
-  .gallery-item.reorder-active { cursor: grab; }
-  .gallery-item.reorder-active:active { cursor: grabbing; }
-  .gallery-item.reorder-active .gallery-overlay { display: none; }
-  .gallery-item.dragging { opacity: 0.3; }
-  .gallery-item.drag-over { outline: 2px solid var(--terracotta); outline-offset: -2px; }
-  .reorder-bar {
-    display: none;
-    align-items: center; gap: 12px;
-    margin-bottom: 18px;
-    padding: 10px 16px;
-    background: var(--umber);
-    color: #fff;
-    border-radius: 6px;
-    font-family: 'Jost', sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-  }
-  .reorder-bar.visible { display: flex; }
-  .reorder-bar button {
-    background: var(--terracotta); color: #fff;
-    border: none; border-radius: 4px;
-    padding: 5px 14px; font-size: 11px; font-family: 'Jost',sans-serif;
-    cursor: pointer; letter-spacing: 0.06em;
-  }
-  .arrange-btn {
-    background: none; border: 1px solid var(--brown-light);
-    color: var(--brown-light); border-radius: 4px;
-    padding: 6px 14px; font-size: 10px; letter-spacing: 0.12em;
-    font-family: 'Jost', sans-serif; text-transform: uppercase;
-    cursor: pointer; transition: all 0.2s; margin-left: 12px;
-  }
-  .arrange-btn:hover { border-color: var(--umber); color: var(--umber); }
 
   .gallery-item:hover .gallery-img,
   .gallery-item:hover .gallery-img-placeholder { transform: scale(1.04); }
@@ -1167,23 +1134,15 @@
       <p class="section-eyebrow">Artworks</p>
       <h2 class="section-title">The <em>Collection</em></h2>
     </div>
-    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
-      <div class="filter-tabs">
-        <button class="filter-tab active">All</button>
-        <button class="filter-tab">Available</button>
-        <button class="filter-tab">Beirut Diaries</button>
-        <button class="filter-tab">On the Line</button>
-        <button class="filter-tab">Mixed Arts</button>
-        <button class="filter-tab">Landscape & Abstract</button>
-        <button class="filter-tab">Commission</button>
-      </div>
-      <button class="arrange-btn" onclick="toggleReorderMode()" id="arrange-btn">⇅ Arrange</button>
+    <div class="filter-tabs">
+      <button class="filter-tab active">All</button>
+      <button class="filter-tab">Available</button>
+      <button class="filter-tab">Beirut Diaries</button>
+      <button class="filter-tab">On the Line</button>
+      <button class="filter-tab">Mixed Arts</button>
+      <button class="filter-tab">Landscape & Abstract</button>
+      <button class="filter-tab">Commission</button>
     </div>
-  </div>
-
-  <div class="reorder-bar" id="reorder-bar">
-    <span>Drag paintings to reorder within each collection</span>
-    <button onclick="exitReorderMode()">Done</button>
   </div>
 
   <div id="gallery-grid">
@@ -1421,10 +1380,6 @@
   let galleryPaintings = [];
   let lbImages = [];
   let lbImgIdx = 0;
-  let reorderMode = false;
-  let publicPin = null;
-  let allPaintingsCache = null;
-  let dragSrcId = null;
 
   async function getPaintings() {
     try {
@@ -1465,39 +1420,15 @@
       ? `<img class="gallery-img" src="${p.imageData}" alt="${p.title}" ${imgStyle}>`
       : `<div class="gallery-img-placeholder ${gpColors[i % gpColors.length]}"></div>`;
     const isAvail = p.status === 'Available' || p.available;
-    const badge = reorderMode ? '' :
-      p.status === 'Sold' ? '<span class="gallery-sold-badge">Sold</span>' :
+    const badge = p.status === 'Sold' ? '<span class="gallery-sold-badge">Sold</span>' :
       isAvail ? '<span class="gallery-avail-badge">Available</span>' : '';
-    const attrs = reorderMode
-      ? `data-id="${p.id}" draggable="true"`
-      : `data-id="${p.id}" onclick="openPainting('${p.id}')"`;
-    return `<div class="gallery-item${reorderMode?' reorder-active':''}" ${attrs}>
+    return `<div class="gallery-item" data-id="${p.id}" onclick="openPainting('${p.id}')">
       ${imgContent}${badge}
       <div class="gallery-overlay"><div class="gallery-info">
         <p class="g-title">${p.title}</p>
         <p class="g-meta">${meta}</p>
       </div></div>
     </div>`;
-  }
-
-  function attachDragHandlers(container) {
-    container.querySelectorAll('.gallery-item[draggable]').forEach(el => {
-      el.addEventListener('dragstart', e => {
-        dragSrcId = el.dataset.id;
-        e.dataTransfer.effectAllowed = 'move';
-        setTimeout(() => el.classList.add('dragging'), 0);
-      });
-      el.addEventListener('dragend', () => { el.classList.remove('dragging'); el.classList.remove('drag-over'); });
-      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
-      el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-      el.addEventListener('drop', async e => {
-        e.preventDefault();
-        el.classList.remove('drag-over');
-        if (!dragSrcId || dragSrcId === el.dataset.id) return;
-        const src = dragSrcId; dragSrcId = null;
-        await moveGalleryPaintingTo(src, el.dataset.id);
-      });
-    });
   }
 
   async function renderGallery(filter) {
@@ -1521,14 +1452,11 @@
       });
     }
 
-    // Sort available first (skip in reorder mode so drag positions persist)
-    if (!reorderMode) {
-      filtered.sort((a, b) => {
-        const aA = (a.status === 'Available' || a.available) ? 0 : 1;
-        const bA = (b.status === 'Available' || b.available) ? 0 : 1;
-        return aA - bA;
-      });
-    }
+    filtered.sort((a, b) => {
+      const aA = (a.status === 'Available' || a.available) ? 0 : 1;
+      const bA = (b.status === 'Available' || b.available) ? 0 : 1;
+      return aA - bA;
+    });
 
     galleryPaintings = filtered;
 
@@ -1555,56 +1483,6 @@
       container.innerHTML = `<div class="gallery-grid">${filtered.map((p, i) => renderGalleryItem(p, i)).join('')}</div>`;
     }
 
-    if (reorderMode) attachDragHandlers(container);
-  }
-
-  async function toggleReorderMode() {
-    if (reorderMode) { exitReorderMode(); return; }
-    const pin = prompt('Enter your admin PIN to arrange paintings:');
-    if (!pin) return;
-    const res = await fetch('/api/pin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'verify', pin }),
-    });
-    const { valid } = await res.json();
-    if (!valid) { alert('Incorrect PIN.'); return; }
-    publicPin = pin;
-    reorderMode = true;
-    // Switch to All filter so full order is visible
-    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.filter-tab').classList.add('active');
-    activeFilter = 'All';
-    document.getElementById('reorder-bar').classList.add('visible');
-    document.getElementById('arrange-btn').textContent = '✕ Cancel';
-    allPaintingsCache = await getPaintings();
-    await renderGallery('All');
-  }
-
-  async function exitReorderMode() {
-    reorderMode = false;
-    publicPin = null;
-    allPaintingsCache = null;
-    document.getElementById('reorder-bar').classList.remove('visible');
-    document.getElementById('arrange-btn').textContent = '⇅ Arrange';
-    await renderGallery();
-  }
-
-  async function moveGalleryPaintingTo(srcId, targetId) {
-    const all = allPaintingsCache;
-    if (!all) return;
-    const srcIdx = all.findIndex(p => p.id === srcId);
-    const targetIdx = all.findIndex(p => p.id === targetId);
-    if (srcIdx === -1 || targetIdx === -1) return;
-    const [moved] = all.splice(srcIdx, 1);
-    all.splice(targetIdx, 0, moved);
-    allPaintingsCache = [...all];
-    await fetch('/api/paintings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paintings: all, pin: publicPin }),
-    });
-    await renderGallery();
   }
 
   function openPainting(id) {
