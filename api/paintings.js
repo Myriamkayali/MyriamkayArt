@@ -41,22 +41,28 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (req.method === 'GET') {
-    const paintings = await readBlob(PAINTINGS_PATH);
-    return res.status(200).json(paintings || []);
+  try {
+    if (req.method === 'GET') {
+      const paintings = await readBlob(PAINTINGS_PATH);
+      return res.status(200).json(paintings || []);
+    }
+
+    if (req.method === 'POST') {
+      const { paintings, pin } = await parseBody(req);
+      const config   = await readBlob(CONFIG_PATH);
+      const validPin = config?.pin || DEFAULT_PIN;
+
+      if (!pin) return res.status(401).json({ error: 'PIN missing' });
+      if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+      if (!Array.isArray(paintings)) return res.status(400).json({ error: 'Invalid data — expected array' });
+
+      await writeBlob(PAINTINGS_PATH, paintings);
+      return res.status(200).json({ ok: true });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (e) {
+    console.error('paintings handler error:', e);
+    return res.status(500).json({ error: e.message || 'Internal server error' });
   }
-
-  if (req.method === 'POST') {
-    const { paintings, pin } = await parseBody(req);
-    const config   = await readBlob(CONFIG_PATH);
-    const validPin = config?.pin || DEFAULT_PIN;
-
-    if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
-    if (!Array.isArray(paintings)) return res.status(400).json({ error: 'Invalid data' });
-
-    await writeBlob(PAINTINGS_PATH, paintings);
-    return res.status(200).json({ ok: true });
-  }
-
-  return res.status(405).json({ error: 'Method not allowed' });
 };
