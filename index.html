@@ -397,25 +397,24 @@
   }
   .gallery-item:nth-child(4n+1) .gallery-img-placeholder { aspect-ratio: 4/3; }
 
-  /* Reorder mode */
-  .gallery-item.reorder-active { cursor: default; }
+  /* Collections grouping */
+  .gallery-group { margin-bottom: 64px; }
+  .gallery-group-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 400; font-style: italic;
+    color: var(--umber);
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(160,120,88,0.22);
+    letter-spacing: 0.01em;
+  }
+
+  /* Reorder / drag mode */
+  .gallery-item.reorder-active { cursor: grab; }
+  .gallery-item.reorder-active:active { cursor: grabbing; }
   .gallery-item.reorder-active .gallery-overlay { display: none; }
-  .reorder-arrows {
-    position: absolute; top: 8px; right: 8px;
-    display: flex; flex-direction: column; gap: 4px;
-    z-index: 10;
-  }
-  .reorder-arrow {
-    width: 32px; height: 32px;
-    background: rgba(30,15,7,0.75);
-    color: #fff;
-    border: none; border-radius: 4px;
-    font-size: 16px; line-height: 1;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
-  }
-  .reorder-arrow:hover { background: var(--terracotta); }
-  .reorder-arrow:disabled { opacity: 0.25; cursor: default; }
+  .gallery-item.dragging { opacity: 0.3; }
+  .gallery-item.drag-over { outline: 2px solid var(--terracotta); outline-offset: -2px; }
   .reorder-bar {
     display: none;
     align-items: center; gap: 12px;
@@ -1183,12 +1182,12 @@
   </div>
 
   <div class="reorder-bar" id="reorder-bar">
-    <span>Drag or use arrows to reorder paintings</span>
+    <span>Drag paintings to reorder within each collection</span>
     <button onclick="exitReorderMode()">Done</button>
   </div>
 
-  <div class="gallery-grid" id="gallery-grid">
-    <!-- Populated dynamically from admin dashboard -->
+  <div id="gallery-grid">
+    <!-- Populated dynamically -->
   </div>
 </section>
 
@@ -1425,6 +1424,7 @@
   let reorderMode = false;
   let publicPin = null;
   let allPaintingsCache = null;
+  let dragSrcId = null;
 
   async function getPaintings() {
     try {
@@ -1445,71 +1445,117 @@
     if (tagTitle) tagTitle.textContent = `${featured.title} — ${featured.year}`;
   }
 
+  const gpColors = ['gp-1','gp-2','gp-3','gp-4','gp-5','gp-6','gp-7'];
+  const fallback = [
+    { id:'f1', title:'Untitled I', year:2024, medium:'Oil on linen', category:'Portrait', width:90, height:120, imageData:null, available:true },
+    { id:'f2', title:'Morning Light', year:2024, medium:'Oil on linen', category:'Figure', width:60, height:80, imageData:null, available:true },
+    { id:'f3', title:'Study in Ochre', year:2023, medium:'Oil on panel', category:'Study', width:40, height:50, imageData:null, available:true },
+    { id:'f4', title:'Figure with Shadow', year:2023, medium:'Oil on linen', category:'Figure', width:70, height:100, imageData:null, available:true },
+    { id:'f5', title:'Seated', year:2023, medium:'Oil on linen', category:'Figure', width:80, height:100, imageData:null, available:false },
+    { id:'f6', title:'Portrait in Umber', year:2022, medium:'Oil on panel', category:'Portrait', width:50, height:70, imageData:null, available:true },
+    { id:'f7', title:'Repose', year:2022, medium:'Oil on linen', category:'Figure', width:100, height:130, imageData:null, available:true },
+  ];
+
+  function renderGalleryItem(p, i) {
+    const dims = (p.width && p.height) ? `${p.width} × ${p.height} cm · ` : '';
+    const meta = `${p.medium ? p.medium + ' · ' : ''}${dims}${p.year}`;
+    const naturalRatio = (p.width && p.height) ? `${p.width}/${p.height}` : null;
+    const imgStyle = naturalRatio ? `style="aspect-ratio:${naturalRatio}"` : '';
+    const imgContent = p.imageData
+      ? `<img class="gallery-img" src="${p.imageData}" alt="${p.title}" ${imgStyle}>`
+      : `<div class="gallery-img-placeholder ${gpColors[i % gpColors.length]}"></div>`;
+    const isAvail = p.status === 'Available' || p.available;
+    const badge = reorderMode ? '' :
+      p.status === 'Sold' ? '<span class="gallery-sold-badge">Sold</span>' :
+      isAvail ? '<span class="gallery-avail-badge">Available</span>' : '';
+    const attrs = reorderMode
+      ? `data-id="${p.id}" draggable="true"`
+      : `data-id="${p.id}" onclick="openPainting('${p.id}')"`;
+    return `<div class="gallery-item${reorderMode?' reorder-active':''}" ${attrs}>
+      ${imgContent}${badge}
+      <div class="gallery-overlay"><div class="gallery-info">
+        <p class="g-title">${p.title}</p>
+        <p class="g-meta">${meta}</p>
+      </div></div>
+    </div>`;
+  }
+
+  function attachDragHandlers(container) {
+    container.querySelectorAll('.gallery-item[draggable]').forEach(el => {
+      el.addEventListener('dragstart', e => {
+        dragSrcId = el.dataset.id;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => el.classList.add('dragging'), 0);
+      });
+      el.addEventListener('dragend', () => { el.classList.remove('dragging'); el.classList.remove('drag-over'); });
+      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+      el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+      el.addEventListener('drop', async e => {
+        e.preventDefault();
+        el.classList.remove('drag-over');
+        if (!dragSrcId || dragSrcId === el.dataset.id) return;
+        const src = dragSrcId; dragSrcId = null;
+        await moveGalleryPaintingTo(src, el.dataset.id);
+      });
+    });
+  }
+
   async function renderGallery(filter) {
     activeFilter = filter || activeFilter;
-    const grid = document.getElementById('gallery-grid');
-    if (!grid) return;
+    const container = document.getElementById('gallery-grid');
+    if (!container) return;
+    container.innerHTML = `<p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;padding:40px 0;">Loading…</p>`;
 
-    grid.innerHTML = `<p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;padding:40px 0;">Loading…</p>`;
+    const allLoaded = (await getPaintings()).filter(p => p.status !== 'Private');
+    const source = allLoaded.length > 0 ? allLoaded : fallback;
 
-    let paintings = (await getPaintings()).filter(p => p.status !== 'Private');
+    let filtered;
     if (activeFilter === 'Available') {
-      paintings = paintings.filter(p => p.status === 'Available' || p.available);
-    } else if (activeFilter !== 'All') {
-      paintings = paintings.filter(p => {
+      filtered = source.filter(p => p.status === 'Available' || p.available);
+    } else if (activeFilter === 'All') {
+      filtered = [...source];
+    } else {
+      filtered = source.filter(p => {
         const cats = Array.isArray(p.category) ? p.category : [p.category];
         return cats.includes(activeFilter);
       });
     }
 
-    const fallback = [
-      { id:'f1', title:'Untitled I', year:2024, medium:'Oil on linen', category:'Portrait', width:90, height:120, imageData:null, available:true },
-      { id:'f2', title:'Morning Light', year:2024, medium:'Oil on linen', category:'Figure', width:60, height:80, imageData:null, available:true },
-      { id:'f3', title:'Study in Ochre', year:2023, medium:'Oil on panel', category:'Study', width:40, height:50, imageData:null, available:true },
-      { id:'f4', title:'Figure with Shadow', year:2023, medium:'Oil on linen', category:'Figure', width:70, height:100, imageData:null, available:true },
-      { id:'f5', title:'Seated', year:2023, medium:'Oil on linen', category:'Figure', width:80, height:100, imageData:null, available:false },
-      { id:'f6', title:'Portrait in Umber', year:2022, medium:'Oil on panel', category:'Portrait', width:50, height:70, imageData:null, available:true },
-      { id:'f7', title:'Repose', year:2022, medium:'Oil on linen', category:'Figure', width:100, height:130, imageData:null, available:true },
-    ];
+    // Sort available first (skip in reorder mode so drag positions persist)
+    if (!reorderMode) {
+      filtered.sort((a, b) => {
+        const aA = (a.status === 'Available' || a.available) ? 0 : 1;
+        const bA = (b.status === 'Available' || b.available) ? 0 : 1;
+        return aA - bA;
+      });
+    }
 
-    // Available first, preserve admin order within groups
-    paintings.sort((a, b) => {
-      const aAvail = (a.status === 'Available' || a.available) ? 0 : 1;
-      const bAvail = (b.status === 'Available' || b.available) ? 0 : 1;
-      return aAvail - bAvail;
-    });
+    galleryPaintings = filtered;
 
-    galleryPaintings = paintings.length > 0 ? paintings : fallback;
-    const gpColors = ['gp-1','gp-2','gp-3','gp-4','gp-5','gp-6','gp-7'];
+    if (filtered.length === 0) {
+      container.innerHTML = `<p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;padding:40px 0;">No paintings in this collection yet.</p>`;
+      return;
+    }
 
-    grid.innerHTML = galleryPaintings.map((p, i) => {
-      const dims = (p.width && p.height) ? `${p.width} × ${p.height} cm · ` : '';
-      const meta = `${p.medium ? p.medium + ' · ' : ''}${dims}${p.year}`;
-      const naturalRatio = (p.width && p.height) ? `${p.width}/${p.height}` : null;
-      const imgStyle = naturalRatio ? `style="aspect-ratio:${naturalRatio}"` : '';
-      const imgContent = p.imageData
-        ? `<img class="gallery-img" src="${p.imageData}" alt="${p.title}" ${imgStyle}>`
-        : `<div class="gallery-img-placeholder ${gpColors[i % gpColors.length]}"></div>`;
+    if (activeFilter === 'All') {
+      // Group by category
+      const groups = new Map();
+      filtered.forEach((p, i) => {
+        const cat = Array.isArray(p.category) ? (p.category[0] || 'Other') : (p.category || 'Other');
+        if (!groups.has(cat)) groups.set(cat, []);
+        groups.get(cat).push({ p, i });
+      });
+      container.innerHTML = [...groups.entries()].map(([cat, items]) =>
+        `<div class="gallery-group" data-category="${cat}">
+          <h3 class="gallery-group-title">${cat}</h3>
+          <div class="gallery-grid">${items.map(({ p, i }) => renderGalleryItem(p, i)).join('')}</div>
+        </div>`
+      ).join('');
+    } else {
+      container.innerHTML = `<div class="gallery-grid">${filtered.map((p, i) => renderGalleryItem(p, i)).join('')}</div>`;
+    }
 
-      const reorderControls = reorderMode ? `
-        <div class="reorder-arrows">
-          <button class="reorder-arrow" onclick="event.stopPropagation();moveGalleryPainting('${p.id}',-1)" ${i===0?'disabled':''}>↑</button>
-          <button class="reorder-arrow" onclick="event.stopPropagation();moveGalleryPainting('${p.id}',1)" ${i===galleryPaintings.length-1?'disabled':''}>↓</button>
-        </div>` : '';
-
-      const clickHandler = reorderMode ? '' : `onclick="openPainting('${p.id}')"`;
-      return `<div class="gallery-item${reorderMode?' reorder-active':''}" ${clickHandler}>
-        ${imgContent}
-        ${reorderControls}
-        ${!reorderMode && p.status === 'Sold' ? '<span class="gallery-sold-badge">Sold</span>' : !reorderMode && p.available ? '<span class="gallery-avail-badge">Available</span>' : ''}
-        <div class="gallery-overlay">
-          <div class="gallery-info">
-            <p class="g-title">${p.title}</p>
-            <p class="g-meta">${meta}</p>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+    if (reorderMode) attachDragHandlers(container);
   }
 
   async function toggleReorderMode() {
@@ -1544,28 +1590,21 @@
     await renderGallery();
   }
 
-  async function moveGalleryPainting(id, dir) {
-    const all = allPaintingsCache || await getPaintings();
-    const visibleIds = galleryPaintings.map(p => p.id);
-    const visibleIdx = visibleIds.indexOf(id);
-    const targetVisibleIdx = visibleIdx + dir;
-    if (targetVisibleIdx < 0 || targetVisibleIdx >= galleryPaintings.length) return;
-
-    // Swap in the full paintings array
-    const allIdxA = all.findIndex(p => p.id === id);
-    const allIdxB = all.findIndex(p => p.id === visibleIds[targetVisibleIdx]);
-    if (allIdxA === -1 || allIdxB === -1) return;
-    [all[allIdxA], all[allIdxB]] = [all[allIdxB], all[allIdxA]];
-    allPaintingsCache = all;
-
-    // Save
+  async function moveGalleryPaintingTo(srcId, targetId) {
+    const all = allPaintingsCache;
+    if (!all) return;
+    const srcIdx = all.findIndex(p => p.id === srcId);
+    const targetIdx = all.findIndex(p => p.id === targetId);
+    if (srcIdx === -1 || targetIdx === -1) return;
+    const [moved] = all.splice(srcIdx, 1);
+    all.splice(targetIdx, 0, moved);
+    allPaintingsCache = [...all];
     await fetch('/api/paintings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ paintings: all, pin: publicPin }),
     });
-
-    await renderGallery('All');
+    await renderGallery();
   }
 
   function openPainting(id) {
