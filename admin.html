@@ -691,18 +691,49 @@ body {
 </div>
 
 <script>
-const STORAGE_KEY = 'mk_paintings';
-const PIN_KEY = 'mk_pin';
-const DEFAULT_PIN = '1234';
-
 let currentPin = '';
+let currentAdminPin = null;
+let paintingsCache = null;
 let editingId = null;
 let imageData = null;
 let additionalImages = [];
 let confirmCallback = null;
 
+// ── DATA LAYER ───────────────────────────────────
+function getPaintings() { return paintingsCache || []; }
+
+async function loadPaintings() {
+  try {
+    const res = await fetch('/api/paintings');
+    paintingsCache = await res.json();
+  } catch {
+    paintingsCache = paintingsCache || [];
+  }
+  updateBadge();
+}
+
+async function savePaintings(paintings) {
+  paintingsCache = paintings;
+  updateBadge();
+  try {
+    const res = await fetch('/api/paintings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paintings, pin: currentAdminPin }),
+    });
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({}));
+      showToast(error || 'Failed to save.', 'error');
+      return false;
+    }
+    return true;
+  } catch {
+    showToast('Failed to save. Check your connection.', 'error');
+    return false;
+  }
+}
+
 // ── PIN ──────────────────────────────────────────
-function getPin() { return localStorage.getItem(PIN_KEY) || DEFAULT_PIN; }
 
 function pinInput(d) {
   if (currentPin.length >= 4) return;
@@ -724,20 +755,32 @@ function updatePinDots() {
   }
 }
 
-function checkPin() {
-  if (currentPin === getPin()) {
-    document.getElementById('pin-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    showScreen('list');
-  } else {
-    for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.add('error');
-    document.getElementById('pin-error').classList.add('show');
-    setTimeout(() => {
-      currentPin = '';
-      for (let i = 0; i < 4; i++) {
-        document.getElementById('d' + i).classList.remove('filled', 'error');
-      }
-    }, 700);
+async function checkPin() {
+  try {
+    const res = await fetch('/api/pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify', pin: currentPin }),
+    });
+    const { valid } = await res.json();
+    if (valid) {
+      currentAdminPin = currentPin;
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      await loadPaintings();
+      showScreen('list');
+    } else {
+      for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.add('error');
+      document.getElementById('pin-error').classList.add('show');
+      setTimeout(() => {
+        currentPin = '';
+        for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.remove('filled', 'error');
+      }, 700);
+    }
+  } catch {
+    showToast('Connection error. Please try again.', 'error');
+    currentPin = '';
+    updatePinDots();
   }
 }
 
@@ -750,26 +793,6 @@ function lockDashboard() {
 }
 
 // ── DATA ──────────────────────────────────────────
-function getPaintings() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
-}
-
-function savePaintings(paintings) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(paintings));
-    updateBadge();
-    return true;
-  } catch (e) {
-    if (e.name === 'QuotaExceededError' || e.code === 22) {
-      showToast('Storage full — image is too large for the browser to save. Try a smaller or compressed image.', 'error');
-    } else {
-      showToast('Failed to save. Please try again.', 'error');
-    }
-    return false;
-  }
-}
-
 function updateBadge() {
   document.getElementById('count-badge').textContent = getPaintings().length;
 }
@@ -1071,7 +1094,7 @@ function removeAdditionalImage(idx) {
   renderForm();
 }
 
-function savePainting() {
+async function savePainting() {
   const title = document.getElementById('f-title').value.trim();
   const year  = document.getElementById('f-year').value;
   if (!title) { showToast('Please enter a title.', 'error'); return; }
@@ -1106,7 +1129,7 @@ function savePainting() {
     paintings.unshift(painting);
   }
 
-  const saved = savePaintings(paintings);
+  const saved = await savePaintings(paintings);
   if (!saved) return;
   const wasEditing = !!editingId;
   editingId = null;
@@ -1135,21 +1158,21 @@ function confirmDelete(id, title) {
   document.getElementById('confirm-ok').onclick = () => { deletePainting(id); closeModal(); };
 }
 
-function deletePainting(id) {
+async function deletePainting(id) {
   const paintings = getPaintings().filter(p => p.id !== id);
-  savePaintings(paintings);
+  await savePaintings(paintings);
   showToast('Painting removed.', 'error');
   renderList();
 }
 
-function movePainting(id, dir) {
+async function movePainting(id, dir) {
   const paintings = getPaintings();
   const idx = paintings.findIndex(p => p.id === id);
   if (idx === -1) return;
   const target = idx + dir;
   if (target < 0 || target >= paintings.length) return;
   [paintings[idx], paintings[target]] = [paintings[target], paintings[idx]];
-  savePaintings(paintings);
+  await savePaintings(paintings);
   renderList();
 }
 
@@ -1200,15 +1223,24 @@ function renderSettings() {
     </div>`;
 }
 
-function changePin() {
+async function changePin() {
   const cur = document.getElementById('s-current').value;
   const nw  = document.getElementById('s-new').value;
   const con = document.getElementById('s-confirm').value;
-  if (cur !== getPin()) { showToast('Current PIN is incorrect.', 'error'); return; }
-  if (nw.length !== 4 || !/^\d{4}$/.test(nw)) { showToast('PIN must be exactly 4 digits.', 'error'); return; }
   if (nw !== con) { showToast('New PINs do not match.', 'error'); return; }
-  localStorage.setItem(PIN_KEY, nw);
-  showToast('PIN updated successfully!', 'success');
+  try {
+    const res = await fetch('/api/pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'change', currentPin: cur, newPin: nw }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Failed to change PIN.', 'error'); return; }
+    currentAdminPin = nw;
+    showToast('PIN updated successfully!', 'success');
+  } catch {
+    showToast('Connection error. Please try again.', 'error');
+  }
 }
 
 function exportData() {
@@ -1225,13 +1257,15 @@ function importData(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
       const data = JSON.parse(e.target.result);
       if (!Array.isArray(data)) throw new Error('Invalid format');
-      savePaintings(data);
-      showToast(`Imported ${data.length} paintings!`, 'success');
-      showScreen('list');
+      const saved = await savePaintings(data);
+      if (saved) {
+        showToast(`Imported ${data.length} paintings!`, 'success');
+        showScreen('list');
+      }
     } catch { showToast('Invalid JSON file.', 'error'); }
   };
   reader.readAsText(file);
@@ -1240,8 +1274,8 @@ function importData(input) {
 function clearAll() {
   document.getElementById('confirm-body').textContent = 'This will delete ALL paintings from your gallery permanently. Export your data first!';
   document.getElementById('confirm-modal').classList.add('open');
-  document.getElementById('confirm-ok').onclick = () => {
-    savePaintings([]);
+  document.getElementById('confirm-ok').onclick = async () => {
+    await savePaintings([]);
     showToast('All paintings cleared.', 'error');
     closeModal();
     showScreen('list');

@@ -1277,19 +1277,21 @@
     window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
   }
 
-  const STORAGE_KEY = 'mk_paintings';
   let activeFilter = 'All';
   let galleryPaintings = [];
   let lbImages = [];
   let lbImgIdx = 0;
 
-  function getPaintings() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch { return []; }
+  async function getPaintings() {
+    try {
+      const res = await fetch('/api/paintings');
+      return await res.json();
+    } catch { return []; }
   }
 
-  function renderHome() {
-    const featured = getPaintings().find(p => p.featured && p.imageData);
+  async function renderHome() {
+    const paintings = await getPaintings();
+    const featured = paintings.find(p => p.featured && p.imageData);
     if (!featured) return;
     const placeholder = document.getElementById('hero-painting-placeholder');
     const tagTitle = document.getElementById('hero-tag-title');
@@ -1299,12 +1301,14 @@
     if (tagTitle) tagTitle.textContent = `${featured.title} — ${featured.year}`;
   }
 
-  function renderGallery(filter) {
+  async function renderGallery(filter) {
     activeFilter = filter || activeFilter;
     const grid = document.getElementById('gallery-grid');
     if (!grid) return;
 
-    let paintings = getPaintings().filter(p => p.status !== 'Private');
+    grid.innerHTML = `<p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;padding:40px 0;">Loading…</p>`;
+
+    let paintings = (await getPaintings()).filter(p => p.status !== 'Private');
     if (activeFilter !== 'All') {
       paintings = paintings.filter(p => {
         const cats = Array.isArray(p.category) ? p.category : [p.category];
@@ -1433,7 +1437,7 @@
       target.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (id === 'home') renderHome();
-      if (id === 'collection') renderGallery();
+      if (id === 'collection') renderGallery(); // async, intentionally not awaited
     }
   }
 
@@ -1446,7 +1450,7 @@
     tab.addEventListener('click', function() {
       document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
       this.classList.add('active');
-      renderGallery(this.textContent.trim());
+      renderGallery(this.textContent.trim()); // async, intentionally not awaited
     });
   });
 
