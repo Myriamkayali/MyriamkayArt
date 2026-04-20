@@ -797,22 +797,28 @@ async function loadPaintings() {
 }
 
 async function savePaintings(paintings) {
-  paintingsCache = paintings;
+  // Strip any remaining base64 imageData to keep payload small
+  const clean = paintings.map(p => ({
+    ...p,
+    imageData: p.imageData && p.imageData.startsWith('data:') ? null : p.imageData,
+    additionalImages: (p.additionalImages || []).filter(u => u && !u.startsWith('data:')),
+  }));
+  paintingsCache = clean;
   updateBadge();
   try {
     const res = await fetch('/api/paintings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paintings, pin: currentAdminPin }),
+      body: JSON.stringify({ paintings: clean, pin: currentAdminPin }),
     });
     if (!res.ok) {
-      const { error } = await res.json().catch(() => ({}));
-      showToast(error || 'Failed to save.', 'error');
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || `Save failed (${res.status}).`, 'error');
       return false;
     }
     return true;
-  } catch {
-    showToast('Failed to save. Check your connection.', 'error');
+  } catch (e) {
+    showToast(e.message || 'Failed to save. Check your connection.', 'error');
     return false;
   }
 }
@@ -1153,8 +1159,8 @@ async function handleFile(input) {
           <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none"> ↺ Replace Image
         </label>
       </div>`;
-  } catch {
-    showToast('Image upload failed. Please try again.', 'error');
+  } catch (e) {
+    showToast(e.message || 'Image upload failed. Please try again.', 'error');
     renderForm();
   }
 }
@@ -1178,8 +1184,8 @@ async function handleAdditionalFile(input) {
     const { url } = await res.json();
     additionalImages.push(url);
     renderForm();
-  } catch {
-    showToast('Image upload failed. Please try again.', 'error');
+  } catch (e) {
+    showToast(e.message || 'Image upload failed. Please try again.', 'error');
     input.disabled = false;
   }
 }
@@ -1187,6 +1193,25 @@ async function handleAdditionalFile(input) {
 function removeAdditionalImage(idx) {
   additionalImages.splice(idx, 1);
   renderForm();
+}
+
+async function uploadBase64IfNeeded(dataOrUrl) {
+  if (!dataOrUrl || !dataOrUrl.startsWith('data:')) return dataOrUrl;
+  try {
+    const res = await fetch(dataOrUrl);
+    const blob = await res.blob();
+    const ext = blob.type.split('/')[1] || 'jpg';
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      body: blob,
+      headers: { 'content-type': blob.type, 'x-filename': encodeURIComponent('painting.' + ext) },
+    });
+    if (!uploadRes.ok) throw new Error('base64 upload failed');
+    const { url } = await uploadRes.json();
+    return url;
+  } catch {
+    return dataOrUrl; // keep original on failure
+  }
 }
 
 async function savePainting() {
@@ -1198,6 +1223,13 @@ async function savePainting() {
   const categories = [...document.querySelectorAll('#category-checkboxes input:checked')].map(i => i.value);
   const urlInput = document.getElementById('url-input');
   if (urlInput && urlInput.value.trim().startsWith('http')) imageData = urlInput.value.trim();
+
+  // Migrate any base64 images to Blob before saving
+  if (imageData && imageData.startsWith('data:')) {
+    showToast('Uploading image to cloud…', 'success');
+    imageData = await uploadBase64IfNeeded(imageData);
+  }
+  const migratedAdditional = await Promise.all(additionalImages.map(uploadBase64IfNeeded));
 
   const paintings = getPaintings();
   const painting = {
@@ -1214,7 +1246,7 @@ async function savePainting() {
     status: document.getElementById('f-status').value,
     available: document.getElementById('f-status').value === 'Available',
     imageData: imageData || null,
-    additionalImages: additionalImages.slice(),
+    additionalImages: migratedAdditional,
   };
 
   if (editingId) {
