@@ -1038,6 +1038,7 @@
     </div>
     <div class="filter-tabs">
       <button class="filter-tab active">All</button>
+      <button class="filter-tab">Available</button>
       <button class="filter-tab">Beirut Diaries</button>
       <button class="filter-tab">On the Line</button>
       <button class="filter-tab">Mixed Arts</button>
@@ -1309,7 +1310,9 @@
     grid.innerHTML = `<p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;padding:40px 0;">Loading…</p>`;
 
     let paintings = (await getPaintings()).filter(p => p.status !== 'Private');
-    if (activeFilter !== 'All') {
+    if (activeFilter === 'Available') {
+      paintings = paintings.filter(p => p.status === 'Available' || p.available);
+    } else if (activeFilter !== 'All') {
       paintings = paintings.filter(p => {
         const cats = Array.isArray(p.category) ? p.category : [p.category];
         return cats.includes(activeFilter);

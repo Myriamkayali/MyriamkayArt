@@ -908,9 +908,14 @@ function renderForm() {
   }
 
   const imgSection = imageData
-    ? `<div class="image-preview-wrap">
-        <img class="image-preview" src="${imageData}" alt="Preview">
-        <button class="remove-img" onclick="removeImage()">×</button>
+    ? `<div>
+        <div class="image-preview-wrap">
+          <img class="image-preview" src="${imageData}" alt="Preview">
+          <button class="remove-img" onclick="removeImage()" title="Remove image">×</button>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;padding:8px 16px;border:1px solid var(--border);color:var(--terra-light);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--terra)'" onmouseout="this.style.borderColor='var(--border)'">
+          <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none"> ↺ Replace Image
+        </label>
        </div>`
     : `<div class="image-upload-area" id="drop-area">
         <input type="file" accept="image/*" onchange="handleFile(this)">
@@ -1054,9 +1059,14 @@ async function handleFile(input) {
     const { url } = await res.json();
     imageData = url;
     document.getElementById('img-section').innerHTML = `
-      <div class="image-preview-wrap">
-        <img class="image-preview" src="${url}" alt="Preview">
-        <button class="remove-img" onclick="removeImage()">×</button>
+      <div>
+        <div class="image-preview-wrap">
+          <img class="image-preview" src="${url}" alt="Preview">
+          <button class="remove-img" onclick="removeImage()" title="Remove image">×</button>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;padding:8px 16px;border:1px solid var(--border);color:var(--terra-light);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--terra)'" onmouseout="this.style.borderColor='var(--border)'">
+          <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none"> ↺ Replace Image
+        </label>
       </div>`;
   } catch {
     showToast('Image upload failed. Please try again.', 'error');
