@@ -906,6 +906,38 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  /* ── HAMBURGER ── */
+  .nav-burger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 201;
+  }
+  .nav-burger span {
+    display: block;
+    width: 24px;
+    height: 1.5px;
+    background: var(--umber);
+    transition: all 0.25s;
+    transform-origin: center;
+  }
+  nav.scrolled .nav-burger span { background: var(--cream); }
+  .nav-burger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .nav-burger.open span:nth-child(2) { opacity: 0; }
+  .nav-burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  .nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(30,15,7,0.5);
+    z-index: 198;
+  }
+  .nav-overlay.open { display: block; }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 900px) {
     nav { padding: 0 24px; }
@@ -929,6 +961,54 @@
     .collection-header { flex-direction: column; align-items: flex-start; gap: 24px; }
     #lightbox > div { grid-template-columns: 1fr !important; padding: 56px 20px 60px; gap: 32px; }
     #lightbox > button { top: 14px; right: 18px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    nav { padding: 0 18px; }
+    .nav-burger { display: flex; }
+    .nav-links {
+      position: fixed;
+      top: 0; right: 0;
+      width: 72vw; max-width: 300px;
+      height: 100vh;
+      background: var(--cream);
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+      padding: 80px 36px 40px;
+      z-index: 199;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      box-shadow: -8px 0 32px rgba(30,15,7,0.12);
+    }
+    .nav-links.open { transform: translateX(0); }
+    .nav-links li { width: 100%; border-bottom: 1px solid rgba(107,66,38,0.1); }
+    .nav-links li a {
+      display: block;
+      padding: 18px 0;
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      color: var(--umber);
+    }
+    .hero-text { padding: 48px 18px 32px; }
+    .hero-title { font-size: clamp(40px, 11vw, 64px); }
+    .hero-sub { font-size: 14px; }
+    .gallery-grid { grid-template-columns: 1fr; gap: 12px; }
+    .gallery-item:nth-child(4n+1) { grid-column: span 1; }
+    .gallery-item:nth-child(4n+1) .gallery-img-placeholder { aspect-ratio: 3/4; }
+    .filter-tabs { gap: 6px; }
+    .filter-tab { padding: 7px 12px; font-size: 9px; }
+    #prints { padding: 80px 18px 48px; }
+    #commission { padding: 80px 18px 48px; }
+    .commission-form { padding: 24px 18px; }
+    .instagram-card { flex-wrap: wrap; }
+    .ig-cta { width: 100%; margin-top: 8px; }
+    #contact { padding: 80px 18px 48px; }
+    .contact-form { padding: 28px 18px; }
+    #lightbox > div { padding: 48px 16px 48px; }
+    .site-footer { padding: 32px 18px; }
   }
 </style>
 </head>
@@ -936,15 +1016,19 @@
 
 <nav id="main-nav">
   <a class="nav-logo" onclick="showSection('home')">Myriam <span>Kayali</span></a>
-  <ul class="nav-links">
-    <li><a onclick="showSection('home')">Home</a></li>
-    <li><a onclick="showSection('about')">About</a></li>
-    <li><a onclick="showSection('collection')">Collection</a></li>
-    <li><a onclick="showSection('prints')">Prints</a></li>
-    <li><a onclick="showSection('commission')">Commission</a></li>
-    <li><a onclick="showSection('contact')">Contact</a></li>
+  <ul class="nav-links" id="nav-links">
+    <li><a onclick="showSection('home');closeMobileNav()">Home</a></li>
+    <li><a onclick="showSection('about');closeMobileNav()">About</a></li>
+    <li><a onclick="showSection('collection');closeMobileNav()">Collection</a></li>
+    <li><a onclick="showSection('prints');closeMobileNav()">Prints</a></li>
+    <li><a onclick="showSection('commission');closeMobileNav()">Commission</a></li>
+    <li><a onclick="showSection('contact');closeMobileNav()">Contact</a></li>
   </ul>
+  <button class="nav-burger" id="nav-burger" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="nav-overlay" id="nav-overlay" onclick="closeMobileNav()"></div>
 
 <!-- ══ HOME ══ -->
 <section id="home" class="active">
@@ -1464,6 +1548,19 @@
       this.classList.add('active');
     });
   });
+
+  function toggleMobileNav() {
+    const open = document.getElementById('nav-links').classList.toggle('open');
+    document.getElementById('nav-burger').classList.toggle('open', open);
+    document.getElementById('nav-overlay').classList.toggle('open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+  function closeMobileNav() {
+    document.getElementById('nav-links').classList.remove('open');
+    document.getElementById('nav-burger').classList.remove('open');
+    document.getElementById('nav-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
 
   showSection('home');
   renderHome();
