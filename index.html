@@ -722,7 +722,7 @@
 
   /* ── CONTACT ── */
   #contact {
-    padding: calc(var(--nav-h) + 80px) 80px 100px;
+    padding: calc(var(--nav-h) + 80px) 80px 80px;
     background: var(--umber);
     min-height: 100vh;
     display: grid;
@@ -1016,6 +1016,104 @@
     .contact-form { padding: 28px 18px; }
     #lightbox > div { padding: 48px 16px 48px; }
     .site-footer { padding: 32px 18px; }
+    .ig-feed-grid { grid-template-columns: repeat(3,1fr); }
+  }
+
+  /* ── INSTAGRAM FEED ── */
+  .ig-feed-wrap {
+    grid-column: 1 / -1;
+    border-top: 1px solid rgba(244,237,224,0.1);
+    padding-top: 56px;
+    margin-top: 20px;
+  }
+  .ig-feed-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .ig-feed-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(244,237,224,0.25);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(244,237,224,0.7);
+    flex-shrink: 0;
+  }
+  .ig-feed-meta { flex: 1; }
+  .ig-feed-handle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-style: italic; font-weight: 400;
+    color: var(--cream); line-height: 1.1;
+  }
+  .ig-feed-tagline {
+    font-size: 10px; letter-spacing: 0.16em;
+    color: rgba(244,237,224,0.38);
+    text-transform: uppercase; margin-top: 4px;
+  }
+  .ig-follow-btn {
+    display: inline-block;
+    padding: 9px 22px;
+    border: 1px solid rgba(244,237,224,0.3);
+    color: var(--cream);
+    font-family: 'Jost', sans-serif;
+    font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.22s;
+    white-space: nowrap;
+  }
+  .ig-follow-btn:hover { background: rgba(244,237,224,0.1); border-color: rgba(244,237,224,0.7); }
+  .ig-feed-grid {
+    display: grid;
+    grid-template-columns: repeat(6,1fr);
+    gap: 3px;
+  }
+  .ig-feed-cell {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: pointer;
+    background: rgba(244,237,224,0.05);
+  }
+  .ig-feed-cell img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block;
+  }
+  .ig-feed-cell:hover img { transform: scale(1.07); }
+  .ig-feed-cell-overlay {
+    position: absolute; inset: 0;
+    background: rgba(30,15,7,0);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.3s;
+  }
+  .ig-feed-cell:hover .ig-feed-cell-overlay { background: rgba(30,15,7,0.5); }
+  .ig-feed-cell-overlay span {
+    color: rgba(244,237,224,0.9);
+    font-family: 'Jost', sans-serif;
+    font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .ig-feed-cell:hover .ig-feed-cell-overlay span { opacity: 1; }
+  .ig-feed-footer {
+    margin-top: 18px;
+    text-align: center;
+  }
+  .ig-feed-footer a {
+    font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(244,237,224,0.35);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .ig-feed-footer a:hover { color: rgba(244,237,224,0.75); }
+  @media (max-width: 600px) {
+    .ig-feed-grid { grid-template-columns: repeat(3,1fr); }
+    .ig-feed-header { flex-wrap: wrap; gap: 12px; }
+    .ig-follow-btn { width: 100%; text-align: center; }
   }
 </style>
 </head>
@@ -1296,6 +1394,26 @@
     <label>Message</label>
     <textarea id="ct-message" placeholder="Write your message here..."></textarea>
     <button class="contact-form-submit" onclick="sendContactWhatsApp()">Send Message →</button>
+  </div>
+
+  <!-- Instagram feed strip -->
+  <div class="ig-feed-wrap">
+    <div class="ig-feed-header">
+      <div class="ig-feed-avatar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+      </div>
+      <div class="ig-feed-meta">
+        <p class="ig-feed-handle">@myriamkay.art</p>
+        <p class="ig-feed-tagline">Follow to stay tuned — new works, process &amp; behind the scenes</p>
+      </div>
+      <a class="ig-follow-btn" href="https://instagram.com/myriamkay.art" target="_blank">Follow on Instagram</a>
+    </div>
+    <div class="ig-feed-grid" id="ig-feed-grid">
+      <!-- populated by JS -->
+    </div>
+    <div class="ig-feed-footer">
+      <a href="https://instagram.com/myriamkay.art" target="_blank">See all posts on Instagram →</a>
+    </div>
   </div>
 </section>
 
@@ -1606,6 +1724,22 @@
     window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
   }
 
+  async function renderIgFeed() {
+    const grid = document.getElementById('ig-feed-grid');
+    if (!grid) return;
+    const all = await getPaintings();
+    const withImg = all.filter(p => p.imageData && p.status !== 'Private');
+    // Show up to 6 most recent (they come stored in admin order; take last 6 reversed)
+    const cells = withImg.slice(-6).reverse();
+    if (!cells.length) { grid.innerHTML = ''; return; }
+    grid.innerHTML = cells.map(p =>
+      `<a class="ig-feed-cell" href="https://instagram.com/myriamkay.art" target="_blank">
+        <img src="${p.imageData}" alt="${p.title}" loading="lazy">
+        <div class="ig-feed-cell-overlay"><span>View on Instagram</span></div>
+      </a>`
+    ).join('');
+  }
+
   function showSection(id) {
     document.querySelectorAll('section').forEach(s => {
       s.classList.remove('active');
@@ -1620,6 +1754,7 @@
       if (id === 'home') renderHome();
       else if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
       if (id === 'collection') renderGallery(); // async, intentionally not awaited
+      if (id === 'contact') renderIgFeed();
     }
   }
 
