@@ -197,8 +197,7 @@
     width: 100%; height: 100%;
     object-fit: cover;
   }
-  @keyframes heroFadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .hero-slide-img { animation: heroFadeIn 0.7s ease; }
+  .hero-slide-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 1s ease; }
 
   .hero-float-tag {
     position: absolute;
@@ -1385,28 +1384,62 @@
   let heroSlides = [];
   let heroIdx = 0;
   let heroTimer = null;
+  let heroActive = 'a';
 
-  function showHeroSlide(idx) {
+  function showHeroSlide(idx, instant) {
     const p = heroSlides[idx];
     if (!p) return;
-    const placeholder = document.getElementById('hero-painting-placeholder');
     const tagTitle = document.getElementById('hero-tag-title');
-    if (placeholder) placeholder.innerHTML = `<img class="hero-slide-img" src="${p.imageData}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;">`;
     if (tagTitle) tagTitle.textContent = `${p.title} — ${p.year}`;
+
+    if (instant) {
+      const img = document.getElementById('hero-img-a');
+      if (!img) return;
+      img.src = p.imageData;
+      const show = () => { img.style.opacity = '1'; };
+      img.onload = show;
+      if (img.complete && img.naturalWidth > 0) show();
+      heroActive = 'a';
+      return;
+    }
+
+    const nextId = heroActive === 'a' ? 'b' : 'a';
+    const curr = document.getElementById(`hero-img-${heroActive}`);
+    const next = document.getElementById(`hero-img-${nextId}`);
+    if (!curr || !next) return;
+
+    next.src = p.imageData;
+    const doSwap = () => {
+      next.style.opacity = '1';
+      curr.style.opacity = '0';
+      heroActive = nextId;
+    };
+    next.onload = doSwap;
+    if (next.complete && next.naturalWidth > 0) doSwap();
   }
 
   async function renderHome() {
     const paintings = await getPaintings();
-    heroSlides = paintings.filter(p => p.imageData);
+    heroSlides = paintings.filter(p => p.featured && p.imageData);
     if (!heroSlides.length) return;
+
+    const placeholder = document.getElementById('hero-painting-placeholder');
+    if (placeholder) {
+      placeholder.innerHTML = `
+        <img id="hero-img-a" class="hero-slide-img" style="opacity:0;" alt="">
+        <img id="hero-img-b" class="hero-slide-img" style="opacity:0;" alt="">`;
+    }
+
     heroIdx = 0;
-    showHeroSlide(0);
+    heroActive = 'a';
+    showHeroSlide(0, true);
+
     if (heroTimer) clearInterval(heroTimer);
     if (heroSlides.length > 1) {
       heroTimer = setInterval(() => {
         heroIdx = (heroIdx + 1) % heroSlides.length;
-        showHeroSlide(heroIdx);
-      }, 2000);
+        showHeroSlide(heroIdx, false);
+      }, 3000);
     }
   }
 
