@@ -1118,10 +1118,10 @@
     margin-bottom: 20px;
   }
   .exhibition-img-grid-cell {
-    overflow: hidden; aspect-ratio: 4/3;
+    overflow: hidden; background: #EDE5D8;
   }
   .exhibition-img-grid-cell img {
-    width: 100%; height: 100%; object-fit: cover; display: block;
+    width: 100%; height: 100%; object-fit: contain; display: block;
     transition: transform 0.6s ease;
   }
   .exhibition-img-grid-cell:hover img { transform: scale(1.04); }
@@ -1304,6 +1304,22 @@
       </div>
     </div>
   </div>
+  <!-- ── AVAILABLE PIECES ── -->
+  <div class="home-extra-section">
+    <p class="home-section-eyebrow">Original Works</p>
+    <h2 class="home-section-title">Available <em>Pieces</em></h2>
+    <div class="avail-scroll" id="avail-scroll">
+      <p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;">Loading…</p>
+    </div>
+    <a class="avail-view-all" onclick="showSection('collection')">Browse full collection →</a>
+  </div>
+
+  <!-- ── DUBAI EXHIBITION (dynamic) ── -->
+  <div id="exhibition-section-wrap"></div>
+
+  <!-- ── INTERVIEW (dynamic) ── -->
+  <div id="press-section-wrap"></div>
+
   <div class="marquee-strip">
     <div class="marquee-track">
       <span>Memory &amp; Place</span>
@@ -1328,22 +1344,6 @@
       <span class="mdot">◆</span>
     </div>
   </div>
-
-  <!-- ── AVAILABLE PIECES ── -->
-  <div class="home-extra-section">
-    <p class="home-section-eyebrow">Original Works</p>
-    <h2 class="home-section-title">Available <em>Pieces</em></h2>
-    <div class="avail-scroll" id="avail-scroll">
-      <p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;">Loading…</p>
-    </div>
-    <a class="avail-view-all" onclick="showSection('collection')">Browse full collection →</a>
-  </div>
-
-  <!-- ── DUBAI EXHIBITION (dynamic) ── -->
-  <div id="exhibition-section-wrap"></div>
-
-  <!-- ── INTERVIEW (dynamic) ── -->
-  <div id="press-section-wrap"></div>
 </section>
 
 <!-- ══ ABOUT ══ -->

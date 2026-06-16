@@ -1605,8 +1605,12 @@ async function renderExhibitionScreen() {
       <div id="ex-images-grid" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px">
         ${exhibitionImages.map((src, i) => `
           <div style="position:relative;display:inline-block">
-            <img src="${src}" style="width:120px;height:90px;object-fit:cover;display:block;border:1px solid var(--border);">
+            <img src="${src}" style="width:120px;height:90px;object-fit:contain;background:#EDE5D8;display:block;border:1px solid var(--border);">
             <button onclick="removeExhibitionImage(${i})" style="position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(20,10,5,0.8);border:1px solid var(--border2);color:var(--cream);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
+            <div style="display:flex;gap:2px;margin-top:4px;justify-content:center">
+              <button onclick="moveExhibitionImage(${i},-1)" ${i===0?'disabled':''} style="flex:1;padding:2px 0;font-size:11px;background:var(--umber);border:1px solid var(--border2);color:var(--cream);cursor:pointer;opacity:${i===0?'0.3':'1'}">↑</button>
+              <button onclick="moveExhibitionImage(${i},1)" ${i===exhibitionImages.length-1?'disabled':''} style="flex:1;padding:2px 0;font-size:11px;background:var(--umber);border:1px solid var(--border2);color:var(--cream);cursor:pointer;opacity:${i===exhibitionImages.length-1?'0.3':'1'}">↓</button>
+            </div>
           </div>`).join('')}
       </div>
       <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;padding:9px 18px;border:1px solid var(--border);color:var(--terra-light);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--terra)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -1654,6 +1658,13 @@ async function renderExhibitionScreen() {
 
 function removeExhibitionImage(idx) {
   exhibitionImages.splice(idx, 1);
+  renderExhibitionScreen();
+}
+
+function moveExhibitionImage(idx, dir) {
+  const target = idx + dir;
+  if (target < 0 || target >= exhibitionImages.length) return;
+  [exhibitionImages[idx], exhibitionImages[target]] = [exhibitionImages[target], exhibitionImages[idx]];
   renderExhibitionScreen();
 }
 
