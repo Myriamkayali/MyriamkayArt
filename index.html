@@ -1020,6 +1020,7 @@
     .home-extra-section { padding: 60px 24px; }
     .avail-card { flex: 0 0 220px; }
     .dubai-grid { grid-template-columns: 1fr 1fr; }
+    .exhibition-img-grid { grid-template-columns: repeat(2, 1fr); }
     .interview-inner { grid-template-columns: 1fr; gap: 32px; }
   }
 
@@ -1107,6 +1108,26 @@
     margin-top: 20px;
     font-size: 13px; color: var(--brown-light); line-height: 1.7;
     max-width: 520px; font-family: 'Jost', sans-serif;
+  }
+
+  /* Exhibition image grid (dynamic) */
+  .exhibition-img-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .exhibition-img-grid-cell {
+    overflow: hidden; aspect-ratio: 4/3;
+  }
+  .exhibition-img-grid-cell img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.6s ease;
+  }
+  .exhibition-img-grid-cell:hover img { transform: scale(1.04); }
+  .exhibition-empty {
+    font-size: 13px; color: var(--brown-light);
+    font-family: 'Jost', sans-serif; padding: 24px 0;
   }
 
   /* Interview */
@@ -1318,42 +1339,11 @@
     <a class="avail-view-all" onclick="showSection('collection')">Browse full collection →</a>
   </div>
 
-  <!-- ── DUBAI EXHIBITION ── -->
-  <div class="dubai-section">
-    <p class="home-section-eyebrow">Exhibition</p>
-    <h2 class="home-section-title">On The Line — <em>Dubai</em></h2>
-    <div class="dubai-grid">
-      <div class="dubai-grid-cell tall">
-        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit1-WIp4tjAUegXf2AE4GLy210OFIOS3yN.jpg" alt="Dubai Exhibition" loading="lazy">
-      </div>
-      <div class="dubai-grid-cell">
-        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit2-opdmyANc7fhaFoS7zg1qEK8p7zwHe2.jpg" alt="Dubai Exhibition" loading="lazy">
-      </div>
-      <div class="dubai-grid-cell">
-        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg" alt="Dubai Exhibition" loading="lazy">
-      </div>
-      <div class="dubai-grid-cell" style="grid-column: 2 / -1;">
-        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit4-FS5b8wnbm0Ao9xqgkg9vEzkqWocAuD.jpg" alt="Dubai Exhibition" loading="lazy">
-      </div>
-    </div>
-    <p class="dubai-caption">A selection of works shown as part of the On The Line series exhibition in Dubai — exploring memory, sound, and the quiet persistence of everyday objects.</p>
-  </div>
+  <!-- ── DUBAI EXHIBITION (dynamic) ── -->
+  <div id="exhibition-section-wrap"></div>
 
-  <!-- ── INTERVIEW ── -->
-  <div class="interview-section">
-    <p class="home-section-eyebrow">Press</p>
-    <h2 class="home-section-title">In the <em>Press</em></h2>
-    <div class="interview-inner">
-      <div>
-        <p class="interview-source">4PM Friday — Interview</p>
-        <p class="interview-quote">Myriam Kayali Paints a Love Letter to Beirut</p>
-        <a class="interview-read-btn" href="https://4pmfriday.com/article/myriam-kayali-paints-a-love-letter-to-beirut/" target="_blank">Read the Interview →</a>
-      </div>
-      <a class="interview-img-wrap" href="https://4pmfriday.com/article/myriam-kayali-paints-a-love-letter-to-beirut/" target="_blank">
-        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg" alt="Interview" loading="lazy">
-      </a>
-    </div>
-  </div>
+  <!-- ── INTERVIEW (dynamic) ── -->
+  <div id="press-section-wrap"></div>
 </section>
 
 <!-- ══ ABOUT ══ -->
@@ -1881,6 +1871,86 @@
     window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
   }
 
+  let exhibitionCache = null;
+
+  async function getExhibition() {
+    if (exhibitionCache) return exhibitionCache;
+    try {
+      const res = await fetch('/api/exhibition');
+      exhibitionCache = await res.json();
+    } catch {
+      exhibitionCache = {
+        title: 'A Taste of Home',
+        subtitle: 'Exhibition — Dubai, 2025',
+        description: 'A selection of works exploring memory, food, and the quiet persistence of everyday objects.',
+        images: [],
+        pressImageUrl: '',
+        pressTitle: 'Myriam Kayali Paints a Love Letter to Beirut',
+        pressSubtitle: 'Through colour, memory and emotion, the artist captures the city that continues to shape her.',
+      };
+    }
+    return exhibitionCache;
+  }
+
+  async function renderExhibitionSection() {
+    const exWrap = document.getElementById('exhibition-section-wrap');
+    const pressWrap = document.getElementById('press-section-wrap');
+    if (!exWrap || !pressWrap) return;
+
+    const d = await getExhibition();
+
+    // Exhibition section
+    const titleParts = (d.title || '').split(' ');
+    const lastWord = titleParts.pop();
+    const titleHtml = titleParts.length
+      ? titleParts.join(' ') + ' <em>' + lastWord + '</em>'
+      : '<em>' + lastWord + '</em>';
+
+    let imagesHtml;
+    if (!d.images || d.images.length === 0) {
+      imagesHtml = '<p class="exhibition-empty">No exhibition images yet.</p>';
+    } else {
+      imagesHtml = `<div class="exhibition-img-grid">
+        ${d.images.map(src => `
+          <div class="exhibition-img-grid-cell">
+            <img src="${src}" alt="${d.title || 'Exhibition'}" loading="lazy">
+          </div>`).join('')}
+      </div>`;
+    }
+
+    exWrap.innerHTML = `
+      <div class="dubai-section">
+        <p class="home-section-eyebrow">Exhibition</p>
+        <h2 class="home-section-title">${titleHtml}</h2>
+        <p style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--brown-light);font-family:'Jost',sans-serif;margin-bottom:28px">${d.subtitle || ''}</p>
+        ${imagesHtml}
+        ${d.description ? `<p class="dubai-caption">${d.description}</p>` : ''}
+      </div>`;
+
+    // Press / Interview section
+    const pressImg = d.pressImageUrl || '';
+    const pressTitle = d.pressTitle || 'Myriam Kayali Paints a Love Letter to Beirut';
+    const pressSubtitle = d.pressSubtitle || 'Through colour, memory and emotion, the artist captures the city that continues to shape her.';
+
+    pressWrap.innerHTML = `
+      <div class="interview-section">
+        <p class="home-section-eyebrow">Press</p>
+        <h2 class="home-section-title">In the <em>Press</em></h2>
+        <div class="interview-inner">
+          <div>
+            <p class="interview-source">PEOPLE &amp; CULTURE</p>
+            <p class="interview-quote">${pressTitle}</p>
+            ${pressSubtitle ? `<p style="font-size:14px;color:var(--brown-light);font-family:'Jost',sans-serif;line-height:1.7;margin-bottom:28px;">${pressSubtitle}</p>` : ''}
+            <a class="interview-read-btn" href="https://4pmfriday.com/article/myriam-kayali-paints-a-love-letter-to-beirut/" target="_blank">Read the Interview →</a>
+          </div>
+          ${pressImg ? `
+          <a class="interview-img-wrap" href="https://4pmfriday.com/article/myriam-kayali-paints-a-love-letter-to-beirut/" target="_blank">
+            <img src="${pressImg}" alt="Interview" loading="lazy">
+          </a>` : ''}
+        </div>
+      </div>`;
+  }
+
   async function renderAvailableStrip() {
     const strip = document.getElementById('avail-scroll');
     if (!strip) return;
@@ -1930,7 +2000,7 @@
       if (id === 'about') target.style.display = 'grid';
       target.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (id === 'home') { renderHome(); renderAvailableStrip(); }
+      if (id === 'home') { renderHome(); renderAvailableStrip(); renderExhibitionSection(); }
       else if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
       if (id === 'collection') renderGallery(); // async, intentionally not awaited
       if (id === 'contact') renderIgFeed();
@@ -1974,6 +2044,7 @@
   showSection('home');
   renderHome();
   renderAvailableStrip();
+  renderExhibitionSection();
 </script>
 </body>
 </html>
