@@ -1017,7 +1017,131 @@
     #lightbox > div { padding: 48px 16px 48px; }
     .site-footer { padding: 32px 18px; }
     .ig-feed-grid { grid-template-columns: repeat(3,1fr); }
+    .home-extra-section { padding: 60px 24px; }
+    .avail-card { flex: 0 0 220px; }
+    .dubai-grid { grid-template-columns: 1fr 1fr; }
+    .interview-inner { grid-template-columns: 1fr; gap: 32px; }
   }
+
+  /* ══ HOME EXTRA SECTIONS ══ */
+  .home-extra-section {
+    padding: 80px 80px 0;
+    background: var(--cream);
+  }
+  .home-section-eyebrow {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--terracotta); margin-bottom: 10px;
+    font-family: 'Jost', sans-serif;
+  }
+  .home-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 3.5vw, 46px); font-weight: 300; line-height: 1.1;
+    color: var(--umber); margin-bottom: 36px;
+  }
+  .home-section-title em { font-style: italic; color: var(--terracotta); }
+
+  /* Available scroll strip */
+  .avail-scroll {
+    display: flex; gap: 24px; overflow-x: auto;
+    padding-bottom: 24px; scroll-snap-type: x mandatory;
+    scrollbar-width: thin; scrollbar-color: rgba(160,120,88,0.25) transparent;
+  }
+  .avail-scroll::-webkit-scrollbar { height: 3px; }
+  .avail-scroll::-webkit-scrollbar-thumb { background: rgba(160,120,88,0.3); border-radius: 2px; }
+  .avail-card {
+    flex: 0 0 260px; scroll-snap-align: start; cursor: pointer;
+  }
+  .avail-card-img-wrap {
+    overflow: hidden; aspect-ratio: 3/4; background: #EDE5D8; margin-bottom: 14px;
+  }
+  .avail-card-img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    transition: transform 0.5s ease;
+  }
+  .avail-card:hover .avail-card-img { transform: scale(1.04); }
+  .avail-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px; font-weight: 400; color: var(--umber); margin-bottom: 3px;
+  }
+  .avail-card-meta { font-size: 11px; color: var(--brown-light); letter-spacing: 0.06em; margin-bottom: 8px; }
+  .avail-card-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 21px; color: var(--umber); margin-bottom: 12px;
+  }
+  .avail-inquire-btn {
+    display: inline-block; padding: 7px 16px;
+    border: 1px solid var(--umber); color: var(--umber);
+    font-family: 'Jost', sans-serif; font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    background: none; cursor: pointer; transition: all 0.2s;
+  }
+  .avail-inquire-btn:hover { background: var(--umber); color: var(--cream); }
+  .avail-view-all {
+    display: inline-block; margin-top: 28px;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--brown-light); text-decoration: none; cursor: pointer;
+    transition: color 0.2s; border-bottom: 1px solid transparent;
+    font-family: 'Jost', sans-serif;
+  }
+  .avail-view-all:hover { color: var(--terracotta); border-color: var(--terracotta); }
+
+  /* Dubai exhibition */
+  .dubai-section {
+    padding: 80px 80px 0;
+    background: var(--cream);
+  }
+  .dubai-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 4px;
+  }
+  .dubai-grid-cell { overflow: hidden; position: relative; }
+  .dubai-grid-cell.tall { grid-row: span 2; }
+  .dubai-grid-cell img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.6s ease; min-height: 260px;
+  }
+  .dubai-grid-cell:hover img { transform: scale(1.04); }
+  .dubai-caption {
+    margin-top: 20px;
+    font-size: 13px; color: var(--brown-light); line-height: 1.7;
+    max-width: 520px; font-family: 'Jost', sans-serif;
+  }
+
+  /* Interview */
+  .interview-section {
+    padding: 80px 80px 80px;
+    background: var(--cream);
+  }
+  .interview-inner {
+    display: grid; grid-template-columns: 1fr 1.1fr; gap: 60px; align-items: center;
+    border: 1px solid rgba(160,120,88,0.2); padding: 52px 52px;
+  }
+  .interview-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(22px, 3vw, 34px); font-weight: 300; font-style: italic;
+    line-height: 1.45; color: var(--umber); margin-bottom: 28px;
+  }
+  .interview-quote::before { content: '\201C'; color: var(--terracotta); }
+  .interview-quote::after  { content: '\201D'; color: var(--terracotta); }
+  .interview-source {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--brown-light); margin-bottom: 24px; font-family: 'Jost', sans-serif;
+  }
+  .interview-read-btn {
+    display: inline-block; padding: 12px 28px;
+    background: var(--umber); color: var(--cream);
+    font-family: 'Jost', sans-serif; font-size: 11px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .interview-read-btn:hover { background: var(--terracotta); }
+  .interview-img-wrap {
+    overflow: hidden; aspect-ratio: 4/3;
+  }
+  .interview-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s; }
+  .interview-img-wrap:hover img { transform: scale(1.03); }
 
   /* ── INSTAGRAM FEED ── */
   .ig-feed-wrap {
@@ -1181,6 +1305,53 @@
       <span class="mdot">◆</span>
       <span>The Sacred in the Mundane</span>
       <span class="mdot">◆</span>
+    </div>
+  </div>
+
+  <!-- ── AVAILABLE PIECES ── -->
+  <div class="home-extra-section">
+    <p class="home-section-eyebrow">Original Works</p>
+    <h2 class="home-section-title">Available <em>Pieces</em></h2>
+    <div class="avail-scroll" id="avail-scroll">
+      <p style="color:var(--brown-light);font-family:'Jost',sans-serif;font-size:13px;">Loading…</p>
+    </div>
+    <a class="avail-view-all" onclick="showSection('collection')">Browse full collection →</a>
+  </div>
+
+  <!-- ── DUBAI EXHIBITION ── -->
+  <div class="dubai-section">
+    <p class="home-section-eyebrow">Exhibition</p>
+    <h2 class="home-section-title">On The Line — <em>Dubai</em></h2>
+    <div class="dubai-grid">
+      <div class="dubai-grid-cell tall">
+        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit1-WIp4tjAUegXf2AE4GLy210OFIOS3yN.jpg" alt="Dubai Exhibition" loading="lazy">
+      </div>
+      <div class="dubai-grid-cell">
+        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit2-opdmyANc7fhaFoS7zg1qEK8p7zwHe2.jpg" alt="Dubai Exhibition" loading="lazy">
+      </div>
+      <div class="dubai-grid-cell">
+        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg" alt="Dubai Exhibition" loading="lazy">
+      </div>
+      <div class="dubai-grid-cell" style="grid-column: 2 / -1;">
+        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit4-FS5b8wnbm0Ao9xqgkg9vEzkqWocAuD.jpg" alt="Dubai Exhibition" loading="lazy">
+      </div>
+    </div>
+    <p class="dubai-caption">A selection of works shown as part of the On The Line series exhibition in Dubai — exploring memory, sound, and the quiet persistence of everyday objects.</p>
+  </div>
+
+  <!-- ── INTERVIEW ── -->
+  <div class="interview-section">
+    <p class="home-section-eyebrow">Press</p>
+    <h2 class="home-section-title">In the <em>Press</em></h2>
+    <div class="interview-inner">
+      <div>
+        <p class="interview-source">4PM Friday — Interview</p>
+        <p class="interview-quote">Myriam Kayali Paints a Love Letter to Beirut</p>
+        <a class="interview-read-btn" href="https://4pmfriday.com/article/myriam-kayali-paints-a-love-letter-to-beirut/" target="_blank">Read the Interview →</a>
+      </div>
+      <a class="interview-img-wrap" href="https://4pmfriday.com/article/myriam-kayali-paints-a-love-letter-to-beirut/" target="_blank">
+        <img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg" alt="Interview" loading="lazy">
+      </a>
     </div>
   </div>
 </section>
@@ -1710,6 +1881,28 @@
     window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
   }
 
+  async function renderAvailableStrip() {
+    const strip = document.getElementById('avail-scroll');
+    if (!strip) return;
+    const all = await getPaintings();
+    const avail = all.filter(p => (p.status === 'Available' || p.available) && p.imageData);
+    if (!avail.length) { strip.innerHTML = '<p style="color:var(--brown-light);font-family:\'Jost\',sans-serif;font-size:13px;">No available works right now — check back soon.</p>'; return; }
+    strip.innerHTML = avail.map(p => {
+      const price = p.price ? `$${Number(p.price).toLocaleString()}` : '';
+      const dims = p.width && p.height ? `${p.width} × ${p.height} cm · ` : '';
+      const meta = `${p.medium ? p.medium + ' · ' : ''}${dims}${p.year}`;
+      return `<div class="avail-card" onclick="showSection('collection')">
+        <div class="avail-card-img-wrap">
+          <img class="avail-card-img" src="${p.imageData}" alt="${p.title}" loading="lazy">
+        </div>
+        <p class="avail-card-title">${p.title}</p>
+        <p class="avail-card-meta">${meta}</p>
+        ${price ? `<p class="avail-card-price">${price}</p>` : ''}
+        <button class="avail-inquire-btn" onclick="event.stopPropagation();showSection('commission')">Inquire</button>
+      </div>`;
+    }).join('');
+  }
+
   async function renderIgFeed() {
     const grid = document.getElementById('ig-feed-grid');
     if (!grid) return;
@@ -1737,7 +1930,7 @@
       if (id === 'about') target.style.display = 'grid';
       target.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (id === 'home') renderHome();
+      if (id === 'home') { renderHome(); renderAvailableStrip(); }
       else if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
       if (id === 'collection') renderGallery(); // async, intentionally not awaited
       if (id === 'contact') renderIgFeed();
@@ -1780,6 +1973,7 @@
 
   showSection('home');
   renderHome();
+  renderAvailableStrip();
 </script>
 </body>
 </html>
