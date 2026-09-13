@@ -605,6 +605,17 @@
   .btn-order:hover { background: var(--terracotta); }
 
   /* ── HOME PREMIERE (homepage teaser) ── */
+  .premiere-badge {
+    display: inline-block;
+    background: var(--terracotta);
+    color: var(--linen);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    margin-left: 12px;
+    vertical-align: middle;
+  }
   .premiere-tagline {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
@@ -1181,9 +1192,10 @@
   }
   .exhibition-img-grid-cell {
     overflow: hidden; background: #EDE5D8;
+    aspect-ratio: 1/1;
   }
   .exhibition-img-grid-cell img {
-    width: 100%; height: 100%; object-fit: contain; display: block;
+    width: 100%; height: 100%; object-fit: cover; display: block;
     transition: transform 0.6s ease;
   }
   .exhibition-img-grid-cell:hover img { transform: scale(1.04); }
@@ -1378,7 +1390,7 @@
 
   <!-- ── HOME PREMIERE (teaser) ── -->
   <div class="home-extra-section">
-    <p class="home-section-eyebrow">New Series</p>
+    <p class="home-section-eyebrow">New Series <span class="premiere-badge">Coming Soon</span></p>
     <h2 class="home-section-title">Home <em>Premiere</em></h2>
     <p class="premiere-tagline">Hollywood's most iconic scenes, premiering at home.</p>
     <p class="premiere-intro">Home Premiere reimagines iconic Hollywood scenes through a Lebanese lens: the same frame, filled with what we actually grew up on. Each piece is a small correction, a memory inserted back into a scene that never had room for it. This collection is currently in progress, with new pieces added as they're completed.</p>
@@ -1390,7 +1402,7 @@
         </div>
         <div class="premiere-info">
           <p class="premiere-title">Piece I</p>
-          <p class="premiere-note">Home Premiere series</p>
+          <p class="premiere-note">In Progress</p>
         </div>
       </div>
       <div class="premiere-card">
@@ -1399,7 +1411,7 @@
         </div>
         <div class="premiere-info">
           <p class="premiere-title">Piece II</p>
-          <p class="premiere-note">Home Premiere series</p>
+          <p class="premiere-note">In Progress</p>
         </div>
       </div>
       <div class="premiere-card">
@@ -1408,7 +1420,7 @@
         </div>
         <div class="premiere-info">
           <p class="premiere-title">Piece III</p>
-          <p class="premiere-note">Home Premiere series</p>
+          <p class="premiere-note">In Progress</p>
         </div>
       </div>
     </div>
