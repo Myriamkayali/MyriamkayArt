@@ -82,6 +82,19 @@ Images uploaded in the admin are sent to `POST /api/upload` (an Edge function at
 
 **Required env variable in Vercel dashboard:** `BLOB_READ_WRITE_TOKEN`
 
+## Financial Dashboard & Traffic — admin.html
+
+The admin Dashboard screen (`showScreen('dashboard')`) tracks studio finances and site traffic:
+
+- **Revenue** is derived from existing paintings with `status: 'Sold'` (their `price` field) — no separate revenue record. A painting's optional `soldDate` field (added via the Edit form, auto-filled to today when status is set to Sold) drives month-level revenue trends; paintings marked Sold without a `soldDate` fall back to their `year` field for yearly-only totals.
+- **Expenses** are a new record type stored at `mk-data/expenses.json` in Blob via `api/expenses.js`, following the same `readBlob`/`writeBlob`/PIN-protected-POST pattern as `api/paintings.js`. Each entry: `{ id, amount, category, date, note }`.
+- **Traffic** pulls from the Vercel Web Analytics REST API via `api/traffic.js` (PIN-protected GET). Requires these env variables in the Vercel dashboard:
+  - `VERCEL_API_TOKEN` — access token from vercel.com/account/tokens, scoped to this project/team
+  - `VERCEL_PROJECT_ID` — Project Settings → General → "Project ID"
+  - `VERCEL_TEAM_ID` — only if the project lives under a Vercel Team
+
+  Web Analytics must also be enabled for the project (Project → Analytics tab). Without these, the Dashboard shows setup instructions instead of numbers.
+
 ## Deployment
 
 Deploy to Vercel (required for the `/api/upload` Edge function and Blob storage). Push to `main` triggers a deploy automatically once the project is connected.

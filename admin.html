@@ -410,6 +410,12 @@ body {
 .form-input::placeholder, .form-textarea::placeholder { color: var(--muted); }
 .form-textarea { resize: vertical; min-height: 88px; }
 .form-select option { background: #1C1A14; }
+.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23A07858' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 34px;
+}
 
 .image-upload-area {
   border: 1px dashed var(--border2);
@@ -547,6 +553,126 @@ body {
   margin-bottom: 20px;
 }
 
+/* ── DASHBOARD ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 28px 26px;
+}
+.kpi-card.net { border-color: rgba(184,92,56,0.35); background: linear-gradient(160deg, var(--surface), var(--surface2)); }
+.kpi-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.kpi-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px;
+  font-weight: 300;
+  color: var(--cream);
+  line-height: 1;
+}
+.kpi-value.pos { color: #27ae60; }
+.kpi-value.neg { color: #e74c3c; }
+.kpi-sub { font-size: 11px; color: var(--terra-light); margin-top: 6px; }
+
+.dash-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--cream);
+  margin-bottom: 4px;
+}
+.dash-section-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.dash-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 26px;
+  margin-bottom: 24px;
+}
+
+.mini-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.mini-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+}
+.mini-stat .stat-label { margin-bottom: 6px; }
+.mini-stat .stat-value { font-size: 26px; }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border2);
+  font-weight: 400;
+}
+.data-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--cream-dim);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td.num, .data-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table tr.total-row td { color: var(--cream); border-top: 1px solid var(--border2); font-weight: 400; }
+.data-table .bar-cell { width: 34%; }
+.data-table .bar-track { height: 6px; background: var(--surface2); position: relative; overflow: hidden; }
+.data-table .bar-fill { height: 100%; background: var(--terra); }
+.data-table .bar-fill.cost { background: #c0392b; }
+
+.expense-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 4px;
+}
+.expense-cat-tag {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: var(--surface2);
+  color: var(--cream-dim);
+  white-space: nowrap;
+}
+.exp-del-btn {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.15s;
+}
+.exp-del-btn:hover { color: #e74c3c; }
+
 /* ── ANIMATIONS ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
@@ -638,6 +764,10 @@ body {
   .form-screen { max-width: 100%; }
   .settings-section { padding: 20px; }
   .pin-container { padding: 40px 24px; }
+  .kpi-row { grid-template-columns: 1fr; }
+  .mini-stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .expense-form-grid { grid-template-columns: 1fr 1fr; }
+  .dash-block { padding: 18px; overflow-x: auto; }
 }
 
 @media (max-width: 480px) {
@@ -648,6 +778,9 @@ body {
   .painting-card-actions { opacity: 1; }
   .image-preview { max-width: 100%; }
   .modal { width: 95%; }
+  .mini-stats-row { grid-template-columns: 1fr; }
+  .expense-form-grid { grid-template-columns: 1fr; }
+  .data-table .bar-cell { display: none; }
 }
 
   /* ── CROP MODAL ── */
@@ -793,6 +926,15 @@ body {
       Exhibition
     </div>
 
+    <p class="sidebar-section" style="margin-top:20px">Business</p>
+    <div class="nav-item" onclick="showScreen('dashboard')" id="nav-dashboard">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M1 14V2M1 14h14"/>
+        <path d="M4 14V9M8 14V6M12 14V3" stroke-linecap="round"/>
+      </svg>
+      Dashboard
+    </div>
+
     <p class="sidebar-section" style="margin-top:20px">Site</p>
     <div class="nav-item" onclick="window.open('index.html','_blank')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -892,6 +1034,54 @@ async function savePaintings(paintings) {
   }
 }
 
+let expensesCache = null;
+function getExpenses() { return expensesCache || []; }
+
+async function loadExpenses() {
+  try {
+    const res = await fetch('/api/expenses');
+    expensesCache = await res.json();
+  } catch {
+    expensesCache = expensesCache || [];
+  }
+}
+
+async function saveExpenses(expenses) {
+  expensesCache = expenses;
+  try {
+    const res = await fetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expenses, pin: currentAdminPin }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || `Save failed (${res.status}).`, 'error');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    showToast(e.message || 'Failed to save. Check your connection.', 'error');
+    return false;
+  }
+}
+
+let trafficCache = null;
+async function loadTraffic() {
+  try {
+    const res = await fetch(`/api/traffic?pin=${encodeURIComponent(currentAdminPin || '')}`);
+    trafficCache = await res.json();
+  } catch {
+    trafficCache = { configured: false, error: 'Could not reach traffic analytics.' };
+  }
+}
+
+async function refreshTraffic() {
+  trafficCache = null;
+  await loadTraffic();
+  renderDashboard();
+}
+
 // ── PIN ──────────────────────────────────────────
 
 function pinInput(d) {
@@ -961,12 +1151,12 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 // ── NAVIGATION ──────────────────────────────────────────
 function showScreen(name) {
   closeAdminSidebar();
-  ['list','add','settings','exhibition'].forEach(n => {
+  ['list','add','settings','exhibition','dashboard'].forEach(n => {
     const el = document.getElementById('nav-' + n);
     if (el) el.classList.toggle('active', n === name);
   });
 
-  const titles = { list: 'All Paintings', add: 'Add New Painting', settings: 'Settings', exhibition: 'Exhibition' };
+  const titles = { list: 'All Paintings', add: 'Add New Painting', settings: 'Settings', exhibition: 'Exhibition', dashboard: 'Dashboard' };
   document.getElementById('screen-title').textContent = titles[name] || 'Dashboard';
 
   const area = document.getElementById('topbar-actions');
@@ -979,7 +1169,7 @@ function showScreen(name) {
     area.innerHTML = '';
   }
 
-  const render = { list: renderList, add: renderForm, settings: renderSettings, exhibition: renderExhibitionScreen };
+  const render = { list: renderList, add: renderForm, settings: renderSettings, exhibition: renderExhibitionScreen, dashboard: renderDashboard };
   if (render[name]) { render[name](); }
 }
 
@@ -1057,7 +1247,7 @@ function renderList() {
 
 // ── FORM ──────────────────────────────────────────
 function renderForm() {
-  let p = { title: '', year: new Date().getFullYear(), medium: '', category: 'Portrait', width: '', height: '', price: '', description: '', featured: false, available: true, imageData: null };
+  let p = { title: '', year: new Date().getFullYear(), medium: '', category: 'Portrait', width: '', height: '', price: '', description: '', featured: false, available: true, hidePrice: false, soldDate: '', imageData: null };
 
   if (editingId) {
     const found = getPaintings().find(x => x.id === editingId);
@@ -1169,10 +1359,20 @@ function renderForm() {
           </div>
           <input type="hidden" id="f-status" value="${p.status || (p.available ? 'Available' : 'Private')}">
         </div>
+        <div class="form-group" style="max-width:220px">
+          <label class="form-label">Date Sold</label>
+          <input class="form-input" id="f-solddate" type="date" value="${p.soldDate || ''}">
+          <p style="font-size:11px;color:var(--muted)">Used for revenue trends on the Dashboard</p>
+        </div>
         <div class="toggle-row" onclick="toggleSwitch('sw-feat')" style="margin-top:4px">
           <div class="toggle-switch ${p.featured?'on':''}" id="sw-feat"></div>
           <span class="toggle-label">Featured work</span>
           <span class="toggle-sub">Highlighted on the homepage</span>
+        </div>
+        <div class="toggle-row" onclick="toggleSwitch('sw-hideprice')" style="margin-top:4px">
+          <div class="toggle-switch ${p.hidePrice?'on':''}" id="sw-hideprice"></div>
+          <span class="toggle-label">Hide price</span>
+          <span class="toggle-sub">Price stays off the public site</span>
         </div>
       </div>
 
@@ -1358,6 +1558,8 @@ async function savePainting() {
     width: document.getElementById('f-width').value || '',
     height: document.getElementById('f-height').value || '',
     price: document.getElementById('f-price').value || '',
+    hidePrice: document.getElementById('sw-hideprice').classList.contains('on'),
+    soldDate: document.getElementById('f-solddate').value || '',
     description: document.getElementById('f-desc').value.trim(),
     featured: document.getElementById('sw-feat').classList.contains('on'),
     status: document.getElementById('f-status').value,
@@ -1422,6 +1624,335 @@ async function movePainting(id, dir) {
 
 function closeModal() {
   document.getElementById('confirm-modal').classList.remove('open');
+}
+
+// ── DASHBOARD ──────────────────────────────────────────
+const EXPENSE_CATEGORIES = ['Supplies', 'Paint & Materials', 'Shipping', 'Framing', 'Marketing', 'Studio Rent', 'Fees & Commissions', 'Other'];
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtUSD(n) {
+  const v = Math.round(Number(n) || 0);
+  return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString();
+}
+
+function monthLabel(key) {
+  const [y, m] = key.split('-');
+  return `${MONTH_NAMES[parseInt(m, 10) - 1]} ${y}`;
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// A sold painting counts toward revenue by its price. Its Date Sold (if set)
+// places it in a specific month/year; otherwise it falls back to the
+// painting's `year` field for yearly totals only (no month can be inferred).
+function paintingSaleInfo(p) {
+  if (p.status !== 'Sold') return null;
+  const amount = Number(p.price) || 0;
+  if (!amount) return null;
+  let year = null, monthKey = null;
+  if (p.soldDate) {
+    const d = new Date(p.soldDate + 'T00:00:00');
+    if (!isNaN(d)) {
+      year = d.getFullYear();
+      monthKey = `${year}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+  }
+  if (year === null && p.year) year = parseInt(p.year, 10);
+  return { amount, year, monthKey };
+}
+
+function computeDashboardData() {
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonthKey = `${curYear}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  const revenue = { allTime: 0, thisYear: 0, thisMonth: 0, byYear: {}, byMonth: {} };
+  getPaintings().forEach(p => {
+    const info = paintingSaleInfo(p);
+    if (!info) return;
+    revenue.allTime += info.amount;
+    if (info.year != null) {
+      revenue.byYear[info.year] = (revenue.byYear[info.year] || 0) + info.amount;
+      if (info.year === curYear) revenue.thisYear += info.amount;
+    }
+    if (info.monthKey) {
+      revenue.byMonth[info.monthKey] = (revenue.byMonth[info.monthKey] || 0) + info.amount;
+      if (info.monthKey === curMonthKey) revenue.thisMonth += info.amount;
+    }
+  });
+
+  const costs = { allTime: 0, thisYear: 0, thisMonth: 0, byYear: {}, byMonth: {}, byCategory: {} };
+  getExpenses().forEach(e => {
+    const amount = Number(e.amount) || 0;
+    if (!amount) return;
+    costs.allTime += amount;
+    const cat = e.category || 'Other';
+    costs.byCategory[cat] = (costs.byCategory[cat] || 0) + amount;
+    const d = e.date ? new Date(e.date + 'T00:00:00') : null;
+    if (d && !isNaN(d)) {
+      const year = d.getFullYear();
+      const monthKey = `${year}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      costs.byYear[year] = (costs.byYear[year] || 0) + amount;
+      costs.byMonth[monthKey] = (costs.byMonth[monthKey] || 0) + amount;
+      if (year === curYear) costs.thisYear += amount;
+      if (monthKey === curMonthKey) costs.thisMonth += amount;
+    }
+  });
+
+  return { revenue, costs, curYear, curMonthKey };
+}
+
+async function renderDashboard() {
+  if (!expensesCache) await loadExpenses();
+  if (!trafficCache) await loadTraffic();
+  const { revenue, costs } = computeDashboardData();
+
+  const netAll = revenue.allTime - costs.allTime;
+  const netYear = revenue.thisYear - costs.thisYear;
+  const netMonth = revenue.thisMonth - costs.thisMonth;
+  const netColor = n => n >= 0 ? '#27ae60' : '#e74c3c';
+
+  const years = Array.from(new Set([...Object.keys(revenue.byYear), ...Object.keys(costs.byYear)])).sort((a, b) => b - a);
+  const yearRows = years.length ? years.map(y => {
+    const rev = revenue.byYear[y] || 0;
+    const cost = costs.byYear[y] || 0;
+    return `<tr>
+      <td>${y}</td>
+      <td class="num">${fmtUSD(rev)}</td>
+      <td class="num">${fmtUSD(cost)}</td>
+      <td class="num" style="color:${netColor(rev - cost)}">${fmtUSD(rev - cost)}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px 0">No data yet.</td></tr>`;
+
+  const monthKeys = Array.from(new Set([...Object.keys(revenue.byMonth), ...Object.keys(costs.byMonth)])).sort().reverse();
+  const monthRows = monthKeys.length ? monthKeys.map(k => {
+    const rev = revenue.byMonth[k] || 0;
+    const cost = costs.byMonth[k] || 0;
+    return `<tr>
+      <td>${monthLabel(k)}</td>
+      <td class="num">${fmtUSD(rev)}</td>
+      <td class="num">${fmtUSD(cost)}</td>
+      <td class="num" style="color:${netColor(rev - cost)}">${fmtUSD(rev - cost)}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px 0">No dated sales or expenses yet.</td></tr>`;
+
+  const undatedSoldCount = getPaintings().filter(p => p.status === 'Sold' && Number(p.price) && !p.soldDate).length;
+
+  const catEntries = Object.entries(costs.byCategory).sort((a, b) => b[1] - a[1]);
+  const maxCat = Math.max(1, ...catEntries.map(([, v]) => v));
+  const catRows = catEntries.length ? catEntries.map(([cat, amt]) => `
+    <tr>
+      <td>${cat}</td>
+      <td class="bar-cell"><div class="bar-track"><div class="bar-fill cost" style="width:${Math.round(amt / maxCat * 100)}%"></div></div></td>
+      <td class="num">${fmtUSD(amt)}</td>
+    </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px 0">No expenses logged yet.</td></tr>`;
+
+  const expenses = getExpenses().slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.id || '').localeCompare(a.id || ''));
+  const expenseRows = expenses.length ? expenses.map(e => `
+    <tr>
+      <td>${e.date ? formatDate(e.date) : '—'}</td>
+      <td><span class="expense-cat-tag">${e.category || 'Other'}</span></td>
+      <td>${e.note || '—'}</td>
+      <td class="num">${fmtUSD(e.amount)}</td>
+      <td class="num"><button class="exp-del-btn" onclick="confirmDeleteExpense('${e.id}')">Delete</button></td>
+    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px 0">No expenses logged yet.</td></tr>`;
+
+  const now = new Date();
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <p class="kpi-label">Total Revenue (All-Time)</p>
+        <p class="kpi-value">${fmtUSD(revenue.allTime)}</p>
+        <p class="kpi-sub">from sold paintings</p>
+      </div>
+      <div class="kpi-card">
+        <p class="kpi-label">Total Costs (All-Time)</p>
+        <p class="kpi-value">${fmtUSD(costs.allTime)}</p>
+        <p class="kpi-sub">logged expenses</p>
+      </div>
+      <div class="kpi-card net">
+        <p class="kpi-label">Net Profit (All-Time)</p>
+        <p class="kpi-value ${netAll >= 0 ? 'pos' : 'neg'}">${fmtUSD(netAll)}</p>
+        <p class="kpi-sub">revenue minus costs</p>
+      </div>
+    </div>
+
+    <p class="dash-section-title">This Year</p>
+    <p class="dash-section-sub">${now.getFullYear()}</p>
+    <div class="mini-stats-row">
+      <div class="mini-stat"><p class="stat-label">Revenue</p><p class="stat-value">${fmtUSD(revenue.thisYear)}</p></div>
+      <div class="mini-stat"><p class="stat-label">Costs</p><p class="stat-value">${fmtUSD(costs.thisYear)}</p></div>
+      <div class="mini-stat"><p class="stat-label">Net</p><p class="stat-value" style="color:${netColor(netYear)}">${fmtUSD(netYear)}</p></div>
+    </div>
+
+    <p class="dash-section-title">This Month</p>
+    <p class="dash-section-sub">${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}</p>
+    <div class="mini-stats-row">
+      <div class="mini-stat"><p class="stat-label">Revenue</p><p class="stat-value">${fmtUSD(revenue.thisMonth)}</p></div>
+      <div class="mini-stat"><p class="stat-label">Costs</p><p class="stat-value">${fmtUSD(costs.thisMonth)}</p></div>
+      <div class="mini-stat"><p class="stat-label">Net</p><p class="stat-value" style="color:${netColor(netMonth)}">${fmtUSD(netMonth)}</p></div>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Revenue &amp; Costs by Year</p>
+      <p class="dash-section-sub">Sold paintings without a Date Sold are placed by their listed year.</p>
+      <table class="data-table">
+        <thead><tr><th>Year</th><th class="num">Revenue</th><th class="num">Costs</th><th class="num">Net</th></tr></thead>
+        <tbody>${yearRows}</tbody>
+      </table>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Revenue &amp; Costs by Month</p>
+      <p class="dash-section-sub">${undatedSoldCount ? `${undatedSoldCount} sold painting${undatedSoldCount === 1 ? '' : 's'} missing a Date Sold aren't reflected here — add one on the painting's Edit screen.` : 'Only dated sales and expenses appear here.'}</p>
+      <table class="data-table">
+        <thead><tr><th>Month</th><th class="num">Revenue</th><th class="num">Costs</th><th class="num">Net</th></tr></thead>
+        <tbody>${monthRows}</tbody>
+      </table>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Costs by Category</p>
+      <table class="data-table">
+        <thead><tr><th>Category</th><th></th><th class="num">Total</th></tr></thead>
+        <tbody>${catRows}</tbody>
+      </table>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Log an Expense</p>
+      <div class="expense-form-grid">
+        <div class="form-group">
+          <label class="form-label">Amount (USD)</label>
+          <input class="form-input" id="exp-amount" type="number" min="0" step="0.01" placeholder="e.g. 45">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="exp-category">
+            ${EXPENSE_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" id="exp-date" type="date" value="${now.toISOString().slice(0, 10)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Note (optional)</label>
+          <input class="form-input" id="exp-note" type="text" placeholder="e.g. Canvas rolls">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="addExpense()">+ Add Expense</button>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Expense History</p>
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Category</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead>
+        <tbody>${expenseRows}</tbody>
+      </table>
+    </div>
+
+    ${renderTrafficBlock(trafficCache)}`;
+}
+
+function renderTrafficBlock(t) {
+  const fmtNum = n => Math.round(Number(n) || 0).toLocaleString();
+
+  if (!t || !t.configured) {
+    const msg = (t && t.error) || 'Traffic analytics is not set up yet.';
+    return `
+    <div class="dash-block">
+      <p class="dash-section-title">Traffic</p>
+      <p class="dash-section-sub">${msg}</p>
+      <p style="font-size:13px;color:var(--cream-dim);line-height:1.8;max-width:640px">
+        To enable this, add these Environment Variables in your Vercel project
+        (Project → Settings → Environment Variables), then redeploy:
+      </p>
+      <ul style="font-size:13px;color:var(--cream-dim);line-height:1.9;margin:12px 0 0 18px">
+        <li><code>VERCEL_API_TOKEN</code> — an access token from
+          <a href="https://vercel.com/account/tokens" target="_blank" style="color:var(--terra-light)">vercel.com/account/tokens</a>,
+          scoped to this project (or team).</li>
+        <li><code>VERCEL_PROJECT_ID</code> — found in Project Settings → General → "Project ID".</li>
+        <li><code>VERCEL_TEAM_ID</code> — only needed if this project lives under a Vercel Team
+          (Team Settings → General → "Team ID"). Skip it for a personal-account project.</li>
+      </ul>
+      <p style="font-size:13px;color:var(--cream-dim);line-height:1.8;margin-top:12px">
+        Web Analytics also needs to be turned on for this project (Project → Analytics tab → Enable),
+        and needs a little traffic to flow in before numbers appear here.
+      </p>
+      <button class="btn btn-ghost" style="margin-top:16px" onclick="refreshTraffic()">Check again</button>
+    </div>`;
+  }
+
+  const monthRows = (t.byMonth || []).slice().reverse().map(row => {
+    const d = new Date(row.month);
+    const label = isNaN(d) ? row.month : `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+    return `<tr><td>${label}</td><td class="num">${fmtNum(row.pageviews)}</td><td class="num">${fmtNum(row.visitors)}</td></tr>`;
+  }).join('');
+
+  return `
+    <div class="dash-block">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <p class="dash-section-title">Traffic</p>
+        <button class="btn btn-ghost" style="padding:6px 14px" onclick="refreshTraffic()">Refresh</button>
+      </div>
+      <p class="dash-section-sub">Page views and unique visitors, via Vercel Web Analytics.</p>
+      <div class="mini-stats-row" style="margin-bottom:14px">
+        <div class="mini-stat">
+          <p class="stat-label">All-Time Views</p>
+          <p class="stat-value">${fmtNum(t.allTime.pageviews)}</p>
+          <p class="stat-sub">${fmtNum(t.allTime.visitors)} visitors</p>
+        </div>
+        <div class="mini-stat">
+          <p class="stat-label">This Year</p>
+          <p class="stat-value">${fmtNum(t.thisYear.pageviews)}</p>
+          <p class="stat-sub">${fmtNum(t.thisYear.visitors)} visitors</p>
+        </div>
+        <div class="mini-stat">
+          <p class="stat-label">This Month</p>
+          <p class="stat-value">${fmtNum(t.thisMonth.pageviews)}</p>
+          <p class="stat-sub">${fmtNum(t.thisMonth.visitors)} visitors</p>
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Month</th><th class="num">Page Views</th><th class="num">Visitors</th></tr></thead>
+        <tbody>${monthRows || `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px 0">No traffic data in range yet.</td></tr>`}</tbody>
+      </table>
+    </div>`;
+}
+
+async function addExpense() {
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  if (!amount || amount <= 0) { showToast('Enter a valid amount.', 'error'); return; }
+  const category = document.getElementById('exp-category').value;
+  const date = document.getElementById('exp-date').value || new Date().toISOString().slice(0, 10);
+  const note = document.getElementById('exp-note').value.trim();
+
+  const expense = { id: uid(), amount, category, date, note };
+  const saved = await saveExpenses([expense, ...getExpenses()]);
+  if (saved) {
+    showToast('Expense logged.', 'success');
+    renderDashboard();
+  }
+}
+
+function confirmDeleteExpense(id) {
+  const exp = getExpenses().find(e => e.id === id);
+  const label = exp ? `This ${fmtUSD(exp.amount)} "${exp.category}" expense` : 'This expense';
+  document.getElementById('confirm-body').textContent = `${label} will be permanently removed.`;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('confirm-ok').onclick = () => { deleteExpense(id); closeModal(); };
+}
+
+async function deleteExpense(id) {
+  const saved = await saveExpenses(getExpenses().filter(e => e.id !== id));
+  if (saved) showToast('Expense removed.', 'error');
+  renderDashboard();
 }
 
 // ── SETTINGS ──────────────────────────────────────────
@@ -1539,6 +2070,10 @@ function showToast(msg, type = 'success') {
 
 function setStatus(s) {
   document.getElementById('f-status').value = s;
+  if (s === 'Sold') {
+    const dateEl = document.getElementById('f-solddate');
+    if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+  }
   ['Available','Sold','Private'].forEach(opt => {
     const btn = document.getElementById('status-' + opt);
     if (!btn) return;

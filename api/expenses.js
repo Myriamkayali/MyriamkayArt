@@ -1,0 +1,69 @@
+const { put, list } = require('@vercel/blob');
+
+const EXPENSES_PATH = 'mk-data/expenses.json';
+const CONFIG_PATH   = 'mk-data/config.json';
+const DEFAULT_PIN   = '1234';
+
+async function readBlob(path) {
+  try {
+    const { blobs } = await list({ prefix: path });
+    const blob = blobs.find(b => b.pathname === path);
+    if (!blob) return null;
+    const res = await fetch(blob.url + '?t=' + Date.now()); // bypass CDN cache
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function writeBlob(path, data) {
+  await put(path, JSON.stringify(data), {
+    access: 'public',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: 'application/json',
+  });
+}
+
+async function parseBody(req) {
+  return new Promise((resolve) => {
+    let raw = '';
+    req.on('data', chunk => raw += chunk);
+    req.on('end', () => {
+      try { resolve(JSON.parse(raw || '{}')); }
+      catch { resolve({}); }
+    });
+  });
+}
+
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
+    if (req.method === 'GET') {
+      const expenses = await readBlob(EXPENSES_PATH);
+      return res.status(200).json(expenses || []);
+    }
+
+    if (req.method === 'POST') {
+      const { expenses, pin } = await parseBody(req);
+      const config   = await readBlob(CONFIG_PATH);
+      const validPin = config?.pin || DEFAULT_PIN;
+
+      if (!pin) return res.status(401).json({ error: 'PIN missing' });
+      if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+      if (!Array.isArray(expenses)) return res.status(400).json({ error: 'Invalid data — expected array' });
+
+      await writeBlob(EXPENSES_PATH, expenses);
+      return res.status(200).json({ ok: true });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (e) {
+    console.error('expenses handler error:', e);
+    return res.status(500).json({ error: e.message || 'Internal server error' });
+  }
+};
