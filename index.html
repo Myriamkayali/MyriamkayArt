@@ -126,9 +126,10 @@
   }
 
   .hero-sub {
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 400;
     color: var(--brown-light);
-    max-width: 380px;
+    max-width: 400px;
     line-height: 1.8;
     margin-bottom: 52px;
   }
@@ -290,8 +291,8 @@
   .about-content { padding-top: 40px; }
 
   .section-eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.22em;
+    font-size: 12px;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
     color: var(--terracotta);
     margin-bottom: 20px;
@@ -299,7 +300,7 @@
 
   .section-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(38px, 4vw, 58px);
+    font-size: clamp(42px, 4.5vw, 66px);
     font-weight: 300;
     line-height: 1.1;
     color: var(--umber);
@@ -308,7 +309,8 @@
   .section-title em { font-style: italic; }
 
   .about-content p {
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 400;
     color: var(--brown-mid);
     line-height: 1.9;
     margin-bottom: 20px;
@@ -619,17 +621,18 @@
   .premiere-tagline {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-size: 18px;
+    font-size: 20px;
     color: var(--terracotta);
     margin-top: -20px;
     margin-bottom: 20px;
   }
   .premiere-intro {
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 400;
     color: var(--brown-light);
     line-height: 1.9;
     max-width: 640px;
-    margin-bottom: 40px;
+    margin: 0 auto 40px;
   }
 
   .premiere-grid {
@@ -637,7 +640,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 32px;
     max-width: 1080px;
-    margin-bottom: 32px;
+    margin: 0 auto 32px;
   }
 
   .premiere-card {
@@ -721,7 +724,8 @@
     margin-bottom: 8px;
   }
   .step-content p {
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 400;
     color: var(--brown-light);
     line-height: 1.7;
   }
@@ -810,7 +814,8 @@
   .contact-left .section-title { color: var(--cream); }
 
   .contact-left p {
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 400;
     color: rgba(244,237,224,0.55);
     line-height: 1.8;
     max-width: 400px;
@@ -983,10 +988,22 @@
   }
 
   /* ── TRANSITIONS ── */
-  section { animation: fadeIn 0.5s ease; }
+  section { animation: fadeIn 0.7s cubic-bezier(0.22,1,0.36,1); }
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scroll reveal */
+  .reveal-init {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+  }
+  .reveal-init.in-view { opacity: 1; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-init, .reveal-init.in-view { opacity: 1; transform: none; transition: none; }
+    section { animation: none; }
   }
 
   /* ── HAMBURGER ── */
@@ -1101,21 +1118,23 @@
   .home-extra-section {
     padding: 80px 80px 0;
     background: var(--cream);
+    text-align: center;
   }
   .home-section-eyebrow {
-    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
-    color: var(--terracotta); margin-bottom: 10px;
+    font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--terracotta); margin-bottom: 12px;
     font-family: 'Jost', sans-serif;
   }
   .home-section-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(28px, 3.5vw, 46px); font-weight: 300; line-height: 1.1;
+    font-size: clamp(32px, 4vw, 52px); font-weight: 300; line-height: 1.1;
     color: var(--umber); margin-bottom: 36px;
   }
   .home-section-title em { font-style: italic; color: var(--terracotta); }
 
   /* Available scroll strip */
   .avail-scroll {
+    text-align: left;
     display: flex; gap: 24px; overflow-x: auto;
     padding-bottom: 24px; scroll-snap-type: x mandatory;
     scrollbar-width: thin; scrollbar-color: rgba(160,120,88,0.25) transparent;
@@ -1163,8 +1182,10 @@
   .dubai-section {
     padding: 80px 80px 0;
     background: var(--cream);
+    text-align: center;
   }
   .dubai-grid {
+    text-align: left;
     display: grid;
     grid-template-columns: 1.3fr 1fr 1fr;
     grid-template-rows: auto auto;
@@ -1178,13 +1199,14 @@
   }
   .dubai-grid-cell:hover img { transform: scale(1.04); }
   .dubai-caption {
-    margin-top: 20px;
-    font-size: 13px; color: var(--brown-light); line-height: 1.7;
-    max-width: 520px; font-family: 'Jost', sans-serif;
+    margin: 20px auto 0;
+    font-size: 15px; font-weight: 400; color: var(--brown-light); line-height: 1.8;
+    max-width: 560px; font-family: 'Jost', sans-serif;
   }
 
   /* Exhibition image grid (dynamic) */
   .exhibition-img-grid {
+    text-align: left;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
@@ -1208,8 +1230,10 @@
   .interview-section {
     padding: 80px 80px 80px;
     background: var(--cream);
+    text-align: center;
   }
   .interview-inner {
+    text-align: left;
     display: grid; grid-template-columns: 1fr 1.1fr; gap: 60px; align-items: center;
     border: 1px solid rgba(160,120,88,0.2); padding: 52px 52px;
   }
@@ -1523,7 +1547,7 @@
     <p class="section-eyebrow" style="margin-bottom: 24px;">Fine Art Prints</p>
     <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Coming<br><em style="font-style:italic; color: var(--terracotta);">Soon</em></h2>
     <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
-    <p style="font-size: 15px; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">A curated selection of fine art prints is on its way. Follow on Instagram and turn on story &amp; post notifications to be the first to know when they drop.</p>
+    <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">A curated selection of fine art prints is on its way. Follow on Instagram and turn on story &amp; post notifications to be the first to know when they drop.</p>
     <a href="https://instagram.com/myriamkay.art" target="_blank" style="display:inline-flex;align-items:center;gap:18px;padding:18px 28px;border:1px solid rgba(107,66,38,0.25);background:rgba(107,66,38,0.04);text-decoration:none;transition:all 0.25s;max-width:360px;width:100%;" onmouseover="this.style.borderColor='var(--terracotta)';this.style.background='rgba(184,92,56,0.07)'" onmouseout="this.style.borderColor='rgba(107,66,38,0.25)';this.style.background='rgba(107,66,38,0.04)'">
       <div style="width:44px;height:44px;border:1px solid rgba(107,66,38,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--umber);">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
@@ -1542,7 +1566,7 @@
   <div class="commission-layout">
     <div>
       <h2 class="section-title">Commission<br>a <em>Painting</em></h2>
-      <p style="font-size:15px;color:var(--brown-light);line-height:1.8;max-width:480px;margin-top:16px;">
+      <p style="font-size:16px;font-weight:400;color:var(--brown-light);line-height:1.8;max-width:480px;margin-top:16px;">
         Transform your vision into a one-of-a-kind artwork. Whether it's a meaningful gift, a statement piece for your home, or a personal tribute, I'd love to create something special for you.
       </p>
 
@@ -1908,6 +1932,7 @@
       container.innerHTML = `<div class="gallery-grid">${filtered.map((p, i) => renderGalleryItem(p, i)).join('')}</div>`;
     }
 
+    initScrollReveal('.gallery-item');
   }
 
   function openPainting(id) {
@@ -2055,7 +2080,7 @@
           <div>
             <p class="interview-source">PEOPLE &amp; CULTURE</p>
             <p class="interview-quote">${pressTitle}</p>
-            ${pressSubtitle ? `<p style="font-size:14px;color:var(--brown-light);font-family:'Jost',sans-serif;line-height:1.7;margin-bottom:28px;">${pressSubtitle}</p>` : ''}
+            ${pressSubtitle ? `<p style="font-size:15px;font-weight:400;color:var(--brown-light);font-family:'Jost',sans-serif;line-height:1.7;margin-bottom:28px;">${pressSubtitle}</p>` : ''}
             <a class="interview-read-btn" href="https://4pmfriday.com/article/myriam-kayali-paints-a-love-letter-to-beirut/" target="_blank">Read the Interview →</a>
           </div>
           ${pressImg ? `
@@ -2064,6 +2089,8 @@
           </a>` : ''}
         </div>
       </div>`;
+
+    initScrollReveal('.dubai-grid-cell, .exhibition-img-grid-cell, .interview-inner');
   }
 
   async function renderAvailableStrip() {
@@ -2088,6 +2115,8 @@
         <button class="avail-inquire-btn" onclick="event.stopPropagation();inquirePainting('${safeTitle}','${rawPrice}')">Inquire</button>
       </div>`;
     }).join('');
+
+    initScrollReveal('.avail-card');
   }
 
   async function renderIgFeed() {
@@ -2104,6 +2133,26 @@
         <div class="ig-feed-cell-overlay"><span>View on Instagram</span></div>
       </a>`
     ).join('');
+  }
+
+  let revealObserver = null;
+  function initScrollReveal(selector) {
+    const els = document.querySelectorAll(selector);
+    if (!revealObserver) {
+      revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    }
+    els.forEach(el => {
+      if (el.classList.contains('in-view')) return;
+      el.classList.add('reveal-init');
+      revealObserver.observe(el);
+    });
   }
 
   function showSection(id) {
@@ -2162,6 +2211,7 @@
   renderHome();
   renderAvailableStrip();
   renderExhibitionSection();
+  initScrollReveal('.premiere-card, .about-content, .about-image-wrap, .process-step, .commission-form, .contact-left, .contact-form');
 </script>
 </body>
 </html>
