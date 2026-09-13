@@ -1859,7 +1859,9 @@ async function renderDashboard() {
 
     ${renderTrafficBlock(trafficCache)}
 
-    ${renderSoldPaintingsBlock()}`;
+    ${renderSoldPaintingsBlock()}
+
+    ${renderUnsoldPaintingsBlock()}`;
 }
 
 function renderSoldPaintingsBlock() {
@@ -1890,6 +1892,42 @@ function renderSoldPaintingsBlock() {
         <thead><tr><th>Painting</th><th>Date Sold</th><th class="num">Price</th></tr></thead>
         <tbody>${rows}</tbody>
         ${sold.length ? `<tfoot><tr class="total-row"><td colspan="2">Total (${sold.length} sold)</td><td class="num">${fmtUSD(total)}</td></tr></tfoot>` : ''}
+      </table>
+    </div>`;
+}
+
+function renderUnsoldPaintingsBlock() {
+  const unsold = getPaintings()
+    .filter(p => p.status !== 'Sold')
+    .map(p => ({
+      title: p.title,
+      status: p.status || (p.available ? 'Available' : 'Private'),
+      price: Number(p.price) || 0,
+      hasPrice: !!Number(p.price),
+    }))
+    .sort((a, b) => {
+      if (a.status !== b.status) return a.status === 'Available' ? -1 : 1;
+      return b.price - a.price;
+    });
+
+  const total = unsold.reduce((sum, p) => sum + p.price, 0);
+  const pricedCount = unsold.filter(p => p.hasPrice).length;
+
+  const rows = unsold.length ? unsold.map(p => `
+    <tr>
+      <td>${p.title}</td>
+      <td><span class="pc-badge ${p.status === 'Available' ? 'avail' : 'cat'}">${p.status}</span></td>
+      <td class="num">${p.hasPrice ? fmtUSD(p.price) : '—'}</td>
+    </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px 0">No unsold paintings right now.</td></tr>`;
+
+  return `
+    <div class="dash-block">
+      <p class="dash-section-title">Unsold Paintings</p>
+      <p class="dash-section-sub">Available and Private paintings currently not sold, priced at listing (not counted in revenue).</p>
+      <table class="data-table">
+        <thead><tr><th>Painting</th><th>Status</th><th class="num">Price</th></tr></thead>
+        <tbody>${rows}</tbody>
+        ${unsold.length ? `<tfoot><tr class="total-row"><td colspan="2">Total (${pricedCount} priced of ${unsold.length})</td><td class="num">${fmtUSD(total)}</td></tr></tfoot>` : ''}
       </table>
     </div>`;
 }
