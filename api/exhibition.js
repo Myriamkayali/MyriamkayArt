@@ -6,7 +6,7 @@ const DEFAULT_PIN     = '1234';
 
 const DEFAULT_EXHIBITION = {
   title: 'A Taste of Home',
-  subtitle: 'Exhibition — Dubai, 2025',
+  subtitle: 'Exhibition, Dubai, 2025',
   description: 'A selection of works exploring memory, food, and the quiet persistence of everyday objects.',
   images: [],
   pressImageUrl: 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg',

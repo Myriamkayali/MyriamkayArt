@@ -1627,7 +1627,7 @@ function closeModal() {
 }
 
 // ── DASHBOARD ──────────────────────────────────────────
-const EXPENSE_CATEGORIES = ['Supplies', 'Paint & Materials', 'Shipping', 'Framing', 'Marketing', 'Studio Rent', 'Fees & Commissions', 'Other'];
+const EXPENSE_CATEGORIES = ['Supplies', 'Paint & Materials', 'Printing', 'Framing', 'Shipping', 'Marketing', 'Studio Rent', 'Fees & Commissions', 'Other'];
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function fmtUSD(n) {
@@ -1857,7 +1857,41 @@ async function renderDashboard() {
       </table>
     </div>
 
-    ${renderTrafficBlock(trafficCache)}`;
+    ${renderTrafficBlock(trafficCache)}
+
+    ${renderSoldPaintingsBlock()}`;
+}
+
+function renderSoldPaintingsBlock() {
+  const sold = getPaintings()
+    .filter(p => p.status === 'Sold' && Number(p.price))
+    .map(p => ({
+      title: p.title,
+      price: Number(p.price) || 0,
+      dateLabel: p.soldDate ? formatDate(p.soldDate) : (p.year ? `${p.year}` : '—'),
+      sortKey: p.soldDate || (p.year ? `${p.year}-00-00` : ''),
+    }))
+    .sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+
+  const total = sold.reduce((sum, p) => sum + p.price, 0);
+
+  const rows = sold.length ? sold.map(p => `
+    <tr>
+      <td>${p.title}</td>
+      <td>${p.dateLabel}</td>
+      <td class="num">${fmtUSD(p.price)}</td>
+    </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px 0">No sold paintings yet.</td></tr>`;
+
+  return `
+    <div class="dash-block">
+      <p class="dash-section-title">Sold Paintings</p>
+      <p class="dash-section-sub">Every sold painting behind the revenue numbers above.</p>
+      <table class="data-table">
+        <thead><tr><th>Painting</th><th>Date Sold</th><th class="num">Price</th></tr></thead>
+        <tbody>${rows}</tbody>
+        ${sold.length ? `<tfoot><tr class="total-row"><td colspan="2">Total (${sold.length} sold)</td><td class="num">${fmtUSD(total)}</td></tr></tfoot>` : ''}
+      </table>
+    </div>`;
 }
 
 function renderTrafficBlock(t) {
