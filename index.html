@@ -2242,7 +2242,7 @@
   function orderSummaryHtml() {
     const { print, size } = orderState;
     const opt = orderSelectedOption();
-    const price = opt && opt.price ? `$${Number(opt.price).toLocaleString()}` : '';
+    const price = opt && opt.price ? `€${Number(opt.price).toLocaleString()}` : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid rgba(107,66,38,0.12)">
       <div>
         <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--umber);line-height:1.2">${print.title}</p>
@@ -2260,7 +2260,7 @@
         ${offered.map(o => {
           const remaining = Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0));
           const disabled = remaining <= 0;
-          return `<span class="size-tag ${o.size === orderState.size ? 'active' : ''}" style="${disabled ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : 'cursor:pointer'}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">${o.size} — $${Number(o.price).toLocaleString()}</span>`;
+          return `<span class="size-tag ${o.size === orderState.size ? 'active' : ''}" style="${disabled ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : 'cursor:pointer'}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">${o.size} — €${Number(o.price).toLocaleString()}</span>`;
         }).join('')}
       </div>
     </div>`;
