@@ -961,6 +961,13 @@ body {
       </svg>
       Prints
     </div>
+    <div class="nav-item" onclick="showScreen('orders')" id="nav-orders">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4h12M2 8h12M2 12h8"/>
+        <circle cx="13" cy="12" r="2"/>
+      </svg>
+      Orders
+    </div>
 
     <p class="sidebar-section" style="margin-top:20px">Site</p>
     <div class="nav-item" onclick="window.open('index.html','_blank')">
@@ -1226,6 +1233,61 @@ function computePrintMetrics(pr) {
   return { totalCostPerUnit, profitPerUnit, profitMargin, numberRemaining, totalPotentialRevenue, totalPotentialProfit };
 }
 
+let ordersCache = null;
+function getOrders() { return ordersCache || []; }
+
+async function loadOrders() {
+  try {
+    const res = await fetch(`/api/orders?pin=${encodeURIComponent(currentAdminPin || '')}`);
+    ordersCache = await res.json();
+    if (!Array.isArray(ordersCache)) ordersCache = [];
+  } catch {
+    ordersCache = ordersCache || [];
+  }
+}
+
+async function updateOrder(orderId, patch) {
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', pin: currentAdminPin, orderId, patch }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast(data.error || `Save failed (${res.status}).`, 'error');
+      return false;
+    }
+    const order = getOrders().find(o => o.id === orderId);
+    if (order) Object.assign(order, patch);
+    return true;
+  } catch (e) {
+    showToast(e.message || 'Failed to save. Check your connection.', 'error');
+    return false;
+  }
+}
+
+async function sendPaymentLinkEmail(orderId) {
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'send-payment-link', pin: currentAdminPin, orderId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast(data.error || `Send failed (${res.status}).`, 'error');
+      return false;
+    }
+    const order = getOrders().find(o => o.id === orderId);
+    if (order) order.paymentStatus = 'Link Sent';
+    return true;
+  } catch (e) {
+    showToast(e.message || 'Failed to send. Check your connection.', 'error');
+    return false;
+  }
+}
+
 let trafficCache = null;
 async function loadTraffic() {
   try {
@@ -1311,12 +1373,12 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 // ── NAVIGATION ──────────────────────────────────────────
 function showScreen(name) {
   closeAdminSidebar();
-  ['list','add','settings','exhibition','dashboard','supplies','pricing','prints'].forEach(n => {
+  ['list','add','settings','exhibition','dashboard','supplies','pricing','prints','orders'].forEach(n => {
     const el = document.getElementById('nav-' + n);
     if (el) el.classList.toggle('active', n === name || (n === 'prints' && name === 'print-add'));
   });
 
-  const titles = { list: 'All Paintings', add: 'Add New Painting', settings: 'Settings', exhibition: 'Exhibition', dashboard: 'Dashboard', supplies: 'Art Supplies', pricing: 'Pricing Calculator', prints: 'Prints', 'print-add': 'Add New Print' };
+  const titles = { list: 'All Paintings', add: 'Add New Painting', settings: 'Settings', exhibition: 'Exhibition', dashboard: 'Dashboard', supplies: 'Art Supplies', pricing: 'Pricing Calculator', prints: 'Prints', 'print-add': 'Add New Print', orders: 'Orders' };
   document.getElementById('screen-title').textContent = titles[name] || 'Dashboard';
 
   const area = document.getElementById('topbar-actions');
@@ -1334,7 +1396,7 @@ function showScreen(name) {
     area.innerHTML = '';
   }
 
-  const render = { list: renderList, add: renderForm, settings: renderSettings, exhibition: renderExhibitionScreen, dashboard: renderDashboard, supplies: renderSupplies, pricing: renderPricingCalculator, prints: renderPrintsList, 'print-add': renderPrintForm };
+  const render = { list: renderList, add: renderForm, settings: renderSettings, exhibition: renderExhibitionScreen, dashboard: renderDashboard, supplies: renderSupplies, pricing: renderPricingCalculator, prints: renderPrintsList, 'print-add': renderPrintForm, orders: renderOrders };
   if (render[name]) { render[name](); }
 }
 
@@ -2175,6 +2237,81 @@ async function deletePrint(id) {
   renderPrintsList();
 }
 
+// ── ORDERS ──────────────────────────────────────────
+const ORDER_STATUS_OPTIONS = ['New', 'Link Sent', 'Paid', 'Shipped', 'Completed'];
+
+async function renderOrders() {
+  if (!ordersCache) await loadOrders();
+  const orders = getOrders().slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+
+  const statusColor = (s) => ({
+    'New': '#e74c3c', 'Link Sent': '#e0a030', 'Paid': '#27ae60', 'Shipped': 'var(--terra-light)', 'Completed': 'var(--muted)',
+  }[s] || 'var(--muted)');
+
+  const rows = orders.length ? orders.map(o => `
+    <tr>
+      <td>
+        <p style="color:var(--cream)">${o.clientName}</p>
+        <p style="font-size:11px;color:var(--muted)">${o.clientEmail}</p>
+        <p style="font-size:11px;color:var(--muted)">${o.clientPhone}</p>
+      </td>
+      <td style="font-size:12px">
+        ${o.shippingStreet}<br>${o.shippingCity}, ${o.shippingCountry} ${o.shippingPostalCode}
+      </td>
+      <td>
+        <p style="color:var(--cream)">${o.printTitle}</p>
+        <p style="font-size:11px;color:var(--muted)">${o.printSize || ''}</p>
+      </td>
+      <td class="num">${fmtUSD(o.price)} × ${o.quantity}</td>
+      <td>${o.createdAt ? formatDate(o.createdAt.slice(0, 10)) : '—'}</td>
+      <td>
+        <select class="form-select" style="font-size:11px;padding:6px 24px 6px 8px;color:${statusColor(o.paymentStatus)}" onchange="updateOrder('${o.id}', { paymentStatus: this.value }).then(() => renderOrders())">
+          ${ORDER_STATUS_OPTIONS.map(s => `<option value="${s}" ${o.paymentStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="min-width:220px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <input class="form-input" id="pl-${o.id}" value="${(o.paymentLink || '').replace(/"/g, '&quot;')}" placeholder="Paste OMT/Whish link" style="font-size:11px;padding:8px 10px;flex:1;min-width:140px">
+          <button class="btn btn-ghost" style="padding:8px 12px;font-size:10px" onclick="savePaymentLink('${o.id}')">Save</button>
+        </div>
+        <button class="btn btn-primary" style="margin-top:6px;padding:8px 12px;font-size:10px;width:100%" onclick="triggerSendPaymentLink('${o.id}')">Send payment link to client</button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px 0">No orders yet.</td></tr>`;
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="dash-block" style="overflow-x:auto">
+      <p class="dash-section-title">Orders</p>
+      <p class="dash-section-sub">${orders.length} order${orders.length === 1 ? '' : 's'}. Update status as you invoice, collect payment, and ship — this is a tracking list only, no payment processing happens here.</p>
+      <table class="data-table">
+        <thead><tr><th>Client</th><th>Shipping</th><th>Print</th><th class="num">Price × Qty</th><th>Date</th><th>Status</th><th>Payment Link</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function savePaymentLink(orderId) {
+  const input = document.getElementById(`pl-${orderId}`);
+  if (!input) return;
+  updateOrder(orderId, { paymentLink: input.value.trim() }).then(saved => {
+    if (saved) showToast('Payment link saved.', 'success');
+  });
+}
+
+async function triggerSendPaymentLink(orderId) {
+  const input = document.getElementById(`pl-${orderId}`);
+  const link = input ? input.value.trim() : '';
+  if (!link) { showToast('Paste a payment link first.', 'error'); return; }
+
+  const saved = await updateOrder(orderId, { paymentLink: link });
+  if (!saved) return;
+
+  const sent = await sendPaymentLinkEmail(orderId);
+  if (sent) {
+    showToast('Payment link sent to client.', 'success');
+    renderOrders();
+  }
+}
+
 function toggleSwitch(id) {
   document.getElementById(id).classList.toggle('on');
 }
@@ -2517,11 +2654,139 @@ function computeDashboardData() {
   return { revenue, costs, curYear, curMonthKey };
 }
 
+function computeBusinessSummary() {
+  const paintings = getPaintings();
+  const prints = getPrints();
+  const soldPaintings = paintings.filter(p => p.status === 'Sold' && Number(p.price));
+
+  const revenueOriginals = soldPaintings.reduce((sum, p) => sum + (Number(p.revenueReceived) || Number(p.price) || 0), 0);
+
+  let profitOriginals = 0;
+  const marginSamples = [];
+  let bestItem = null;
+
+  soldPaintings.forEach(p => {
+    const revenue = Number(p.revenueReceived) || Number(p.price) || 0;
+    const cost = Number(p.costEstimate && p.costEstimate.total) || 0;
+    if (cost > 0 && revenue > 0) {
+      const profit = revenue - cost;
+      const margin = (profit / revenue) * 100;
+      profitOriginals += profit;
+      marginSamples.push(margin);
+      if (!bestItem || margin > bestItem.margin) bestItem = { label: p.title, margin, type: 'painting' };
+    }
+  });
+
+  const costSamples = paintings
+    .map(p => Number(p.costEstimate && p.costEstimate.total) || 0)
+    .filter(c => c > 0);
+  const avgCostPerPainting = costSamples.length ? costSamples.reduce((a, b) => a + b, 0) / costSamples.length : 0;
+  const avgMarginOriginals = marginSamples.length ? marginSamples.reduce((a, b) => a + b, 0) / marginSamples.length : 0;
+
+  let revenuePrints = 0, profitPrints = 0, numberPrintsSold = 0, printUnitsRemaining = 0;
+  let remainingPotentialRevenue = 0, remainingPotentialProfit = 0, printsWithRemaining = 0;
+  prints.forEach(pr => {
+    const m = computePrintMetrics(pr);
+    const sold = Number(pr.numberSold) || 0;
+    const price = Number(pr.price) || 0;
+    revenuePrints += price * sold;
+    profitPrints += m.profitPerUnit * sold;
+    numberPrintsSold += sold;
+    printUnitsRemaining += m.numberRemaining;
+    if (m.numberRemaining > 0) {
+      printsWithRemaining += 1;
+      remainingPotentialRevenue += price * m.numberRemaining;
+      remainingPotentialProfit += m.profitPerUnit * m.numberRemaining;
+    }
+    if (sold > 0 && price > 0 && (!bestItem || m.profitMargin > bestItem.margin)) {
+      bestItem = { label: pr.title, margin: m.profitMargin, type: 'print' };
+    }
+  });
+
+  const totalMaterialCosts = getSupplies().reduce((sum, s) => sum + (Number(s.totalCost) || 0), 0);
+
+  return {
+    revenueOriginals, profitOriginals, revenuePrints, profitPrints,
+    totalMaterialCosts, avgCostPerPainting, avgMarginOriginals,
+    numberOriginalsSold: soldPaintings.length,
+    numberPrintsSold, printUnitsRemaining, printsWithRemaining,
+    remainingPotentialRevenue, remainingPotentialProfit,
+    bestItem,
+  };
+}
+
+function generatePricingInsights(summary) {
+  const insights = [];
+  const paintings = getPaintings();
+
+  // Cost of the most-documented painting size
+  const sizeGroups = {};
+  paintings.forEach(p => {
+    const w = Math.round(Number(p.width) || 0), h = Math.round(Number(p.height) || 0);
+    const cost = Number(p.costEstimate && p.costEstimate.total) || 0;
+    if (!w || !h || !cost) return;
+    const key = `${w}×${h}`;
+    (sizeGroups[key] = sizeGroups[key] || []).push(cost);
+  });
+  const sizeEntries = Object.entries(sizeGroups).filter(([, arr]) => arr.length >= 2).sort((a, b) => b[1].length - a[1].length);
+  if (sizeEntries.length) {
+    const [size, costsArr] = sizeEntries[0];
+    const avg = costsArr.reduce((a, b) => a + b, 0) / costsArr.length;
+    insights.push(`Your ${size}cm paintings usually cost around ${fmtUSD(avg)} to produce, based on ${costsArr.length} tracked pieces.`);
+  }
+
+  // Average margin on sold originals
+  if (summary.avgMarginOriginals) {
+    insights.push(`Average profit margin on sold originals is ${summary.avgMarginOriginals.toFixed(0)}%.`);
+  }
+
+  // Remaining print edition potential
+  if (summary.printUnitsRemaining > 0) {
+    insights.push(`If every remaining print sells at its current price, that's ${fmtUSD(summary.remainingPotentialRevenue)} in revenue and ${fmtUSD(summary.remainingPotentialProfit)} in profit across ${summary.printsWithRemaining} edition${summary.printsWithRemaining === 1 ? '' : 's'}.`);
+  }
+
+  // Material cost trend, this month vs last
+  const now = new Date();
+  const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+  const supplies = getSupplies();
+  const monthKeyOf = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d)) return null;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+  const sumForMonth = (key) => supplies.reduce((sum, s) => monthKeyOf(s.purchaseDate) === key ? sum + (Number(s.totalCost) || 0) : sum, 0);
+  const thisMonthSpend = sumForMonth(thisMonthKey);
+  const lastMonthSpend = sumForMonth(lastMonthKey);
+  if (thisMonthSpend > 0 && thisMonthSpend > lastMonthSpend) {
+    const byCategory = {};
+    supplies.forEach(s => {
+      if (monthKeyOf(s.purchaseDate) !== thisMonthKey) return;
+      const cat = s.category || 'Other';
+      byCategory[cat] = (byCategory[cat] || 0) + (Number(s.totalCost) || 0);
+    });
+    const topCat = Object.entries(byCategory).sort((a, b) => b[1] - a[1])[0];
+    insights.push(`Material costs increased this month (${fmtUSD(thisMonthSpend)} vs ${fmtUSD(lastMonthSpend)} last month)${topCat ? `, mostly from recent ${topCat[0].toLowerCase()} purchases` : ''}.`);
+  }
+
+  // Best margin item
+  if (summary.bestItem) {
+    insights.push(`Your best profit-margin item is "${summary.bestItem.label}" at ${summary.bestItem.margin.toFixed(0)}% margin.`);
+  }
+
+  return insights;
+}
+
 async function renderDashboard() {
   if (!expensesCache) await loadExpenses();
   if (!suppliesCache) await loadSupplies();
+  if (!printsCache) await loadPrints();
   if (!trafficCache) await loadTraffic();
   const { revenue, costs } = computeDashboardData();
+  const summary = computeBusinessSummary();
+  const insights = generatePricingInsights(summary);
 
   const netAll = revenue.allTime - costs.allTime;
   const netYear = revenue.thisYear - costs.thisYear;
@@ -2592,6 +2857,67 @@ async function renderDashboard() {
         <p class="kpi-value ${netAll >= 0 ? 'pos' : 'neg'}">${fmtUSD(netAll)}</p>
         <p class="kpi-sub">revenue minus costs</p>
       </div>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Originals vs Prints</p>
+      <p class="dash-section-sub">All-time. Print sales aren't dated per-unit, so they aren't reflected in the month/year trend tables below.</p>
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <p class="kpi-label">Revenue — Originals</p>
+          <p class="kpi-value">${fmtUSD(summary.revenueOriginals)}</p>
+          <p class="kpi-sub">${summary.numberOriginalsSold} sold</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Revenue — Prints</p>
+          <p class="kpi-value">${fmtUSD(summary.revenuePrints)}</p>
+          <p class="kpi-sub">${summary.numberPrintsSold} unit${summary.numberPrintsSold === 1 ? '' : 's'} sold</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Print Units Remaining</p>
+          <p class="kpi-value">${summary.printUnitsRemaining}</p>
+          <p class="kpi-sub">across ${summary.printsWithRemaining} edition${summary.printsWithRemaining === 1 ? '' : 's'}</p>
+        </div>
+      </div>
+      <div class="kpi-row" style="margin-top:16px">
+        <div class="kpi-card">
+          <p class="kpi-label">Profit — Originals</p>
+          <p class="kpi-value ${summary.profitOriginals >= 0 ? 'pos' : 'neg'}">${fmtUSD(summary.profitOriginals)}</p>
+          <p class="kpi-sub">where cost data exists</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Profit — Prints</p>
+          <p class="kpi-value ${summary.profitPrints >= 0 ? 'pos' : 'neg'}">${fmtUSD(summary.profitPrints)}</p>
+          <p class="kpi-sub">from units sold</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Total Material Costs</p>
+          <p class="kpi-value">${fmtUSD(summary.totalMaterialCosts)}</p>
+          <p class="kpi-sub">from Supplies</p>
+        </div>
+      </div>
+      <div class="mini-stats-row" style="margin-top:16px">
+        <div class="mini-stat">
+          <p class="stat-label">Avg. Cost / Painting</p>
+          <p class="stat-value">${summary.avgCostPerPainting ? fmtUSD(summary.avgCostPerPainting) : '—'}</p>
+        </div>
+        <div class="mini-stat">
+          <p class="stat-label">Avg. Margin (Originals)</p>
+          <p class="stat-value">${summary.avgMarginOriginals ? summary.avgMarginOriginals.toFixed(0) + '%' : '—'}</p>
+        </div>
+        <div class="mini-stat">
+          <p class="stat-label">Best Margin Item</p>
+          <p class="stat-value" style="font-size:16px;line-height:1.3">${summary.bestItem ? `${summary.bestItem.label} (${summary.bestItem.margin.toFixed(0)}%)` : '—'}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Pricing Insights</p>
+      <p class="dash-section-sub">Plain-language notes generated from your data — simple rules, no ML.</p>
+      ${insights.length ? `<ul style="margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:12px">
+        ${insights.map(text => `<li style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--cream-dim);line-height:1.6"><span style="color:var(--terra-light);flex-shrink:0">→</span><span>${text}</span></li>`).join('')}
+      </ul>` : `<p style="font-size:13px;color:var(--muted)">Not enough data yet — add cost estimates to a few paintings and log some supply purchases to unlock insights here.</p>`}
     </div>
 
     <p class="dash-section-title">This Year</p>

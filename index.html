@@ -1709,6 +1709,14 @@
   </div>
 </div>
 
+<!-- ══ ORDER MODAL ══ -->
+<div id="order-modal" onclick="if(event.target===this)closeOrderModal()" style="display:none;position:fixed;inset:0;z-index:950;background:rgba(20,10,5,0.85);overflow-y:auto;padding:32px 16px;">
+  <div style="max-width:480px;margin:0 auto;background:var(--cream);position:relative;">
+    <button onclick="closeOrderModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--brown-light);font-size:26px;cursor:pointer;line-height:1;z-index:2;padding:4px;">×</button>
+    <div id="order-modal-body" style="padding:40px 28px 32px;"></div>
+  </div>
+</div>
+
 <script>
   function sendContactWhatsApp() {
     const name    = document.getElementById('ct-name').value.trim();
@@ -2113,21 +2121,14 @@
     }
   }
 
-  function inquirePrint(title, price) {
-    const lines = [
-      `Hi Myriam! I'm interested in the print "${title}".`,
-      price ? `Listed price: $${price}` : null,
-      ``,
-      `Could you tell me more about it?`,
-    ].filter(l => l !== null).join('\n');
-    window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
-  }
+  let printsPublicCache = [];
 
   async function renderPrintsSection() {
     const wrap = document.getElementById('prints-content');
     if (!wrap) return;
 
     const all = await getPrintsPublic();
+    printsPublicCache = all;
     const prints = all.filter(pr => pr.status !== 'Private');
 
     if (!prints.length) {
@@ -2158,7 +2159,6 @@
       const soldOut = pr.status === 'Sold Out' || numberRemaining <= 0;
       const dims = pr.width && pr.height ? `${pr.width} × ${pr.height} cm` : '';
       const price = pr.price ? `$${Number(pr.price).toLocaleString()}` : 'Inquire for price';
-      const safeTitle = (pr.title || '').replace(/'/g, "\\'");
       const imgHtml = pr.imageData
         ? `<img class="print-img-bg" src="${pr.imageData}" alt="${pr.title}" style="object-fit:cover;display:block" loading="lazy">`
         : `<div class="print-img-bg gp-1" style="height:100%"></div>`;
@@ -2177,7 +2177,7 @@
             <p class="print-price">${price}</p>
             ${soldOut
               ? `<span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light)">Sold Out</span>`
-              : `<button class="btn-order" onclick="inquirePrint('${safeTitle}','${pr.price || ''}')">Inquire →</button>`}
+              : `<button class="btn-order" onclick="openOrderModal('${pr.id}')">Order This Print →</button>`}
           </div>
         </div>
       </div>`;
@@ -2192,6 +2192,179 @@
       <div class="prints-grid">${cards}</div>`;
 
     initScrollReveal('.print-card');
+  }
+
+  // ── ORDER FLOW (multi-step modal) ──
+  let orderState = null;
+
+  function openOrderModal(printId) {
+    const print = printsPublicCache.find(p => p.id === printId);
+    if (!print) return;
+    orderState = {
+      print,
+      step: 1,
+      form: { name: '', email: '', phone: '', street: '', city: '', country: '', postal: '', quantity: 1 },
+    };
+    document.getElementById('order-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    renderOrderStep();
+  }
+
+  function closeOrderModal() {
+    document.getElementById('order-modal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function orderStepDotsHtml(step) {
+    return `<div style="display:flex;gap:6px;margin-bottom:20px">
+      ${[1, 2].map(n => `<div style="height:3px;flex:1;background:${n <= step ? 'var(--terracotta)' : 'rgba(107,66,38,0.15)'};transition:background 0.3s"></div>`).join('')}
+    </div>`;
+  }
+
+  function orderSummaryHtml(print) {
+    const dims = print.width && print.height ? `${print.width} × ${print.height} cm` : '';
+    const price = print.price ? `$${Number(print.price).toLocaleString()}` : '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid rgba(107,66,38,0.12)">
+      <div>
+        <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--umber);line-height:1.2">${print.title}</p>
+        <p style="font-size:11px;color:var(--brown-light);letter-spacing:0.04em;margin-top:2px">${dims}${dims && price ? ' · ' : ''}${price}</p>
+      </div>
+    </div>`;
+  }
+
+  function renderOrderStep() {
+    if (!orderState) return;
+    const body = document.getElementById('order-modal-body');
+    const { print, step, form } = orderState;
+
+    if (step === 1) {
+      body.innerHTML = `
+        ${orderStepDotsHtml(1)}
+        <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);margin-bottom:4px">Step 1 of 2</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--umber);margin-bottom:18px">Contact &amp; Shipping</p>
+        ${orderSummaryHtml(print)}
+        <div class="form-group"><label>Full Name</label><input class="form-input" id="ord-name" value="${form.name}"></div>
+        <div class="form-group"><label>Email</label><input class="form-input" type="email" inputmode="email" id="ord-email" value="${form.email}"></div>
+        <div class="form-group"><label>Phone</label><input class="form-input" type="tel" inputmode="tel" id="ord-phone" value="${form.phone}"></div>
+        <div class="form-group"><label>Street Address</label><input class="form-input" id="ord-street" value="${form.street}"></div>
+        <div class="form-row">
+          <div class="form-group"><label>City</label><input class="form-input" id="ord-city" value="${form.city}"></div>
+          <div class="form-group"><label>Postal Code</label><input class="form-input" id="ord-postal" value="${form.postal}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Country</label><input class="form-input" id="ord-country" value="${form.country}"></div>
+          <div class="form-group"><label>Quantity</label><input class="form-input" type="number" inputmode="numeric" min="1" id="ord-qty" value="${form.quantity}"></div>
+        </div>
+        <p id="ord-error" style="color:#c0392b;font-size:12px;margin-top:4px;display:none"></p>
+        <button class="form-submit" onclick="orderNextStep()">Continue →</button>
+      `;
+      return;
+    }
+
+    if (step === 2) {
+      const total = (Number(print.price) || 0) * (Number(form.quantity) || 1);
+      body.innerHTML = `
+        ${orderStepDotsHtml(2)}
+        <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);margin-bottom:4px">Step 2 of 2</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--umber);margin-bottom:18px">Review Your Order</p>
+        ${orderSummaryHtml(print)}
+        <div style="font-size:14px;color:var(--brown-mid);line-height:1.9;margin-bottom:8px">
+          <p>Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
+        </div>
+        <div style="font-size:13px;color:var(--brown-mid);line-height:1.9;background:var(--cream-dark);padding:16px 18px;margin-bottom:20px">
+          <p>${form.name}</p>
+          <p>${form.email}</p>
+          <p>${form.phone}</p>
+          <p>${form.street}</p>
+          <p>${form.city}, ${form.postal}</p>
+          <p>${form.country}</p>
+        </div>
+        <button class="form-submit" id="ord-submit-btn" onclick="submitOrder()">Place Order</button>
+        <button onclick="orderPrevStep()" style="display:block;width:100%;text-align:center;background:none;border:none;color:var(--brown-light);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-top:14px;padding:8px;">← Back to edit</button>
+      `;
+      return;
+    }
+
+    if (step === 3) {
+      const dims = print.width && print.height ? `${print.width} × ${print.height} cm` : '';
+      body.innerHTML = `
+        <div style="text-align:center;padding:16px 0 4px">
+          <p style="font-family:'Cormorant Garamond',serif;font-size:30px;font-style:italic;color:var(--umber);margin-bottom:14px">Order Received</p>
+          <p style="font-size:14px;color:var(--brown-mid);line-height:1.8;margin-bottom:18px">Thank you, ${(form.name || '').split(' ')[0] || 'there'}! Your order for <strong>${print.title}</strong>${dims ? ` (${dims})` : ''} has been received.</p>
+          <p style="font-size:13px;color:var(--brown-light);line-height:1.8;margin-bottom:28px">A confirmation email is on its way to ${form.email}. Myriam will follow up directly with a payment link once your order is ready to process.</p>
+          <button class="form-submit" onclick="closeOrderModal()">Close</button>
+        </div>`;
+    }
+  }
+
+  function readOrderForm() {
+    orderState.form = {
+      name: document.getElementById('ord-name').value.trim(),
+      email: document.getElementById('ord-email').value.trim(),
+      phone: document.getElementById('ord-phone').value.trim(),
+      street: document.getElementById('ord-street').value.trim(),
+      city: document.getElementById('ord-city').value.trim(),
+      country: document.getElementById('ord-country').value.trim(),
+      postal: document.getElementById('ord-postal').value.trim(),
+      quantity: Math.max(1, parseInt(document.getElementById('ord-qty').value) || 1),
+    };
+  }
+
+  function orderNextStep() {
+    readOrderForm();
+    const f = orderState.form;
+    const errEl = document.getElementById('ord-error');
+    const showError = (msg) => { errEl.textContent = msg; errEl.style.display = 'block'; };
+
+    if (!f.name || !f.email || !f.phone || !f.street || !f.city || !f.country || !f.postal) {
+      showError('Please fill in every field.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+    errEl.style.display = 'none';
+    orderState.step = 2;
+    renderOrderStep();
+  }
+
+  function orderPrevStep() {
+    orderState.step = 1;
+    renderOrderStep();
+  }
+
+  async function submitOrder() {
+    const btn = document.getElementById('ord-submit-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; btn.style.opacity = '0.7'; }
+
+    const { print, form } = orderState;
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          printId: print.id,
+          clientName: form.name,
+          clientEmail: form.email,
+          clientPhone: form.phone,
+          shippingStreet: form.street,
+          shippingCity: form.city,
+          shippingCountry: form.country,
+          shippingPostalCode: form.postal,
+          quantity: form.quantity,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) throw new Error(data.error || 'Could not place order.');
+
+      orderState.step = 3;
+      renderOrderStep();
+    } catch (e) {
+      alert(e.message || 'Something went wrong placing your order. Please try again, or message us on Instagram.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Place Order'; btn.style.opacity = '1'; }
+    }
   }
 
   async function renderIgFeed() {
