@@ -133,11 +133,11 @@ module.exports = async function handler(req, res) {
     // ── Public: create a new order. No PIN — customers don't have one. ──
     if (body.action === 'create') {
       const {
-        printId, clientName, clientEmail, clientPhone,
+        printId, size, clientName, clientEmail, clientPhone,
         shippingStreet, shippingCity, shippingCountry, shippingPostalCode, quantity,
       } = body;
 
-      if (!printId || !clientName || !clientEmail || !clientPhone || !shippingStreet || !shippingCity || !shippingCountry || !shippingPostalCode) {
+      if (!printId || !size || !clientName || !clientEmail || !clientPhone || !shippingStreet || !shippingCity || !shippingCountry || !shippingPostalCode) {
         return res.status(400).json({ error: 'Please fill in every field.' });
       }
       if (!isValidEmail(clientEmail)) {
@@ -149,13 +149,16 @@ module.exports = async function handler(req, res) {
       const print = prints.find(p => p.id === printId);
       if (!print) return res.status(404).json({ error: 'That print could not be found.' });
 
+      const sizeOption = (print.sizeOptions || []).find(o => o.size === size && Number(o.price) > 0);
+      if (!sizeOption) return res.status(400).json({ error: 'That size is not currently available for this print.' });
+
       const order = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
         createdAt: new Date().toISOString(),
         printId: print.id,
         printTitle: print.title,
-        printSize: print.width && print.height ? `${print.width} × ${print.height} cm` : '',
-        price: Number(print.price) || 0, // authoritative — never trust a client-submitted price
+        printSize: size,
+        price: Number(sizeOption.price) || 0, // authoritative — never trust a client-submitted price
         quantity: qty,
         clientName: String(clientName).trim(),
         clientEmail: String(clientEmail).trim(),

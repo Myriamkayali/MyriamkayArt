@@ -1547,85 +1547,21 @@
 
 <!-- ══ COMMISSION ══ -->
 <section id="commission">
-  <div class="commission-layout">
-    <div>
-      <h2 class="section-title">Commission<br>a <em>Painting</em></h2>
-      <p style="font-size:16px;font-weight:400;color:var(--brown-light);line-height:1.8;max-width:480px;margin-top:16px;">
-        Transform your vision into a one-of-a-kind artwork. Whether it's a meaningful gift, a statement piece for your home, or a personal tribute, I'd love to create something special for you.
-      </p>
-
-      <div class="process-steps">
-        <div class="process-step">
-          <span class="step-num">01</span>
-          <div class="step-content">
-            <p class="step-title">Initial Inquiry</p>
-            <p>Send me a brief description of your vision: the subject, size, and any references that speak to you. I'll respond within 3 days.</p>
-          </div>
-        </div>
-        <div class="process-step">
-          <span class="step-num">02</span>
-          <div class="step-content">
-            <p class="step-title">Consultation &amp; Quote</p>
-            <p>We'll have a conversation to align on the scope, reference materials, and timeline. A detailed quote follows.</p>
-          </div>
-        </div>
-        <div class="process-step">
-          <span class="step-num">03</span>
-          <div class="step-content">
-            <p class="step-title">Deposit &amp; Begin</p>
-            <p>A 50% deposit secures your place. I'll share progress photos at key stages for your feedback.</p>
-          </div>
-        </div>
-        <div class="process-step">
-          <span class="step-num">04</span>
-          <div class="step-content">
-            <p class="step-title">Delivery</p>
-            <p>Upon final approval, the balance is due. Your painting is carefully packed and shipped worldwide.</p>
-          </div>
-        </div>
+  <div style="min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 40px;">
+    <p class="section-eyebrow" style="margin-bottom: 24px;">Commissions</p>
+    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Not Taking<br><em style="font-style:italic; color: var(--terracotta);">Commissions</em></h2>
+    <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
+    <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">I'm not accepting new commissions at the moment while I focus on current work. Follow along on Instagram, I'll share an update as soon as commissions reopen.</p>
+    <a href="https://instagram.com/myriamkay.art" target="_blank" style="display:inline-flex;align-items:center;gap:18px;padding:18px 28px;border:1px solid rgba(107,66,38,0.25);background:rgba(107,66,38,0.04);text-decoration:none;transition:all 0.25s;max-width:360px;width:100%;" onmouseover="this.style.borderColor='var(--terracotta)';this.style.background='rgba(184,92,56,0.07)'" onmouseout="this.style.borderColor='rgba(107,66,38,0.25)';this.style.background='rgba(107,66,38,0.04)'">
+      <div style="width:44px;height:44px;border:1px solid rgba(107,66,38,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--umber);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
       </div>
-    </div>
-
-    <div class="commission-form">
-      <p class="form-title">Start a Commission</p>
-      <div class="form-row">
-        <div class="form-group">
-          <label>First Name</label>
-          <input id="c-first" type="text" placeholder="Your name">
-        </div>
-        <div class="form-group">
-          <label>Last Name</label>
-          <input id="c-last" type="text" placeholder="Family name">
-        </div>
+      <div style="text-align:left;">
+        <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown-light);margin-bottom:3px;line-height:1;">Instagram</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--umber);line-height:1;">@myriamkay.art</p>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Approximate Size</label>
-          <select id="c-size">
-            <option value="" disabled selected>Size range</option>
-            <option>Less than 50×50 cm</option>
-            <option>80×80 cm</option>
-            <option>100×100 cm</option>
-            <option>150×150 cm and above</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Budget Range</label>
-          <select id="c-budget">
-            <option value="" disabled selected>Approx. budget</option>
-            <option>$300 – $500</option>
-            <option>$600 – $1,000</option>
-            <option>$1,500</option>
-            <option>$1,500+</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Tell Me About Your Vision</label>
-        <textarea id="c-vision" placeholder="Describe the subject, mood, references, and anything that matters to you..."></textarea>
-      </div>
-      <button class="form-submit" onclick="sendCommissionWhatsApp()">Send Inquiry →</button>
-    </div>
+      <span style="margin-left:auto;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);white-space:nowrap;">Follow →</span>
+    </a>
   </div>
 </section>
 
@@ -1735,31 +1671,6 @@
       `Name: ${name}`,
       ``,
       message,
-    ].filter(l => l !== null).join('\n');
-
-    window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
-  }
-
-  function sendCommissionWhatsApp() {
-    const first  = document.getElementById('c-first').value.trim();
-    const last   = document.getElementById('c-last').value.trim();
-    const size   = document.getElementById('c-size').value;
-    const budget = document.getElementById('c-budget').value;
-    const vision = document.getElementById('c-vision').value.trim();
-
-    if (!first || !vision) {
-      alert('Please fill in at least your name and your vision.');
-      return;
-    }
-
-    const lines = [
-      `Hi Myriam! I'd like to inquire about a commission.`,
-      ``,
-      `Name: ${first}${last ? ' ' + last : ''}`,
-      size   ? `Size: ${size}`     : null,
-      budget ? `Budget: ${budget}` : null,
-      ``,
-      `Vision: ${vision}`,
     ].filter(l => l !== null).join('\n');
 
     window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
@@ -2123,6 +2034,39 @@
 
   let printsPublicCache = [];
 
+  let selectedPrintSize = {};
+
+  function selectPrintSize(printId, size, price, remaining, editionSize, el) {
+    selectedPrintSize[printId] = size;
+    const card = el.closest('.print-card');
+    card.querySelectorAll('.size-tag').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const priceEl = card.querySelector('.print-price');
+    if (priceEl) priceEl.textContent = price ? `$${Number(price).toLocaleString()}` : 'Inquire for price';
+    const remainEl = card.querySelector('.print-remaining-note');
+    if (remainEl) remainEl.textContent = remaining > 0 ? `${remaining} of ${editionSize} remaining` : 'Sold out at this size';
+  }
+
+  function comingSoonPrintsHtml() {
+    return `
+      <div style="min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 40px;">
+        <p class="section-eyebrow" style="margin-bottom: 24px;">Fine Art Prints</p>
+        <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Coming<br><em style="font-style:italic; color: var(--terracotta);">Soon</em></h2>
+        <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
+        <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">A curated selection of fine art prints is on its way. Follow on Instagram and turn on story &amp; post notifications to be the first to know when they drop.</p>
+        <a href="https://instagram.com/myriamkay.art" target="_blank" style="display:inline-flex;align-items:center;gap:18px;padding:18px 28px;border:1px solid rgba(107,66,38,0.25);background:rgba(107,66,38,0.04);text-decoration:none;transition:all 0.25s;max-width:360px;width:100%;" onmouseover="this.style.borderColor='var(--terracotta)';this.style.background='rgba(184,92,56,0.07)'" onmouseout="this.style.borderColor='rgba(107,66,38,0.25)';this.style.background='rgba(107,66,38,0.04)'">
+          <div style="width:44px;height:44px;border:1px solid rgba(107,66,38,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--umber);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <div style="text-align:left;">
+            <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown-light);margin-bottom:3px;line-height:1;">Instagram</p>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--umber);line-height:1;">@myriamkay.art</p>
+          </div>
+          <span style="margin-left:auto;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);white-space:nowrap;">Follow →</span>
+        </a>
+      </div>`;
+  }
+
   async function renderPrintsSection() {
     const wrap = document.getElementById('prints-content');
     if (!wrap) return;
@@ -2131,63 +2075,59 @@
     printsPublicCache = all;
     const prints = all.filter(pr => pr.status !== 'Private');
 
-    if (!prints.length) {
-      wrap.innerHTML = `
-        <div style="min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 40px;">
-          <p class="section-eyebrow" style="margin-bottom: 24px;">Fine Art Prints</p>
-          <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Coming<br><em style="font-style:italic; color: var(--terracotta);">Soon</em></h2>
-          <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
-          <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">A curated selection of fine art prints is on its way. Follow on Instagram and turn on story &amp; post notifications to be the first to know when they drop.</p>
-          <a href="https://instagram.com/myriamkay.art" target="_blank" style="display:inline-flex;align-items:center;gap:18px;padding:18px 28px;border:1px solid rgba(107,66,38,0.25);background:rgba(107,66,38,0.04);text-decoration:none;transition:all 0.25s;max-width:360px;width:100%;" onmouseover="this.style.borderColor='var(--terracotta)';this.style.background='rgba(184,92,56,0.07)'" onmouseout="this.style.borderColor='rgba(107,66,38,0.25)';this.style.background='rgba(107,66,38,0.04)'">
-            <div style="width:44px;height:44px;border:1px solid rgba(107,66,38,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--umber);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
-            </div>
-            <div style="text-align:left;">
-              <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown-light);margin-bottom:3px;line-height:1;">Instagram</p>
-              <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--umber);line-height:1;">@myriamkay.art</p>
-            </div>
-            <span style="margin-left:auto;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);white-space:nowrap;">Follow →</span>
-          </a>
-        </div>`;
-      return;
-    }
-
     const cards = prints.map(pr => {
-      const editionSize = Number(pr.editionSize) || 0;
-      const numberSold = Number(pr.numberSold) || 0;
-      const numberRemaining = Math.max(0, editionSize - numberSold);
-      const soldOut = pr.status === 'Sold Out' || numberRemaining <= 0;
-      const dims = pr.width && pr.height ? `${pr.width} × ${pr.height} cm` : '';
-      const price = pr.price ? `$${Number(pr.price).toLocaleString()}` : 'Inquire for price';
+      const offered = (pr.sizeOptions || [])
+        .filter(o => Number(o.price) > 0)
+        .map(o => ({
+          size: o.size,
+          price: Number(o.price) || 0,
+          editionSize: Number(o.editionSize) || 0,
+          remaining: Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0)),
+        }));
+      if (!offered.length) return ''; // nothing priced yet — skip this print entirely
+
+      const allSoldOut = pr.status === 'Sold Out' || offered.every(o => o.remaining <= 0);
+      const firstAvailable = offered.find(o => o.remaining > 0) || offered[0];
+
       const imgHtml = pr.imageData
         ? `<img class="print-img-bg" src="${pr.imageData}" alt="${pr.title}" style="object-fit:cover;display:block" loading="lazy">`
         : `<div class="print-img-bg gp-1" style="height:100%"></div>`;
 
+      const sizeTagsHtml = offered.map(o => `
+        <span class="size-tag ${o.size === firstAvailable.size ? 'active' : ''}" style="${o.remaining <= 0 ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : ''}"
+          onclick="${o.remaining > 0 ? `selectPrintSize('${pr.id}','${o.size}',${o.price},${o.remaining},${o.editionSize},this)` : ''}">${o.size}</span>`).join('');
+
       return `<div class="print-card">
         <div class="print-img">
           ${imgHtml}
-          <span class="print-badge" style="${soldOut ? 'background:var(--umber)' : ''}">${soldOut ? 'Sold Out' : 'Limited Edition'}</span>
+          <span class="print-badge" style="${allSoldOut ? 'background:var(--umber)' : ''}">${allSoldOut ? 'Sold Out' : 'Limited Edition'}</span>
         </div>
         <div class="print-info">
           <p class="print-title">${pr.title}</p>
-          <p class="print-edition">Physical Limited Edition Print${dims ? ' · ' + dims : ''}</p>
-          <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown-light);margin-bottom:16px">Edition of ${editionSize} — ${soldOut ? 'sold out' : `${numberRemaining} remaining`}</p>
+          <p class="print-edition">Physical Limited Edition Print</p>
+          <div class="print-sizes">${sizeTagsHtml}</div>
+          <p class="print-remaining-note" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown-light);margin-bottom:16px">${firstAvailable.remaining > 0 ? `${firstAvailable.remaining} of ${firstAvailable.editionSize} remaining` : 'Sold out at this size'}</p>
           ${pr.description ? `<p style="font-size:14px;color:var(--brown-mid);line-height:1.7;margin-bottom:20px">${pr.description}</p>` : ''}
           <div class="print-footer">
-            <p class="print-price">${price}</p>
-            ${soldOut
+            <p class="print-price">${firstAvailable.price ? `$${firstAvailable.price.toLocaleString()}` : 'Inquire for price'}</p>
+            ${allSoldOut
               ? `<span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light)">Sold Out</span>`
-              : `<button class="btn-order" onclick="openOrderModal('${pr.id}')">Order This Print →</button>`}
+              : `<button class="btn-order" onclick="openOrderModal('${pr.id}', selectedPrintSize['${pr.id}'] || '${firstAvailable.size}')">Order This Print →</button>`}
           </div>
         </div>
       </div>`;
-    }).join('');
+    }).filter(Boolean).join('');
+
+    if (!cards) {
+      wrap.innerHTML = comingSoonPrintsHtml();
+      return;
+    }
 
     wrap.innerHTML = `
       <div class="prints-header">
         <p class="section-eyebrow">Fine Art Prints</p>
         <h2 class="section-title">Limited <em>Editions</em></h2>
-        <p>Physical, museum-quality prints, produced and shipped in small, numbered editions. Once an edition sells out, it's gone for good.</p>
+        <p>Physical, museum-quality prints, produced and shipped in small, numbered editions, available in A4 through A1. Once an edition sells out, it's gone for good.</p>
       </div>
       <div class="prints-grid">${cards}</div>`;
 
@@ -2197,11 +2137,17 @@
   // ── ORDER FLOW (multi-step modal) ──
   let orderState = null;
 
-  function openOrderModal(printId) {
+  function openOrderModal(printId, size) {
     const print = printsPublicCache.find(p => p.id === printId);
     if (!print) return;
+    const offered = (print.sizeOptions || []).filter(o => Number(o.price) > 0);
+    if (!offered.length) return;
+    const initial = offered.find(o => o.size === size && Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0)) > 0)
+      || offered.find(o => Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0)) > 0)
+      || offered[0];
     orderState = {
       print,
+      size: initial.size,
       step: 1,
       form: { name: '', email: '', phone: '', street: '', city: '', country: '', postal: '', quantity: 1 },
     };
@@ -2215,19 +2161,44 @@
     document.body.style.overflow = '';
   }
 
+  function selectOrderSize(size) {
+    orderState.size = size;
+    renderOrderStep();
+  }
+
   function orderStepDotsHtml(step) {
     return `<div style="display:flex;gap:6px;margin-bottom:20px">
       ${[1, 2].map(n => `<div style="height:3px;flex:1;background:${n <= step ? 'var(--terracotta)' : 'rgba(107,66,38,0.15)'};transition:background 0.3s"></div>`).join('')}
     </div>`;
   }
 
-  function orderSummaryHtml(print) {
-    const dims = print.width && print.height ? `${print.width} × ${print.height} cm` : '';
-    const price = print.price ? `$${Number(print.price).toLocaleString()}` : '';
+  function orderSelectedOption() {
+    return (orderState.print.sizeOptions || []).find(o => o.size === orderState.size) || null;
+  }
+
+  function orderSummaryHtml() {
+    const { print, size } = orderState;
+    const opt = orderSelectedOption();
+    const price = opt && opt.price ? `$${Number(opt.price).toLocaleString()}` : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid rgba(107,66,38,0.12)">
       <div>
         <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--umber);line-height:1.2">${print.title}</p>
-        <p style="font-size:11px;color:var(--brown-light);letter-spacing:0.04em;margin-top:2px">${dims}${dims && price ? ' · ' : ''}${price}</p>
+        <p style="font-size:11px;color:var(--brown-light);letter-spacing:0.04em;margin-top:2px">${size}${price ? ' · ' + price : ''}</p>
+      </div>
+    </div>`;
+  }
+
+  function orderSizeSelectorHtml() {
+    const offered = (orderState.print.sizeOptions || []).filter(o => Number(o.price) > 0);
+    if (offered.length <= 1) return '';
+    return `<div class="form-group">
+      <label>Size</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${offered.map(o => {
+          const remaining = Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0));
+          const disabled = remaining <= 0;
+          return `<span class="size-tag ${o.size === orderState.size ? 'active' : ''}" style="${disabled ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : 'cursor:pointer'}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">${o.size} — $${Number(o.price).toLocaleString()}</span>`;
+        }).join('')}
       </div>
     </div>`;
   }
@@ -2242,7 +2213,8 @@
         ${orderStepDotsHtml(1)}
         <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);margin-bottom:4px">Step 1 of 2</p>
         <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--umber);margin-bottom:18px">Contact &amp; Shipping</p>
-        ${orderSummaryHtml(print)}
+        ${orderSummaryHtml()}
+        ${orderSizeSelectorHtml()}
         <div class="form-group"><label>Full Name</label><input class="form-input" id="ord-name" value="${form.name}"></div>
         <div class="form-group"><label>Email</label><input class="form-input" type="email" inputmode="email" id="ord-email" value="${form.email}"></div>
         <div class="form-group"><label>Phone</label><input class="form-input" type="tel" inputmode="tel" id="ord-phone" value="${form.phone}"></div>
@@ -2262,14 +2234,16 @@
     }
 
     if (step === 2) {
-      const total = (Number(print.price) || 0) * (Number(form.quantity) || 1);
+      const opt = orderSelectedOption();
+      const unitPrice = opt ? Number(opt.price) || 0 : 0;
+      const total = unitPrice * (Number(form.quantity) || 1);
       body.innerHTML = `
         ${orderStepDotsHtml(2)}
         <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);margin-bottom:4px">Step 2 of 2</p>
         <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--umber);margin-bottom:18px">Review Your Order</p>
-        ${orderSummaryHtml(print)}
+        ${orderSummaryHtml()}
         <div style="font-size:14px;color:var(--brown-mid);line-height:1.9;margin-bottom:8px">
-          <p>Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
+          <p>Size: ${orderState.size} · Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
         </div>
         <div style="font-size:13px;color:var(--brown-mid);line-height:1.9;background:var(--cream-dark);padding:16px 18px;margin-bottom:20px">
           <p>${form.name}</p>
@@ -2286,11 +2260,10 @@
     }
 
     if (step === 3) {
-      const dims = print.width && print.height ? `${print.width} × ${print.height} cm` : '';
       body.innerHTML = `
         <div style="text-align:center;padding:16px 0 4px">
           <p style="font-family:'Cormorant Garamond',serif;font-size:30px;font-style:italic;color:var(--umber);margin-bottom:14px">Order Received</p>
-          <p style="font-size:14px;color:var(--brown-mid);line-height:1.8;margin-bottom:18px">Thank you, ${(form.name || '').split(' ')[0] || 'there'}! Your order for <strong>${print.title}</strong>${dims ? ` (${dims})` : ''} has been received.</p>
+          <p style="font-size:14px;color:var(--brown-mid);line-height:1.8;margin-bottom:18px">Thank you, ${(form.name || '').split(' ')[0] || 'there'}! Your order for <strong>${print.title}</strong> (${orderState.size}) has been received.</p>
           <p style="font-size:13px;color:var(--brown-light);line-height:1.8;margin-bottom:28px">A confirmation email is on its way to ${form.email}. Myriam will follow up directly with a payment link once your order is ready to process.</p>
           <button class="form-submit" onclick="closeOrderModal()">Close</button>
         </div>`;
@@ -2338,7 +2311,7 @@
     const btn = document.getElementById('ord-submit-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; btn.style.opacity = '0.7'; }
 
-    const { print, form } = orderState;
+    const { print, form, size } = orderState;
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -2346,6 +2319,7 @@
         body: JSON.stringify({
           action: 'create',
           printId: print.id,
+          size,
           clientName: form.name,
           clientEmail: form.email,
           clientPhone: form.phone,

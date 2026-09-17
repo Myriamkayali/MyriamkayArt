@@ -1212,17 +1212,20 @@ async function savePrints(prints) {
   }
 }
 
-function computePrintMetrics(pr) {
-  const paper = Number(pr.paperCost) || 0;
-  const production = Number(pr.productionCost) || 0;
-  const packaging = Number(pr.packagingCost) || 0;
-  const shipping = Number(pr.shippingCost) || 0;
-  const certificate = Number(pr.certificateCost) || 0;
+const PRINT_SIZE_NAMES = ['A4', 'A3', 'A2', 'A1'];
+
+// Metrics for one size option of a print (price, edition, costs all live per-size now).
+function computeSizeMetrics(opt) {
+  const paper = Number(opt.paperCost) || 0;
+  const production = Number(opt.productionCost) || 0;
+  const packaging = Number(opt.packagingCost) || 0;
+  const shipping = Number(opt.shippingCost) || 0;
+  const certificate = Number(opt.certificateCost) || 0;
   const totalCostPerUnit = Math.round((paper + production + packaging + shipping + certificate) * 100) / 100;
 
-  const price = Number(pr.price) || 0;
-  const editionSize = Number(pr.editionSize) || 0;
-  const numberSold = Number(pr.numberSold) || 0;
+  const price = Number(opt.price) || 0;
+  const editionSize = Number(opt.editionSize) || 0;
+  const numberSold = Number(opt.numberSold) || 0;
   const numberRemaining = Math.max(0, editionSize - numberSold);
 
   const profitPerUnit = Math.round((price - totalCostPerUnit) * 100) / 100;
@@ -1231,6 +1234,30 @@ function computePrintMetrics(pr) {
   const totalPotentialProfit = Math.round(profitPerUnit * editionSize * 100) / 100;
 
   return { totalCostPerUnit, profitPerUnit, profitMargin, numberRemaining, totalPotentialRevenue, totalPotentialProfit };
+}
+
+// Aggregate metrics across every size option a print offers (list cards, dashboard summaries).
+function computePrintMetrics(pr) {
+  const options = (pr.sizeOptions || []).filter(o => Number(o.price) > 0);
+  let numberRemaining = 0, totalPotentialRevenue = 0, totalPotentialProfit = 0, numberSold = 0, editionSize = 0;
+  let bestMargin = null, minPrice = null;
+
+  options.forEach(o => {
+    const m = computeSizeMetrics(o);
+    numberRemaining += m.numberRemaining;
+    totalPotentialRevenue += m.totalPotentialRevenue;
+    totalPotentialProfit += m.totalPotentialProfit;
+    numberSold += Number(o.numberSold) || 0;
+    editionSize += Number(o.editionSize) || 0;
+    if (bestMargin === null || m.profitMargin > bestMargin) bestMargin = m.profitMargin;
+    const price = Number(o.price) || 0;
+    if (price > 0 && (minPrice === null || price < minPrice)) minPrice = price;
+  });
+
+  return {
+    numberRemaining, totalPotentialRevenue, totalPotentialProfit, numberSold, editionSize,
+    profitMargin: bestMargin || 0, minPrice: minPrice || 0, sizeCount: options.length,
+  };
 }
 
 let ordersCache = null;
@@ -1834,9 +1861,161 @@ async function renderPricingCalculator() {
         <thead><tr><th>Price Point</th><th class="num">Price</th><th class="num">Profit</th><th class="num">Margin</th></tr></thead>
         <tbody id="pc-points-body"></tbody>
       </table>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Painting Price Breakdown by Size</p>
+      <p class="dash-section-sub">Set your material cost at one reference size — it's scaled by area across every size in your catalog, then flat costs and margin are added on top.</p>
+      <div class="expense-form-grid">
+        <div class="form-group">
+          <label class="form-label">Reference Width (cm)</label>
+          <input class="form-input" id="pb-ref-width" type="number" min="1" value="30" oninput="recalcPaintingBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reference Height (cm)</label>
+          <input class="form-input" id="pb-ref-height" type="number" min="1" value="30" oninput="recalcPaintingBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Material Cost at Reference Size</label>
+          <input class="form-input" id="pb-ref-material" type="number" min="0" step="0.5" value="0" oninput="recalcPaintingBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Packaging Cost (flat)</label>
+          <input class="form-input" id="pb-packaging" type="number" min="0" step="0.5" value="${st.defaultPackagingCostOriginals}" oninput="recalcPaintingBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shipping Cost (flat)</label>
+          <input class="form-input" id="pb-shipping" type="number" min="0" step="0.5" value="${st.defaultShippingCost}" oninput="recalcPaintingBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Margin (%)</label>
+          <input class="form-input" id="pb-margin" type="number" min="0" max="95" value="${st.targetProfitMargin}" oninput="recalcPaintingBreakdown()">
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Size</th><th class="num">Area (cm²)</th><th class="num">Material Cost</th><th class="num">Total Cost</th><th class="num">Suggested Price</th></tr></thead>
+        <tbody id="painting-breakdown-body"></tbody>
+      </table>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Print Price Breakdown by Paper Size</p>
+      <p class="dash-section-sub">Same idea, for prints — set paper/production cost at one A-series size, scaled by area across A4 through A1.</p>
+      <div class="expense-form-grid">
+        <div class="form-group">
+          <label class="form-label">Reference Size</label>
+          <select class="form-select" id="prb-ref-size" onchange="recalcPrintBreakdown()">
+            ${A_SERIES_SIZES.map(s => `<option value="${s.name}" ${s.name === 'A3' ? 'selected' : ''}>${s.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Paper/Production Cost at Reference Size</label>
+          <input class="form-input" id="prb-ref-cost" type="number" min="0" step="0.5" value="0" oninput="recalcPrintBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Packaging Cost (flat)</label>
+          <input class="form-input" id="prb-packaging" type="number" min="0" step="0.5" value="${st.defaultPackagingCostPrints}" oninput="recalcPrintBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shipping Cost (flat)</label>
+          <input class="form-input" id="prb-shipping" type="number" min="0" step="0.5" value="${st.defaultShippingCost}" oninput="recalcPrintBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certificate Cost (flat, optional)</label>
+          <input class="form-input" id="prb-certificate" type="number" min="0" step="0.5" value="${st.defaultCertificateCost}" oninput="recalcPrintBreakdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Margin (%)</label>
+          <input class="form-input" id="prb-margin" type="number" min="0" max="95" value="${st.targetProfitMargin}" oninput="recalcPrintBreakdown()">
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Size</th><th class="num">Area (cm²)</th><th class="num">Paper/Production Cost</th><th class="num">Total Cost</th><th class="num">Suggested Price</th></tr></thead>
+        <tbody id="print-breakdown-body"></tbody>
+      </table>
     </div>`;
 
   recalcPricing();
+  recalcPaintingBreakdown();
+  recalcPrintBreakdown();
+}
+
+const A_SERIES_SIZES = [
+  { name: 'A4', w: 21.0, h: 29.7 },
+  { name: 'A3', w: 29.7, h: 42.0 },
+  { name: 'A2', w: 42.0, h: 59.4 },
+  { name: 'A1', w: 59.4, h: 84.1 },
+];
+
+function getCatalogPaintingSizes() {
+  const sizes = new Map();
+  getPaintings().forEach(p => {
+    const w = Math.round(Number(p.width) || 0), h = Math.round(Number(p.height) || 0);
+    if (!w || !h) return;
+    const key = `${w}×${h}`;
+    if (!sizes.has(key)) sizes.set(key, { w, h, area: w * h });
+  });
+  return Array.from(sizes.values()).sort((a, b) => a.area - b.area);
+}
+
+function recalcPaintingBreakdown() {
+  const body = document.getElementById('painting-breakdown-body');
+  if (!body) return;
+
+  const refW = parseFloat(document.getElementById('pb-ref-width').value) || 1;
+  const refH = parseFloat(document.getElementById('pb-ref-height').value) || 1;
+  const refMaterial = parseFloat(document.getElementById('pb-ref-material').value) || 0;
+  const packaging = parseFloat(document.getElementById('pb-packaging').value) || 0;
+  const shipping = parseFloat(document.getElementById('pb-shipping').value) || 0;
+  const margin = Math.min(95, Math.max(0, parseFloat(document.getElementById('pb-margin').value) || 0));
+  const refArea = refW * refH;
+
+  let sizes = getCatalogPaintingSizes();
+  const refKey = `${refW}×${refH}`;
+  if (!sizes.find(s => `${s.w}×${s.h}` === refKey)) {
+    sizes = [...sizes, { w: refW, h: refH, area: refArea }].sort((a, b) => a.area - b.area);
+  }
+
+  body.innerHTML = sizes.length ? sizes.map(s => {
+    const materialCost = refArea > 0 ? refMaterial * (s.area / refArea) : 0;
+    const totalCost = materialCost + packaging + shipping;
+    const price = margin < 100 ? totalCost / (1 - margin / 100) : totalCost;
+    return `<tr>
+      <td>${s.w} × ${s.h} cm</td>
+      <td class="num">${s.area.toLocaleString()}</td>
+      <td class="num">${fmtUSD(materialCost)}</td>
+      <td class="num">${fmtUSD(totalCost)}</td>
+      <td class="num" style="color:var(--terra-light)">${fmtUSD(price)}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px 0">No sized paintings in your catalog yet.</td></tr>`;
+}
+
+function recalcPrintBreakdown() {
+  const body = document.getElementById('print-breakdown-body');
+  if (!body) return;
+
+  const refName = document.getElementById('prb-ref-size').value;
+  const refSize = A_SERIES_SIZES.find(s => s.name === refName) || A_SERIES_SIZES[1];
+  const refCost = parseFloat(document.getElementById('prb-ref-cost').value) || 0;
+  const packaging = parseFloat(document.getElementById('prb-packaging').value) || 0;
+  const shipping = parseFloat(document.getElementById('prb-shipping').value) || 0;
+  const certificate = parseFloat(document.getElementById('prb-certificate').value) || 0;
+  const margin = Math.min(95, Math.max(0, parseFloat(document.getElementById('prb-margin').value) || 0));
+  const refArea = refSize.w * refSize.h;
+
+  body.innerHTML = A_SERIES_SIZES.map(s => {
+    const area = s.w * s.h;
+    const scaledCost = refArea > 0 ? refCost * (area / refArea) : 0;
+    const totalCost = scaledCost + packaging + shipping + certificate;
+    const price = margin < 100 ? totalCost / (1 - margin / 100) : totalCost;
+    return `<tr>
+      <td>${s.name} (${s.w.toFixed(1)} × ${s.h.toFixed(1)} cm)</td>
+      <td class="num">${Math.round(area).toLocaleString()}</td>
+      <td class="num">${fmtUSD(scaledCost)}</td>
+      <td class="num">${fmtUSD(totalCost)}</td>
+      <td class="num" style="color:var(--terra-light)">${fmtUSD(price)}</td>
+    </tr>`;
+  }).join('');
 }
 
 function pricingSuggestFromSize() {
@@ -1939,12 +2118,16 @@ async function renderPrintsList() {
   const prints = getPrints();
 
   const totalPrints = prints.length;
-  const totalSold = prints.reduce((sum, pr) => sum + (Number(pr.numberSold) || 0), 0);
-  const totalRemaining = prints.reduce((sum, pr) => sum + computePrintMetrics(pr).numberRemaining, 0);
-  const potentialRevenueRemaining = prints.reduce((sum, pr) => {
-    const price = Number(pr.price) || 0;
-    return sum + price * computePrintMetrics(pr).numberRemaining;
-  }, 0);
+  let totalSold = 0, totalRemaining = 0, potentialRevenueRemaining = 0;
+  prints.forEach(pr => {
+    const m = computePrintMetrics(pr);
+    totalSold += m.numberSold;
+    totalRemaining += m.numberRemaining;
+    potentialRevenueRemaining += (pr.sizeOptions || []).reduce((sum, o) => {
+      const om = computeSizeMetrics(o);
+      return sum + (Number(o.price) || 0) * om.numberRemaining;
+    }, 0);
+  });
 
   let html = `
     <div class="stats-row">
@@ -2000,12 +2183,12 @@ async function renderPrintsList() {
           </div>
           <div class="painting-card-info">
             <p class="pc-title">${pr.title}</p>
-            <p class="pc-meta">${pr.width && pr.height ? `${pr.width} × ${pr.height} cm · ` : ''}Edition of ${pr.editionSize || 0}</p>
+            <p class="pc-meta">${m.sizeCount} size${m.sizeCount === 1 ? '' : 's'} offered · Edition of ${m.editionSize}</p>
             <div class="pc-badges">
               ${statusBadge}
-              <span class="pc-badge cat">${Number(pr.numberSold) || 0}/${pr.editionSize || 0} sold</span>
+              <span class="pc-badge cat">${m.numberSold}/${m.editionSize} sold</span>
             </div>
-            <p style="font-size:11px;color:var(--terra-light);margin-top:8px">${fmtUSD(pr.price)} · ${m.profitMargin.toFixed(0)}% margin</p>
+            <p style="font-size:11px;color:var(--terra-light);margin-top:8px">${m.minPrice ? `from ${fmtUSD(m.minPrice)}` : 'No price set'} · ${m.profitMargin.toFixed(0)}% best margin</p>
           </div>
         </div>`;
     });
@@ -2015,15 +2198,38 @@ async function renderPrintsList() {
   document.getElementById('content-area').innerHTML = html;
 }
 
+function findSizeOption(pr, size) {
+  return (pr.sizeOptions || []).find(o => o.size === size) || null;
+}
+
+function sizeOptionBlockHtml(size, opt) {
+  const o = opt || { price: '', editionSize: '', numberSold: 0, paperCost: '', productionCost: '', packagingCost: '', shippingCost: '', certificateCost: '' };
+  return `
+    <div style="border:1px solid var(--border);padding:18px;margin-bottom:14px;background:var(--surface)">
+      <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--cream);margin-bottom:14px">${size}</p>
+      <div class="expense-form-grid">
+        <div class="form-group"><label class="form-label">Price</label><input class="form-input" id="pr-${size}-price" type="number" min="0" step="0.5" value="${o.price}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Edition Size</label><input class="form-input" id="pr-${size}-edition" type="number" min="0" value="${o.editionSize}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Number Sold</label><input class="form-input" id="pr-${size}-sold" type="number" min="0" value="${o.numberSold || 0}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Paper Cost</label><input class="form-input" id="pr-${size}-paper" type="number" min="0" step="0.5" value="${o.paperCost}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Production Cost</label><input class="form-input" id="pr-${size}-production" type="number" min="0" step="0.5" value="${o.productionCost}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Packaging Cost</label><input class="form-input" id="pr-${size}-packaging" type="number" min="0" step="0.5" value="${o.packagingCost}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Shipping Cost</label><input class="form-input" id="pr-${size}-shipping" type="number" min="0" step="0.5" value="${o.shippingCost}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Certificate Cost</label><input class="form-input" id="pr-${size}-certificate" type="number" min="0" step="0.5" value="${o.certificateCost}" oninput="updatePrintTotals()"></div>
+      </div>
+      <div class="mini-stats-row" style="margin-top:12px;grid-template-columns:repeat(4,1fr)">
+        <div class="mini-stat"><p class="stat-label">Total Cost/Unit</p><p class="stat-value" id="pr-${size}-total-cost" style="font-size:18px">$0</p></div>
+        <div class="mini-stat"><p class="stat-label">Profit/Unit</p><p class="stat-value" id="pr-${size}-profit" style="font-size:18px">$0</p></div>
+        <div class="mini-stat"><p class="stat-label">Margin</p><p class="stat-value" id="pr-${size}-margin" style="font-size:18px">—</p></div>
+        <div class="mini-stat"><p class="stat-label">Remaining</p><p class="stat-value" id="pr-${size}-remaining" style="font-size:18px">0</p></div>
+      </div>
+    </div>`;
+}
+
 async function renderPrintForm() {
   if (!printsCache) await loadPrints();
 
-  let pr = {
-    title: '', description: '', width: '', height: '',
-    editionSize: '', numberSold: 0, price: '',
-    paperCost: '', productionCost: '', packagingCost: '', shippingCost: '', certificateCost: '',
-    status: 'Available', imageData: null,
-  };
+  let pr = { title: '', description: '', status: 'Available', imageData: null, sizeOptions: [] };
 
   if (editingPrintId) {
     const found = getPrints().find(x => x.id === editingPrintId);
@@ -2062,26 +2268,6 @@ async function renderPrintForm() {
           <textarea class="form-textarea" id="pr-desc" placeholder="A few words for the public print page...">${pr.description || ''}</textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Print Width (cm)</label>
-          <input class="form-input" id="pr-width" type="number" min="0" value="${pr.width}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Print Height (cm)</label>
-          <input class="form-input" id="pr-height" type="number" min="0" value="${pr.height}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Edition Size</label>
-          <input class="form-input" id="pr-edition" type="number" min="1" value="${pr.editionSize}" oninput="updatePrintTotals()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Number Sold</label>
-          <input class="form-input" id="pr-sold" type="number" min="0" value="${pr.numberSold || 0}" oninput="updatePrintTotals()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Selling Price (per unit)</label>
-          <input class="form-input" id="pr-price" type="number" min="0" step="0.5" value="${pr.price}" oninput="updatePrintTotals()">
-        </div>
-        <div class="form-group">
           <label class="form-label">Status</label>
           <select class="form-select" id="pr-status">
             ${['Available', 'Sold Out', 'Private'].map(s => `<option value="${s}" ${pr.status === s ? 'selected' : ''}>${s}</option>`).join('')}
@@ -2094,42 +2280,11 @@ async function renderPrintForm() {
       <div id="print-img-section">${imgSection}</div>
 
       <hr class="form-divider">
-      <p class="form-section-title">Cost Per Unit</p>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Production Cost</label>
-          <input class="form-input" id="pr-production" type="number" min="0" step="0.5" value="${pr.productionCost}" oninput="updatePrintTotals()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Paper Cost</label>
-          <input class="form-input" id="pr-paper" type="number" min="0" step="0.5" value="${pr.paperCost}" oninput="updatePrintTotals()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Packaging Cost</label>
-          <input class="form-input" id="pr-packaging" type="number" min="0" step="0.5" value="${pr.packagingCost}" oninput="updatePrintTotals()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Shipping Cost (optional)</label>
-          <input class="form-input" id="pr-shipping" type="number" min="0" step="0.5" value="${pr.shippingCost}" oninput="updatePrintTotals()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Certificate Cost (optional)</label>
-          <input class="form-input" id="pr-certificate" type="number" min="0" step="0.5" value="${pr.certificateCost}" oninput="updatePrintTotals()">
-        </div>
-      </div>
+      <p class="form-section-title">Size Options &amp; Pricing</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Leave a size's price at 0 to not offer it on the public site. Price, edition size, and costs are all tracked separately per size.</p>
+      ${PRINT_SIZE_NAMES.map(size => sizeOptionBlockHtml(size, findSizeOption(pr, size))).join('')}
 
-      <div class="mini-stats-row" style="margin:20px 0">
-        <div class="mini-stat"><p class="stat-label">Total Cost/Unit</p><p class="stat-value" id="pr-total-cost" style="font-size:22px">$0</p></div>
-        <div class="mini-stat"><p class="stat-label">Profit/Unit</p><p class="stat-value" id="pr-profit-unit" style="font-size:22px">$0</p></div>
-        <div class="mini-stat"><p class="stat-label">Margin</p><p class="stat-value" id="pr-margin" style="font-size:22px">—</p></div>
-      </div>
-      <div class="mini-stats-row" style="margin-bottom:20px">
-        <div class="mini-stat"><p class="stat-label">Remaining</p><p class="stat-value" id="pr-remaining" style="font-size:22px">0</p></div>
-        <div class="mini-stat"><p class="stat-label">Potential Revenue (full edition)</p><p class="stat-value" id="pr-potential-revenue" style="font-size:22px">$0</p></div>
-        <div class="mini-stat"><p class="stat-label">Potential Profit (full edition)</p><p class="stat-value" id="pr-potential-profit" style="font-size:22px">$0</p></div>
-      </div>
-
-      <div style="display:flex;gap:12px">
+      <div style="display:flex;gap:12px;margin-top:8px">
         <button class="btn btn-primary" onclick="savePrint()" style="padding:12px 36px;font-size:11px">${editingPrintId ? 'Save Changes' : 'Add Print'}</button>
         <button class="btn btn-ghost" onclick="cancelEditPrint()">Cancel</button>
       </div>
@@ -2139,27 +2294,27 @@ async function renderPrintForm() {
 }
 
 function updatePrintTotals() {
-  const el = document.getElementById('pr-edition');
+  const el = document.getElementById(`pr-${PRINT_SIZE_NAMES[0]}-price`);
   if (!el) return;
-  const draft = {
-    editionSize: document.getElementById('pr-edition').value,
-    numberSold: document.getElementById('pr-sold').value,
-    price: document.getElementById('pr-price').value,
-    productionCost: document.getElementById('pr-production').value,
-    paperCost: document.getElementById('pr-paper').value,
-    packagingCost: document.getElementById('pr-packaging').value,
-    shippingCost: document.getElementById('pr-shipping').value,
-    certificateCost: document.getElementById('pr-certificate').value,
-  };
-  const m = computePrintMetrics(draft);
-  document.getElementById('pr-total-cost').textContent = fmtUSD(m.totalCostPerUnit);
-  document.getElementById('pr-profit-unit').textContent = fmtUSD(m.profitPerUnit);
-  document.getElementById('pr-profit-unit').style.color = m.profitPerUnit >= 0 ? '' : '#e74c3c';
-  document.getElementById('pr-margin').textContent = draft.price ? `${m.profitMargin.toFixed(1)}%` : '—';
-  document.getElementById('pr-remaining').textContent = m.numberRemaining;
-  document.getElementById('pr-potential-revenue').textContent = fmtUSD(m.totalPotentialRevenue);
-  document.getElementById('pr-potential-profit').textContent = fmtUSD(m.totalPotentialProfit);
-  document.getElementById('pr-potential-profit').style.color = m.totalPotentialProfit >= 0 ? '' : '#e74c3c';
+  PRINT_SIZE_NAMES.forEach(size => {
+    const opt = {
+      price: document.getElementById(`pr-${size}-price`).value,
+      editionSize: document.getElementById(`pr-${size}-edition`).value,
+      numberSold: document.getElementById(`pr-${size}-sold`).value,
+      paperCost: document.getElementById(`pr-${size}-paper`).value,
+      productionCost: document.getElementById(`pr-${size}-production`).value,
+      packagingCost: document.getElementById(`pr-${size}-packaging`).value,
+      shippingCost: document.getElementById(`pr-${size}-shipping`).value,
+      certificateCost: document.getElementById(`pr-${size}-certificate`).value,
+    };
+    const m = computeSizeMetrics(opt);
+    document.getElementById(`pr-${size}-total-cost`).textContent = fmtUSD(m.totalCostPerUnit);
+    const profitEl = document.getElementById(`pr-${size}-profit`);
+    profitEl.textContent = fmtUSD(m.profitPerUnit);
+    profitEl.style.color = m.profitPerUnit >= 0 ? '' : '#e74c3c';
+    document.getElementById(`pr-${size}-margin`).textContent = opt.price ? `${m.profitMargin.toFixed(1)}%` : '—';
+    document.getElementById(`pr-${size}-remaining`).textContent = m.numberRemaining;
+  });
 }
 
 function handlePrintFile(input) {
@@ -2179,22 +2334,25 @@ async function savePrint() {
   const title = document.getElementById('pr-title').value.trim();
   if (!title) { showToast('Please enter a title.', 'error'); return; }
 
+  const sizeOptions = PRINT_SIZE_NAMES.map(size => ({
+    size,
+    price: document.getElementById(`pr-${size}-price`).value || '',
+    editionSize: parseInt(document.getElementById(`pr-${size}-edition`).value) || 0,
+    numberSold: parseInt(document.getElementById(`pr-${size}-sold`).value) || 0,
+    paperCost: document.getElementById(`pr-${size}-paper`).value || '',
+    productionCost: document.getElementById(`pr-${size}-production`).value || '',
+    packagingCost: document.getElementById(`pr-${size}-packaging`).value || '',
+    shippingCost: document.getElementById(`pr-${size}-shipping`).value || '',
+    certificateCost: document.getElementById(`pr-${size}-certificate`).value || '',
+  }));
+
   const prints = getPrints();
   const print = {
     id: editingPrintId || uid(),
     title,
     description: document.getElementById('pr-desc').value.trim(),
-    width: document.getElementById('pr-width').value || '',
-    height: document.getElementById('pr-height').value || '',
-    editionSize: parseInt(document.getElementById('pr-edition').value) || 0,
-    numberSold: parseInt(document.getElementById('pr-sold').value) || 0,
-    price: document.getElementById('pr-price').value || '',
     status: document.getElementById('pr-status').value,
-    productionCost: document.getElementById('pr-production').value || '',
-    paperCost: document.getElementById('pr-paper').value || '',
-    packagingCost: document.getElementById('pr-packaging').value || '',
-    shippingCost: document.getElementById('pr-shipping').value || '',
-    certificateCost: document.getElementById('pr-certificate').value || '',
+    sizeOptions,
     imageData: printImageData || null,
   };
 
@@ -2686,21 +2844,26 @@ function computeBusinessSummary() {
   let revenuePrints = 0, profitPrints = 0, numberPrintsSold = 0, printUnitsRemaining = 0;
   let remainingPotentialRevenue = 0, remainingPotentialProfit = 0, printsWithRemaining = 0;
   prints.forEach(pr => {
-    const m = computePrintMetrics(pr);
-    const sold = Number(pr.numberSold) || 0;
-    const price = Number(pr.price) || 0;
-    revenuePrints += price * sold;
-    profitPrints += m.profitPerUnit * sold;
-    numberPrintsSold += sold;
-    printUnitsRemaining += m.numberRemaining;
-    if (m.numberRemaining > 0) {
-      printsWithRemaining += 1;
-      remainingPotentialRevenue += price * m.numberRemaining;
-      remainingPotentialProfit += m.profitPerUnit * m.numberRemaining;
-    }
-    if (sold > 0 && price > 0 && (!bestItem || m.profitMargin > bestItem.margin)) {
-      bestItem = { label: pr.title, margin: m.profitMargin, type: 'print' };
-    }
+    let printHasRemaining = false;
+    (pr.sizeOptions || []).forEach(opt => {
+      const m = computeSizeMetrics(opt);
+      const sold = Number(opt.numberSold) || 0;
+      const price = Number(opt.price) || 0;
+      if (!price) return;
+      revenuePrints += price * sold;
+      profitPrints += m.profitPerUnit * sold;
+      numberPrintsSold += sold;
+      printUnitsRemaining += m.numberRemaining;
+      if (m.numberRemaining > 0) {
+        printHasRemaining = true;
+        remainingPotentialRevenue += price * m.numberRemaining;
+        remainingPotentialProfit += m.profitPerUnit * m.numberRemaining;
+      }
+      if (sold > 0 && (!bestItem || m.profitMargin > bestItem.margin)) {
+        bestItem = { label: `${pr.title} (${opt.size})`, margin: m.profitMargin, type: 'print' };
+      }
+    });
+    if (printHasRemaining) printsWithRemaining += 1;
   });
 
   const totalMaterialCosts = getSupplies().reduce((sum, s) => sum + (Number(s.totalCost) || 0), 0);
