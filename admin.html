@@ -934,6 +934,33 @@ body {
       </svg>
       Dashboard
     </div>
+    <div class="nav-item" onclick="showScreen('supplies')" id="nav-supplies">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 5l6-3.5L14 5v6l-6 3.5L2 11V5z"/>
+        <path d="M2 5l6 3.5L14 5M8 8.5V15"/>
+      </svg>
+      Supplies
+    </div>
+    <div class="nav-item" onclick="showScreen('pricing')" id="nav-pricing">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="1.5" y="1.5" width="13" height="13" rx="1"/>
+        <line x1="1.5" y1="5.5" x2="14.5" y2="5.5"/>
+        <line x1="4.5" y1="8" x2="4.5" y2="8.01"/>
+        <line x1="8" y1="8" x2="8" y2="8.01"/>
+        <line x1="11.5" y1="8" x2="11.5" y2="8.01"/>
+        <line x1="4.5" y1="11" x2="4.5" y2="11.01"/>
+        <line x1="8" y1="11" x2="8" y2="11.01"/>
+        <line x1="11.5" y1="11" x2="11.5" y2="11.01"/>
+      </svg>
+      Pricing Calculator
+    </div>
+    <div class="nav-item" onclick="showScreen('prints')" id="nav-prints">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="9" height="9" rx="0.5"/>
+        <rect x="5" y="5" width="9" height="9" rx="0.5" fill="var(--bg)"/>
+      </svg>
+      Prints
+    </div>
 
     <p class="sidebar-section" style="margin-top:20px">Site</p>
     <div class="nav-item" onclick="window.open('index.html','_blank')">
@@ -1066,6 +1093,139 @@ async function saveExpenses(expenses) {
   }
 }
 
+let suppliesCache = null;
+function getSupplies() { return suppliesCache || []; }
+
+async function loadSupplies() {
+  try {
+    const res = await fetch('/api/supplies');
+    suppliesCache = await res.json();
+  } catch {
+    suppliesCache = suppliesCache || [];
+  }
+}
+
+async function saveSupplies(supplies) {
+  suppliesCache = supplies;
+  try {
+    const res = await fetch('/api/supplies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supplies, pin: currentAdminPin }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || `Save failed (${res.status}).`, 'error');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    showToast(e.message || 'Failed to save. Check your connection.', 'error');
+    return false;
+  }
+}
+
+const DEFAULT_SETTINGS = {
+  currency: 'USD',
+  targetProfitMargin: 50,
+  minAcceptableMargin: 30,
+  hourlyRate: 20,
+  defaultPackagingCostOriginals: 15,
+  defaultPackagingCostPrints: 5,
+  defaultShippingCost: 25,
+  defaultCertificateCost: 2,
+  defaultWastagePercent: 10,
+  defaultMarkupMultiplier: 2,
+};
+let settingsCache = null;
+function getSettings() { return settingsCache || DEFAULT_SETTINGS; }
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    settingsCache = await res.json();
+  } catch {
+    settingsCache = settingsCache || DEFAULT_SETTINGS;
+  }
+}
+
+async function saveSettings(settings) {
+  settingsCache = settings;
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings, pin: currentAdminPin }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || `Save failed (${res.status}).`, 'error');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    showToast(e.message || 'Failed to save. Check your connection.', 'error');
+    return false;
+  }
+}
+
+let printsCache = null;
+function getPrints() { return printsCache || []; }
+
+async function loadPrints() {
+  try {
+    const res = await fetch('/api/prints');
+    printsCache = await res.json();
+  } catch {
+    printsCache = printsCache || [];
+  }
+}
+
+async function savePrints(prints) {
+  const clean = prints.map(pr => ({
+    ...pr,
+    imageData: pr.imageData && pr.imageData.startsWith('data:') ? null : pr.imageData,
+  }));
+  printsCache = clean;
+  try {
+    const res = await fetch('/api/prints', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prints: clean, pin: currentAdminPin }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || `Save failed (${res.status}).`, 'error');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    showToast(e.message || 'Failed to save. Check your connection.', 'error');
+    return false;
+  }
+}
+
+function computePrintMetrics(pr) {
+  const paper = Number(pr.paperCost) || 0;
+  const production = Number(pr.productionCost) || 0;
+  const packaging = Number(pr.packagingCost) || 0;
+  const shipping = Number(pr.shippingCost) || 0;
+  const certificate = Number(pr.certificateCost) || 0;
+  const totalCostPerUnit = Math.round((paper + production + packaging + shipping + certificate) * 100) / 100;
+
+  const price = Number(pr.price) || 0;
+  const editionSize = Number(pr.editionSize) || 0;
+  const numberSold = Number(pr.numberSold) || 0;
+  const numberRemaining = Math.max(0, editionSize - numberSold);
+
+  const profitPerUnit = Math.round((price - totalCostPerUnit) * 100) / 100;
+  const profitMargin = price > 0 ? (profitPerUnit / price * 100) : 0;
+  const totalPotentialRevenue = Math.round(price * editionSize * 100) / 100;
+  const totalPotentialProfit = Math.round(profitPerUnit * editionSize * 100) / 100;
+
+  return { totalCostPerUnit, profitPerUnit, profitMargin, numberRemaining, totalPotentialRevenue, totalPotentialProfit };
+}
+
 let trafficCache = null;
 async function loadTraffic() {
   try {
@@ -1151,12 +1311,12 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 // ── NAVIGATION ──────────────────────────────────────────
 function showScreen(name) {
   closeAdminSidebar();
-  ['list','add','settings','exhibition','dashboard'].forEach(n => {
+  ['list','add','settings','exhibition','dashboard','supplies','pricing','prints'].forEach(n => {
     const el = document.getElementById('nav-' + n);
-    if (el) el.classList.toggle('active', n === name);
+    if (el) el.classList.toggle('active', n === name || (n === 'prints' && name === 'print-add'));
   });
 
-  const titles = { list: 'All Paintings', add: 'Add New Painting', settings: 'Settings', exhibition: 'Exhibition', dashboard: 'Dashboard' };
+  const titles = { list: 'All Paintings', add: 'Add New Painting', settings: 'Settings', exhibition: 'Exhibition', dashboard: 'Dashboard', supplies: 'Art Supplies', pricing: 'Pricing Calculator', prints: 'Prints', 'print-add': 'Add New Print' };
   document.getElementById('screen-title').textContent = titles[name] || 'Dashboard';
 
   const area = document.getElementById('topbar-actions');
@@ -1165,11 +1325,16 @@ function showScreen(name) {
   } else if (name === 'add' && editingId) {
     document.getElementById('screen-title').textContent = 'Edit Painting';
     area.innerHTML = '<button class="btn btn-ghost" onclick="cancelEdit()">Cancel</button>';
+  } else if (name === 'prints') {
+    area.innerHTML = '<button class="btn btn-primary" onclick="showScreen(\'print-add\')">+ Add Print</button>';
+  } else if (name === 'print-add' && editingPrintId) {
+    document.getElementById('screen-title').textContent = 'Edit Print';
+    area.innerHTML = '<button class="btn btn-ghost" onclick="cancelEditPrint()">Cancel</button>';
   } else {
     area.innerHTML = '';
   }
 
-  const render = { list: renderList, add: renderForm, settings: renderSettings, exhibition: renderExhibitionScreen, dashboard: renderDashboard };
+  const render = { list: renderList, add: renderForm, settings: renderSettings, exhibition: renderExhibitionScreen, dashboard: renderDashboard, supplies: renderSupplies, pricing: renderPricingCalculator, prints: renderPrintsList, 'print-add': renderPrintForm };
   if (render[name]) { render[name](); }
 }
 
@@ -1247,7 +1412,12 @@ function renderList() {
 
 // ── FORM ──────────────────────────────────────────
 function renderForm() {
-  let p = { title: '', year: new Date().getFullYear(), medium: '', category: 'Portrait', width: '', height: '', price: '', description: '', featured: false, available: true, hidePrice: false, soldDate: '', imageData: null };
+  let p = {
+    title: '', year: new Date().getFullYear(), medium: '', category: 'Portrait', width: '', height: '',
+    price: '', description: '', featured: false, available: true, hidePrice: false, soldDate: '',
+    costEstimate: { canvasCost: '', materialCost: '', varnishToolsCost: '', packagingShippingCost: '', framingCost: '', total: 0 },
+    revenueReceived: '', imageData: null,
+  };
 
   if (editingId) {
     const found = getPaintings().find(x => x.id === editingId);
@@ -1256,6 +1426,8 @@ function renderForm() {
     imageData = null;
     additionalImages = [];
   }
+  p.costEstimate = p.costEstimate || { canvasCost: '', materialCost: '', varnishToolsCost: '', packagingShippingCost: '', framingCost: '', total: 0 };
+  if (p.revenueReceived === undefined) p.revenueReceived = '';
 
   const imgSection = imageData
     ? `<div>
@@ -1376,11 +1548,631 @@ function renderForm() {
         </div>
       </div>
 
-      <div style="display:flex;gap:12px">
+      <hr class="form-divider">
+      <p class="form-section-title">Production Cost &amp; Profit</p>
+      <div id="cost-suggestion-box" style="margin-bottom:14px"></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Canvas Cost Estimate</label>
+          <input class="form-input" id="f-cost-canvas" type="number" min="0" step="0.5" value="${p.costEstimate.canvasCost}" oninput="updateCostTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Paint / Material Cost Estimate</label>
+          <input class="form-input" id="f-cost-material" type="number" min="0" step="0.5" value="${p.costEstimate.materialCost}" oninput="updateCostTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Varnish / Tools Estimate</label>
+          <input class="form-input" id="f-cost-varnish" type="number" min="0" step="0.5" value="${p.costEstimate.varnishToolsCost}" oninput="updateCostTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Packaging / Shipping Estimate</label>
+          <input class="form-input" id="f-cost-packaging" type="number" min="0" step="0.5" value="${p.costEstimate.packagingShippingCost}" oninput="updateCostTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Framing Cost (optional)</label>
+          <input class="form-input" id="f-cost-framing" type="number" min="0" step="0.5" value="${p.costEstimate.framingCost}" oninput="updateCostTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Revenue Received</label>
+          <input class="form-input" id="f-revenue-received" type="number" min="0" step="0.5" value="${p.revenueReceived}" oninput="updateCostTotals()" placeholder="Defaults to price once sold">
+        </div>
+      </div>
+      <button type="button" class="btn btn-ghost" onclick="applyCostSuggestion()" style="margin-bottom:20px">Suggest from similar-sized paintings</button>
+      <div class="mini-stats-row" style="margin-bottom:8px">
+        <div class="mini-stat">
+          <p class="stat-label">Total Est. Production Cost</p>
+          <p class="stat-value" id="cost-total-display" style="font-size:22px">$0</p>
+        </div>
+        <div class="mini-stat">
+          <p class="stat-label" id="cost-profit-label">Profit</p>
+          <p class="stat-value" id="cost-profit-display" style="font-size:22px">—</p>
+        </div>
+        <div class="mini-stat">
+          <p class="stat-label">Profit Margin</p>
+          <p class="stat-value" id="cost-margin-display" style="font-size:22px">—</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:20px">
         <button class="btn btn-primary" onclick="savePainting()" style="padding:12px 36px;font-size:11px">${editingId ? 'Save Changes' : 'Add to Gallery'}</button>
         <button class="btn btn-ghost" onclick="cancelEdit()">Cancel</button>
       </div>
     </div>`;
+
+  updateCostTotals();
+}
+
+// ── COST ESTIMATION (per artwork) ──────────────────────────────────────────
+function findHistoricalCostEstimate(width, height, excludeId) {
+  const w = parseFloat(width), h = parseFloat(height);
+  if (!w || !h) return null;
+  const targetArea = w * h;
+
+  const matches = getPaintings().filter(p => {
+    if (excludeId && p.id === excludeId) return false; // don't match against itself while editing
+    const ce = p.costEstimate;
+    if (!ce || !Number(ce.total)) return false;
+    const pw = parseFloat(p.width), ph = parseFloat(p.height);
+    if (!pw || !ph) return false;
+    return Math.abs((pw * ph) - targetArea) / targetArea <= 0.2; // within 20% of area
+  });
+  if (!matches.length) return null;
+
+  const avg = (key) => Math.round((matches.reduce((sum, p) => sum + (Number(p.costEstimate[key]) || 0), 0) / matches.length) * 100) / 100;
+  return {
+    count: matches.length,
+    canvasCost: avg('canvasCost'),
+    materialCost: avg('materialCost'),
+    varnishToolsCost: avg('varnishToolsCost'),
+    packagingShippingCost: avg('packagingShippingCost'),
+    framingCost: avg('framingCost'),
+    total: avg('total'),
+  };
+}
+
+function applyCostSuggestion() {
+  const width = document.getElementById('f-width').value;
+  const height = document.getElementById('f-height').value;
+  const box = document.getElementById('cost-suggestion-box');
+  const hist = findHistoricalCostEstimate(width, height, editingId);
+
+  if (!hist) {
+    box.innerHTML = `<p style="font-size:12px;color:var(--muted)">No historical cost data yet for a similar size${width && height ? ` (~${width}×${height}cm)` : ''}. Enter width/height above, or add cost estimates to a few paintings first.</p>`;
+    return;
+  }
+
+  document.getElementById('f-cost-canvas').value = hist.canvasCost;
+  document.getElementById('f-cost-material').value = hist.materialCost;
+  document.getElementById('f-cost-varnish').value = hist.varnishToolsCost;
+  document.getElementById('f-cost-packaging').value = hist.packagingShippingCost;
+  document.getElementById('f-cost-framing').value = hist.framingCost;
+  box.innerHTML = `<p style="font-size:12px;color:var(--terra-light)">Filled in from ${hist.count} similar-sized painting${hist.count === 1 ? '' : 's'} (avg total ${fmtUSD(hist.total)}). Still fully editable.</p>`;
+  updateCostTotals();
+}
+
+function updateCostTotals() {
+  const canvasEl = document.getElementById('f-cost-canvas');
+  if (!canvasEl) return; // form not on screen
+  const canvas = parseFloat(canvasEl.value) || 0;
+  const material = parseFloat(document.getElementById('f-cost-material').value) || 0;
+  const varnish = parseFloat(document.getElementById('f-cost-varnish').value) || 0;
+  const packaging = parseFloat(document.getElementById('f-cost-packaging').value) || 0;
+  const framing = parseFloat(document.getElementById('f-cost-framing').value) || 0;
+  const total = canvas + material + varnish + packaging + framing;
+
+  const revenueReceived = parseFloat(document.getElementById('f-revenue-received').value) || 0;
+  const price = parseFloat(document.getElementById('f-price').value) || 0;
+  const effectiveRevenue = revenueReceived || price;
+  const usingListedPrice = !revenueReceived && price > 0;
+
+  document.getElementById('cost-total-display').textContent = fmtUSD(total);
+
+  const profitLabel = document.getElementById('cost-profit-label');
+  const profitDisplay = document.getElementById('cost-profit-display');
+  const marginDisplay = document.getElementById('cost-margin-display');
+
+  if (effectiveRevenue > 0) {
+    const profit = effectiveRevenue - total;
+    const margin = (profit / effectiveRevenue) * 100;
+    profitLabel.textContent = usingListedPrice ? 'Projected Profit (at listed price)' : 'Profit';
+    profitDisplay.textContent = fmtUSD(profit);
+    profitDisplay.style.color = profit >= 0 ? '' : '#e74c3c';
+    marginDisplay.textContent = `${margin.toFixed(1)}%`;
+  } else {
+    profitLabel.textContent = 'Profit';
+    profitDisplay.textContent = '—';
+    profitDisplay.style.color = '';
+    marginDisplay.textContent = '—';
+  }
+}
+
+// ── PRICING CALCULATOR (originals) ──────────────────────────────────────────
+async function renderPricingCalculator() {
+  if (!settingsCache) await loadSettings();
+  const st = getSettings();
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="dash-block">
+      <p class="dash-section-title">Pricing Calculator</p>
+      <p class="dash-section-sub">Every output below is a suggestion built from these inputs &mdash; edit anything, including the painting's own price, and nothing here overrides it automatically.</p>
+
+      <div id="pc-suggestion-box" style="margin-bottom:14px"></div>
+
+      <div class="expense-form-grid">
+        <div class="form-group">
+          <label class="form-label">Width (cm)</label>
+          <input class="form-input" id="pc-width" type="number" min="0" oninput="pricingSuggestFromSize()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Height (cm)</label>
+          <input class="form-input" id="pc-height" type="number" min="0" oninput="pricingSuggestFromSize()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estimated Material Cost</label>
+          <input class="form-input" id="pc-material" type="number" min="0" step="0.5" value="0" oninput="recalcPricing()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Current / Listed Price (optional)</label>
+          <input class="form-input" id="pc-current-price" type="number" min="0" step="0.5" oninput="recalcPricing()">
+        </div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleSwitch('pc-labor-toggle');recalcPricing()" style="margin:14px 0">
+        <div class="toggle-switch" id="pc-labor-toggle"></div>
+        <span class="toggle-label">Include artist labor cost</span>
+        <span class="toggle-sub">Hours × hourly rate</span>
+      </div>
+
+      <div class="expense-form-grid">
+        <div class="form-group">
+          <label class="form-label">Hours Spent</label>
+          <input class="form-input" id="pc-hours" type="number" min="0" step="0.5" value="0" oninput="recalcPricing()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hourly Rate</label>
+          <input class="form-input" id="pc-hourly-rate" type="number" min="0" step="0.5" value="${st.hourlyRate}" oninput="recalcPricing()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Packaging Cost</label>
+          <input class="form-input" id="pc-packaging" type="number" min="0" step="0.5" value="${st.defaultPackagingCostOriginals}" oninput="recalcPricing()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Framing Cost (optional)</label>
+          <input class="form-input" id="pc-framing" type="number" min="0" step="0.5" value="0" oninput="recalcPricing()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shipping Cost</label>
+          <input class="form-input" id="pc-shipping" type="number" min="0" step="0.5" value="${st.defaultShippingCost}" oninput="recalcPricing()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Profit Margin (%)</label>
+          <input class="form-input" id="pc-target-margin" type="number" min="0" max="95" value="${st.targetProfitMargin}" oninput="recalcPricing()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Minimum Acceptable Margin (%)</label>
+          <input class="form-input" id="pc-min-margin" type="number" min="0" max="95" value="${st.minAcceptableMargin}" oninput="recalcPricing()">
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Cost Breakdown</p>
+      <table class="data-table" id="pc-cost-table"></table>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Suggested Pricing</p>
+      <div class="kpi-row" id="pc-price-cards"></div>
+      <p id="pc-formula-note" style="font-size:12px;color:var(--muted);margin-top:16px;line-height:1.8"></p>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Profit at Different Price Points</p>
+      <table class="data-table">
+        <thead><tr><th>Price Point</th><th class="num">Price</th><th class="num">Profit</th><th class="num">Margin</th></tr></thead>
+        <tbody id="pc-points-body"></tbody>
+      </table>
+    </div>`;
+
+  recalcPricing();
+}
+
+function pricingSuggestFromSize() {
+  const width = document.getElementById('pc-width').value;
+  const height = document.getElementById('pc-height').value;
+  const box = document.getElementById('pc-suggestion-box');
+  const hist = findHistoricalCostEstimate(width, height);
+
+  if (hist) {
+    document.getElementById('pc-material').value = Math.round((hist.canvasCost + hist.materialCost + hist.varnishToolsCost) * 100) / 100;
+    box.innerHTML = `<p style="font-size:12px;color:var(--terra-light)">Material estimate filled from ${hist.count} similar-sized painting${hist.count === 1 ? '' : 's'} (canvas + material + varnish/tools average). Still fully editable.</p>`;
+  } else {
+    box.innerHTML = (width && height) ? `<p style="font-size:12px;color:var(--muted)">No historical cost data yet for a similar size.</p>` : '';
+  }
+  recalcPricing();
+}
+
+function recalcPricing() {
+  const materialEl = document.getElementById('pc-material');
+  if (!materialEl) return; // screen not on display
+
+  const material = parseFloat(materialEl.value) || 0;
+  const laborOn = document.getElementById('pc-labor-toggle').classList.contains('on');
+  const hours = parseFloat(document.getElementById('pc-hours').value) || 0;
+  const hourlyRate = parseFloat(document.getElementById('pc-hourly-rate').value) || 0;
+  const labor = laborOn ? hours * hourlyRate : 0;
+  const packaging = parseFloat(document.getElementById('pc-packaging').value) || 0;
+  const framing = parseFloat(document.getElementById('pc-framing').value) || 0;
+  const shipping = parseFloat(document.getElementById('pc-shipping').value) || 0;
+  const targetMargin = Math.min(95, Math.max(0, parseFloat(document.getElementById('pc-target-margin').value) || 0));
+  const minMargin = Math.min(95, Math.max(0, parseFloat(document.getElementById('pc-min-margin').value) || 0));
+  const currentPrice = parseFloat(document.getElementById('pc-current-price').value) || 0;
+
+  const totalCost = material + labor + packaging + framing + shipping;
+  const priceAtMargin = (m) => m >= 100 ? Infinity : totalCost / (1 - m / 100);
+
+  const breakEven = totalCost;
+  const suggestedMin = priceAtMargin(minMargin);
+  const suggestedTarget = priceAtMargin(targetMargin);
+  const rangeCeiling = suggestedTarget * 1.15;
+
+  document.getElementById('pc-cost-table').innerHTML = `
+    <thead><tr><th>Component</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+      <tr><td>Material</td><td class="num">${fmtUSD(material)}</td></tr>
+      <tr><td>Labor${laborOn ? ` (${hours}h × ${fmtUSD(hourlyRate)}/h)` : ' (not included)'}</td><td class="num">${fmtUSD(labor)}</td></tr>
+      <tr><td>Packaging</td><td class="num">${fmtUSD(packaging)}</td></tr>
+      <tr><td>Framing</td><td class="num">${fmtUSD(framing)}</td></tr>
+      <tr><td>Shipping</td><td class="num">${fmtUSD(shipping)}</td></tr>
+      <tr class="total-row"><td>Total Cost</td><td class="num">${fmtUSD(totalCost)}</td></tr>
+    </tbody>`;
+
+  document.getElementById('pc-price-cards').innerHTML = `
+    <div class="kpi-card">
+      <p class="kpi-label">Break-Even Price</p>
+      <p class="kpi-value">${fmtUSD(breakEven)}</p>
+      <p class="kpi-sub">= Total Cost</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Suggested Minimum</p>
+      <p class="kpi-value">${fmtUSD(suggestedMin)}</p>
+      <p class="kpi-sub">at ${minMargin}% minimum margin</p>
+    </div>
+    <div class="kpi-card net">
+      <p class="kpi-label">Suggested Price</p>
+      <p class="kpi-value pos">${fmtUSD(suggestedTarget)}</p>
+      <p class="kpi-sub">at ${targetMargin}% target margin</p>
+    </div>`;
+
+  document.getElementById('pc-formula-note').innerHTML =
+    `Formula: Price = Total Cost ÷ (1 &minus; Margin ÷ 100), where Margin is profit as a % of price (Profit = Price &minus; Cost).<br>
+     Suggested range: ${fmtUSD(suggestedMin)} (minimum acceptable margin) to ${fmtUSD(rangeCeiling)} (target margin + a 15% stretch).`;
+
+  const points = [
+    { label: 'Break-Even', price: breakEven },
+    { label: `Minimum (${minMargin}% margin)`, price: suggestedMin },
+    { label: `Target (${targetMargin}% margin)`, price: suggestedTarget },
+    { label: 'Range Ceiling (+15% stretch)', price: rangeCeiling },
+  ];
+  if (currentPrice > 0) points.push({ label: 'Current / Listed Price', price: currentPrice });
+
+  document.getElementById('pc-points-body').innerHTML = points.map(pt => {
+    const profit = pt.price - totalCost;
+    const margin = pt.price > 0 ? (profit / pt.price * 100) : 0;
+    return `<tr>
+      <td>${pt.label}</td>
+      <td class="num">${fmtUSD(pt.price)}</td>
+      <td class="num" style="color:${profit >= 0 ? '' : '#e74c3c'}">${fmtUSD(profit)}</td>
+      <td class="num">${margin.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PRINTS MODULE ──────────────────────────────────────────
+let editingPrintId = null;
+let printImageData = null;
+
+async function renderPrintsList() {
+  if (!printsCache) await loadPrints();
+  const prints = getPrints();
+
+  const totalPrints = prints.length;
+  const totalSold = prints.reduce((sum, pr) => sum + (Number(pr.numberSold) || 0), 0);
+  const totalRemaining = prints.reduce((sum, pr) => sum + computePrintMetrics(pr).numberRemaining, 0);
+  const potentialRevenueRemaining = prints.reduce((sum, pr) => {
+    const price = Number(pr.price) || 0;
+    return sum + price * computePrintMetrics(pr).numberRemaining;
+  }, 0);
+
+  let html = `
+    <div class="stats-row">
+      <div class="stat-card">
+        <p class="stat-label">Print Editions</p>
+        <p class="stat-value">${totalPrints}</p>
+        <p class="stat-sub">listed</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Units Sold</p>
+        <p class="stat-value">${totalSold}</p>
+        <p class="stat-sub">across all editions</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Units Remaining</p>
+        <p class="stat-value">${totalRemaining}</p>
+        <p class="stat-sub">still available</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Potential Revenue Left</p>
+        <p class="stat-value" style="font-size:26px">${fmtUSD(potentialRevenueRemaining)}</p>
+        <p class="stat-sub">if remaining units sell</p>
+      </div>
+    </div>
+    <div class="paintings-grid">`;
+
+  if (!prints.length) {
+    html += `<div class="empty-state">
+      <div class="empty-icon">◻</div>
+      <p>No prints yet. Add your first limited edition print to get started.</p>
+      <button class="btn btn-primary" onclick="showScreen('print-add')">+ Add First Print</button>
+    </div>`;
+  } else {
+    prints.forEach(pr => {
+      const m = computePrintMetrics(pr);
+      const imgHtml = pr.imageData
+        ? `<img class="painting-card-img-inner" src="${pr.imageData}" alt="${pr.title}" style="width:100%;height:100%;object-fit:cover">`
+        : `<div class="painting-card-img-placeholder">◻</div>`;
+      const statusBadge = pr.status === 'Private'
+        ? '<span class="pc-badge" style="background:rgba(244,237,224,0.05);color:var(--muted)">Private</span>'
+        : m.numberRemaining <= 0
+          ? '<span class="pc-badge sold">Sold Out</span>'
+          : '<span class="pc-badge avail">Available</span>';
+
+      html += `
+        <div class="painting-card">
+          <div class="painting-card-img" style="position:relative">
+            ${imgHtml}
+            <div class="painting-card-actions">
+              <button class="card-btn" onclick="editPrint('${pr.id}')">Edit</button>
+              <button class="card-btn del-btn" onclick="confirmDeletePrint('${pr.id}', '${(pr.title || '').replace(/'/g, "\\'")}')">Delete</button>
+            </div>
+          </div>
+          <div class="painting-card-info">
+            <p class="pc-title">${pr.title}</p>
+            <p class="pc-meta">${pr.width && pr.height ? `${pr.width} × ${pr.height} cm · ` : ''}Edition of ${pr.editionSize || 0}</p>
+            <div class="pc-badges">
+              ${statusBadge}
+              <span class="pc-badge cat">${Number(pr.numberSold) || 0}/${pr.editionSize || 0} sold</span>
+            </div>
+            <p style="font-size:11px;color:var(--terra-light);margin-top:8px">${fmtUSD(pr.price)} · ${m.profitMargin.toFixed(0)}% margin</p>
+          </div>
+        </div>`;
+    });
+  }
+
+  html += `</div>`;
+  document.getElementById('content-area').innerHTML = html;
+}
+
+async function renderPrintForm() {
+  if (!printsCache) await loadPrints();
+
+  let pr = {
+    title: '', description: '', width: '', height: '',
+    editionSize: '', numberSold: 0, price: '',
+    paperCost: '', productionCost: '', packagingCost: '', shippingCost: '', certificateCost: '',
+    status: 'Available', imageData: null,
+  };
+
+  if (editingPrintId) {
+    const found = getPrints().find(x => x.id === editingPrintId);
+    if (found) { pr = found; printImageData = found.imageData || null; }
+  } else {
+    printImageData = null;
+  }
+
+  const imgSection = printImageData
+    ? `<div>
+        <div class="image-preview-wrap">
+          <img class="image-preview" src="${printImageData}" alt="Preview">
+          <button class="remove-img" onclick="removePrintImage()" title="Remove image">×</button>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;padding:8px 16px;border:1px solid var(--border);color:var(--terra-light);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--terra)'" onmouseout="this.style.borderColor='var(--border)'">
+          <input type="file" accept="image/*" onchange="handlePrintFile(this)" style="display:none"> ↺ Replace Image
+        </label>
+       </div>`
+    : `<div class="image-upload-area" id="print-drop-area">
+        <input type="file" accept="image/*" onchange="handlePrintFile(this)">
+        <div class="upload-icon">↑</div>
+        <p class="upload-text">Drop image here or click to browse</p>
+        <p class="upload-sub">JPG, PNG, WEBP — stored in Vercel Blob</p>
+       </div>`;
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="form-screen">
+      <p class="form-section-title">Print Details</p>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Title</label>
+          <input class="form-input" id="pr-title" value="${(pr.title || '').replace(/"/g, '&quot;')}" placeholder="e.g. Beirut Balconies">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="pr-desc" placeholder="A few words for the public print page...">${pr.description || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Print Width (cm)</label>
+          <input class="form-input" id="pr-width" type="number" min="0" value="${pr.width}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Print Height (cm)</label>
+          <input class="form-input" id="pr-height" type="number" min="0" value="${pr.height}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Edition Size</label>
+          <input class="form-input" id="pr-edition" type="number" min="1" value="${pr.editionSize}" oninput="updatePrintTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Number Sold</label>
+          <input class="form-input" id="pr-sold" type="number" min="0" value="${pr.numberSold || 0}" oninput="updatePrintTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Selling Price (per unit)</label>
+          <input class="form-input" id="pr-price" type="number" min="0" step="0.5" value="${pr.price}" oninput="updatePrintTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="pr-status">
+            ${['Available', 'Sold Out', 'Private'].map(s => `<option value="${s}" ${pr.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <hr class="form-divider">
+      <p class="form-section-title">Image</p>
+      <div id="print-img-section">${imgSection}</div>
+
+      <hr class="form-divider">
+      <p class="form-section-title">Cost Per Unit</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Production Cost</label>
+          <input class="form-input" id="pr-production" type="number" min="0" step="0.5" value="${pr.productionCost}" oninput="updatePrintTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Paper Cost</label>
+          <input class="form-input" id="pr-paper" type="number" min="0" step="0.5" value="${pr.paperCost}" oninput="updatePrintTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Packaging Cost</label>
+          <input class="form-input" id="pr-packaging" type="number" min="0" step="0.5" value="${pr.packagingCost}" oninput="updatePrintTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shipping Cost (optional)</label>
+          <input class="form-input" id="pr-shipping" type="number" min="0" step="0.5" value="${pr.shippingCost}" oninput="updatePrintTotals()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certificate Cost (optional)</label>
+          <input class="form-input" id="pr-certificate" type="number" min="0" step="0.5" value="${pr.certificateCost}" oninput="updatePrintTotals()">
+        </div>
+      </div>
+
+      <div class="mini-stats-row" style="margin:20px 0">
+        <div class="mini-stat"><p class="stat-label">Total Cost/Unit</p><p class="stat-value" id="pr-total-cost" style="font-size:22px">$0</p></div>
+        <div class="mini-stat"><p class="stat-label">Profit/Unit</p><p class="stat-value" id="pr-profit-unit" style="font-size:22px">$0</p></div>
+        <div class="mini-stat"><p class="stat-label">Margin</p><p class="stat-value" id="pr-margin" style="font-size:22px">—</p></div>
+      </div>
+      <div class="mini-stats-row" style="margin-bottom:20px">
+        <div class="mini-stat"><p class="stat-label">Remaining</p><p class="stat-value" id="pr-remaining" style="font-size:22px">0</p></div>
+        <div class="mini-stat"><p class="stat-label">Potential Revenue (full edition)</p><p class="stat-value" id="pr-potential-revenue" style="font-size:22px">$0</p></div>
+        <div class="mini-stat"><p class="stat-label">Potential Profit (full edition)</p><p class="stat-value" id="pr-potential-profit" style="font-size:22px">$0</p></div>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-primary" onclick="savePrint()" style="padding:12px 36px;font-size:11px">${editingPrintId ? 'Save Changes' : 'Add Print'}</button>
+        <button class="btn btn-ghost" onclick="cancelEditPrint()">Cancel</button>
+      </div>
+    </div>`;
+
+  updatePrintTotals();
+}
+
+function updatePrintTotals() {
+  const el = document.getElementById('pr-edition');
+  if (!el) return;
+  const draft = {
+    editionSize: document.getElementById('pr-edition').value,
+    numberSold: document.getElementById('pr-sold').value,
+    price: document.getElementById('pr-price').value,
+    productionCost: document.getElementById('pr-production').value,
+    paperCost: document.getElementById('pr-paper').value,
+    packagingCost: document.getElementById('pr-packaging').value,
+    shippingCost: document.getElementById('pr-shipping').value,
+    certificateCost: document.getElementById('pr-certificate').value,
+  };
+  const m = computePrintMetrics(draft);
+  document.getElementById('pr-total-cost').textContent = fmtUSD(m.totalCostPerUnit);
+  document.getElementById('pr-profit-unit').textContent = fmtUSD(m.profitPerUnit);
+  document.getElementById('pr-profit-unit').style.color = m.profitPerUnit >= 0 ? '' : '#e74c3c';
+  document.getElementById('pr-margin').textContent = draft.price ? `${m.profitMargin.toFixed(1)}%` : '—';
+  document.getElementById('pr-remaining').textContent = m.numberRemaining;
+  document.getElementById('pr-potential-revenue').textContent = fmtUSD(m.totalPotentialRevenue);
+  document.getElementById('pr-potential-profit').textContent = fmtUSD(m.totalPotentialProfit);
+  document.getElementById('pr-potential-profit').style.color = m.totalPotentialProfit >= 0 ? '' : '#e74c3c';
+}
+
+function handlePrintFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => openCropModal(e.target.result, 'print');
+  reader.readAsDataURL(file);
+}
+
+function removePrintImage() {
+  printImageData = null;
+  renderPrintForm();
+}
+
+async function savePrint() {
+  const title = document.getElementById('pr-title').value.trim();
+  if (!title) { showToast('Please enter a title.', 'error'); return; }
+
+  const prints = getPrints();
+  const print = {
+    id: editingPrintId || uid(),
+    title,
+    description: document.getElementById('pr-desc').value.trim(),
+    width: document.getElementById('pr-width').value || '',
+    height: document.getElementById('pr-height').value || '',
+    editionSize: parseInt(document.getElementById('pr-edition').value) || 0,
+    numberSold: parseInt(document.getElementById('pr-sold').value) || 0,
+    price: document.getElementById('pr-price').value || '',
+    status: document.getElementById('pr-status').value,
+    productionCost: document.getElementById('pr-production').value || '',
+    paperCost: document.getElementById('pr-paper').value || '',
+    packagingCost: document.getElementById('pr-packaging').value || '',
+    shippingCost: document.getElementById('pr-shipping').value || '',
+    certificateCost: document.getElementById('pr-certificate').value || '',
+    imageData: printImageData || null,
+  };
+
+  if (editingPrintId) {
+    const idx = prints.findIndex(p => p.id === editingPrintId);
+    if (idx > -1) prints[idx] = print;
+  } else {
+    prints.unshift(print);
+  }
+
+  const saved = await savePrints(prints);
+  if (saved) {
+    showToast(editingPrintId ? 'Print updated!' : 'Print added!', 'success');
+    editingPrintId = null;
+    printImageData = null;
+    showScreen('prints');
+  }
+}
+
+function editPrint(id) {
+  editingPrintId = id;
+  showScreen('print-add');
+}
+
+function cancelEditPrint() {
+  editingPrintId = null;
+  printImageData = null;
+  showScreen('prints');
+}
+
+function confirmDeletePrint(id, title) {
+  document.getElementById('confirm-body').textContent = `"${title}" will be permanently removed.`;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('confirm-ok').onclick = () => { deletePrint(id); closeModal(); };
+}
+
+async function deletePrint(id) {
+  const saved = await savePrints(getPrints().filter(p => p.id !== id));
+  if (saved) showToast('Print removed.', 'error');
+  renderPrintsList();
 }
 
 function toggleSwitch(id) {
@@ -1442,6 +2234,9 @@ async function applyCrop() {
   if (target === 'main') {
     document.getElementById('img-section').innerHTML =
       `<div style="padding:24px;text-align:center;color:var(--muted);font-family:'Jost',sans-serif;font-size:13px">Uploading…</div>`;
+  } else if (target === 'print') {
+    document.getElementById('print-img-section').innerHTML =
+      `<div style="padding:24px;text-align:center;color:var(--muted);font-family:'Jost',sans-serif;font-size:13px">Uploading…</div>`;
   }
 
   try {
@@ -1478,6 +2273,9 @@ async function applyCrop() {
         const preview = document.getElementById('ex-press-img-preview');
         if (preview) preview.innerHTML = `<img src="${url}" style="max-width:200px;max-height:120px;object-fit:cover;border:1px solid var(--border);">`;
       }
+    } else if (target === 'print') {
+      printImageData = url;
+      renderPrintForm();
     } else {
       additionalImages.push(url);
       renderForm();
@@ -1485,6 +2283,7 @@ async function applyCrop() {
   } catch (e) {
     showToast(e.message || 'Upload failed. Please try again.', 'error');
     if (target === 'main') renderForm();
+    if (target === 'print') renderPrintForm();
   }
 }
 
@@ -1548,6 +2347,12 @@ async function savePainting() {
   }
   const migratedAdditional = await Promise.all(additionalImages.map(uploadBase64IfNeeded));
 
+  const canvasCost = parseFloat(document.getElementById('f-cost-canvas').value) || 0;
+  const materialCost = parseFloat(document.getElementById('f-cost-material').value) || 0;
+  const varnishToolsCost = parseFloat(document.getElementById('f-cost-varnish').value) || 0;
+  const packagingShippingCost = parseFloat(document.getElementById('f-cost-packaging').value) || 0;
+  const framingCost = parseFloat(document.getElementById('f-cost-framing').value) || 0;
+
   const paintings = getPaintings();
   const painting = {
     id: editingId || uid(),
@@ -1564,6 +2369,11 @@ async function savePainting() {
     featured: document.getElementById('sw-feat').classList.contains('on'),
     status: document.getElementById('f-status').value,
     available: document.getElementById('f-status').value === 'Available',
+    costEstimate: {
+      canvasCost, materialCost, varnishToolsCost, packagingShippingCost, framingCost,
+      total: Math.round((canvasCost + materialCost + varnishToolsCost + packagingShippingCost + framingCost) * 100) / 100,
+    },
+    revenueReceived: document.getElementById('f-revenue-received').value || '',
     imageData: imageData || null,
     additionalImages: migratedAdditional,
   };
@@ -1686,13 +2496,12 @@ function computeDashboardData() {
   });
 
   const costs = { allTime: 0, thisYear: 0, thisMonth: 0, byYear: {}, byMonth: {}, byCategory: {} };
-  getExpenses().forEach(e => {
-    const amount = Number(e.amount) || 0;
+  function accumulateCost(amount, dateStr, category) {
     if (!amount) return;
     costs.allTime += amount;
-    const cat = e.category || 'Other';
+    const cat = category || 'Other';
     costs.byCategory[cat] = (costs.byCategory[cat] || 0) + amount;
-    const d = e.date ? new Date(e.date + 'T00:00:00') : null;
+    const d = dateStr ? new Date(dateStr + 'T00:00:00') : null;
     if (d && !isNaN(d)) {
       const year = d.getFullYear();
       const monthKey = `${year}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -1701,13 +2510,16 @@ function computeDashboardData() {
       if (year === curYear) costs.thisYear += amount;
       if (monthKey === curMonthKey) costs.thisMonth += amount;
     }
-  });
+  }
+  getExpenses().forEach(e => accumulateCost(Number(e.amount) || 0, e.date, e.category));
+  getSupplies().forEach(s => accumulateCost(Number(s.totalCost) || 0, s.purchaseDate, s.category));
 
   return { revenue, costs, curYear, curMonthKey };
 }
 
 async function renderDashboard() {
   if (!expensesCache) await loadExpenses();
+  if (!suppliesCache) await loadSupplies();
   if (!trafficCache) await loadTraffic();
   const { revenue, costs } = computeDashboardData();
 
@@ -2027,9 +2839,395 @@ async function deleteExpense(id) {
   renderDashboard();
 }
 
-// ── SETTINGS ──────────────────────────────────────────
-function renderSettings() {
+// ── SUPPLIES (art supply cost database) ──────────────────────────────────────────
+let editingSupplyId = null;
+const SUPPLY_CATEGORIES = ['Canvas', 'Paint', 'Brushes/Tools', 'Varnish', 'Packaging', 'Printing Paper', 'Print Production', 'Framing', 'Shipping', 'Other'];
+
+async function renderSupplies() {
+  if (!suppliesCache) await loadSupplies();
+  if (!settingsCache) await loadSettings();
+
+  const editing = editingSupplyId ? getSupplies().find(s => s.id === editingSupplyId) : null;
+  const s = editing || {
+    itemName: '', category: 'Canvas', supplier: '',
+    purchaseDate: new Date().toISOString().slice(0, 10),
+    quantity: 1, unitCost: '', currency: getSettings().currency || 'USD', notes: '',
+  };
+
+  const supplies = getSupplies().slice().sort((a, b) => (b.purchaseDate || '').localeCompare(a.purchaseDate || ''));
+  const total = supplies.reduce((sum, x) => sum + (Number(x.totalCost) || 0), 0);
+
+  const rows = supplies.length ? supplies.map(x => `
+    <tr>
+      <td>${x.itemName}</td>
+      <td><span class="expense-cat-tag">${x.category}</span></td>
+      <td>${x.supplier || '—'}</td>
+      <td>${x.purchaseDate ? formatDate(x.purchaseDate) : '—'}</td>
+      <td class="num">${x.quantity || 1}</td>
+      <td class="num">${fmtUSD(x.unitCost)}</td>
+      <td class="num">${fmtUSD(x.totalCost)}</td>
+      <td class="num" style="white-space:nowrap">
+        <button class="exp-del-btn" style="color:var(--terra-light)" onclick="editSupply('${x.id}')">Edit</button>
+        <button class="exp-del-btn" onclick="confirmDeleteSupply('${x.id}')">Delete</button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px 0">No supply purchases logged yet.</td></tr>`;
+
   document.getElementById('content-area').innerHTML = `
+    <div class="dash-block">
+      <p class="dash-section-title">Scan a Receipt</p>
+      <p class="dash-section-sub">Photograph or upload a receipt — items are extracted automatically, then you review and edit before saving. Uses your Claude API key; each scan has a small real cost.</p>
+      <label class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;width:fit-content">
+        <span id="receipt-upload-label">+ Upload Receipt Photo</span>
+        <input type="file" accept="image/*" capture="environment" style="display:none" id="receipt-file-input" onchange="handleReceiptFile(this)">
+      </label>
+      <div id="receipt-review-box" style="margin-top:18px"></div>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">${editing ? 'Edit Purchase' : 'Log a Supply Purchase'}</p>
+      <p class="dash-section-sub">Material purchases feed the per-artwork cost estimates and pricing calculator.</p>
+      <div class="expense-form-grid">
+        <div class="form-group">
+          <label class="form-label">Item Name</label>
+          <input class="form-input" id="sup-name" value="${(s.itemName || '').replace(/"/g, '&quot;')}" placeholder="e.g. Linen canvas roll">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="sup-category">
+            ${SUPPLY_CATEGORIES.map(c => `<option value="${c}" ${s.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Supplier / Shop</label>
+          <input class="form-input" id="sup-supplier" value="${(s.supplier || '').replace(/"/g, '&quot;')}" placeholder="e.g. Beirut Art Supplies">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purchase Date</label>
+          <input class="form-input" id="sup-date" type="date" value="${s.purchaseDate || ''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input class="form-input" id="sup-qty" type="number" min="0" step="0.01" value="${s.quantity || 1}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit Cost</label>
+          <input class="form-input" id="sup-unitcost" type="number" min="0" step="0.01" value="${s.unitCost || ''}" placeholder="e.g. 18">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Currency</label>
+          <input class="form-input" id="sup-currency" value="${s.currency || getSettings().currency || 'USD'}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (optional)</label>
+          <input class="form-input" id="sup-notes" value="${(s.notes || '').replace(/"/g, '&quot;')}" placeholder="e.g. for the Home Premiere series">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" onclick="saveSupply()">${editing ? 'Save Changes' : '+ Add Purchase'}</button>
+        ${editing ? `<button class="btn btn-ghost" onclick="cancelEditSupply()">Cancel</button>` : ''}
+      </div>
+    </div>
+
+    <div class="dash-block">
+      <p class="dash-section-title">Purchase History</p>
+      <p class="dash-section-sub">${supplies.length} purchase${supplies.length === 1 ? '' : 's'} logged</p>
+      <table class="data-table">
+        <thead><tr><th>Item</th><th>Category</th><th>Supplier</th><th>Date</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Total</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        ${supplies.length ? `<tfoot><tr class="total-row"><td colspan="6">Total material spend</td><td class="num">${fmtUSD(total)}</td><td></td></tr></tfoot>` : ''}
+      </table>
+    </div>`;
+}
+
+function editSupply(id) {
+  editingSupplyId = id;
+  renderSupplies();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEditSupply() {
+  editingSupplyId = null;
+  renderSupplies();
+}
+
+async function saveSupply() {
+  const itemName = document.getElementById('sup-name').value.trim();
+  if (!itemName) { showToast('Enter an item name.', 'error'); return; }
+  const quantity = parseFloat(document.getElementById('sup-qty').value) || 1;
+  const unitCost = parseFloat(document.getElementById('sup-unitcost').value) || 0;
+
+  const supply = {
+    id: editingSupplyId || uid(),
+    itemName,
+    category: document.getElementById('sup-category').value,
+    supplier: document.getElementById('sup-supplier').value.trim(),
+    purchaseDate: document.getElementById('sup-date').value || new Date().toISOString().slice(0, 10),
+    quantity,
+    unitCost,
+    totalCost: Math.round(quantity * unitCost * 100) / 100,
+    currency: document.getElementById('sup-currency').value.trim() || 'USD',
+    notes: document.getElementById('sup-notes').value.trim(),
+  };
+
+  const supplies = getSupplies();
+  if (editingSupplyId) {
+    const idx = supplies.findIndex(s => s.id === editingSupplyId);
+    if (idx > -1) supplies[idx] = supply;
+  } else {
+    supplies.unshift(supply);
+  }
+
+  const saved = await saveSupplies(supplies);
+  if (saved) {
+    showToast(editingSupplyId ? 'Purchase updated.' : 'Purchase logged.', 'success');
+    editingSupplyId = null;
+    renderSupplies();
+  }
+}
+
+function confirmDeleteSupply(id) {
+  const s = getSupplies().find(x => x.id === id);
+  const label = s ? `"${s.itemName}"` : 'This purchase';
+  document.getElementById('confirm-body').textContent = `${label} will be permanently removed.`;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('confirm-ok').onclick = () => { deleteSupply(id); closeModal(); };
+}
+
+async function deleteSupply(id) {
+  const saved = await saveSupplies(getSupplies().filter(s => s.id !== id));
+  if (saved) showToast('Purchase removed.', 'error');
+  renderSupplies();
+}
+
+// ── RECEIPT OCR ──────────────────────────────────────────
+let receiptDraft = null;
+let receiptRowSeq = 0;
+
+function resizeImageFile(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read file.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not read image.'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const scale = maxDim / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleReceiptFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const label = document.getElementById('receipt-upload-label');
+  const box = document.getElementById('receipt-review-box');
+  label.textContent = 'Scanning…';
+  box.innerHTML = `<p style="font-size:12px;color:var(--muted)">Reading receipt…</p>`;
+
+  try {
+    const dataUrl = await resizeImageFile(file, 1600, 0.82);
+    const res = await fetch('/api/receipt-ocr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: dataUrl, pin: currentAdminPin }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      box.innerHTML = `<p style="font-size:12px;color:#e74c3c">${data.error || `Scan failed (${res.status}).`}</p>`;
+      return;
+    }
+    if (data.configured === false) {
+      box.innerHTML = `<p style="font-size:12px;color:var(--muted)">${data.error} Add <code>ANTHROPIC_API_KEY</code> in Vercel project settings, then redeploy.</p>`;
+      return;
+    }
+    if (data.error) {
+      box.innerHTML = `<p style="font-size:12px;color:#e74c3c">${data.error}</p>`;
+      return;
+    }
+    if (!data.items || !data.items.length) {
+      box.innerHTML = `<p style="font-size:12px;color:var(--muted)">No line items found in that image. Try a clearer photo, or add items manually below.</p>`;
+      return;
+    }
+    renderReceiptReview(data);
+  } catch (e) {
+    box.innerHTML = `<p style="font-size:12px;color:#e74c3c">${e.message || 'Failed to scan receipt.'}</p>`;
+  } finally {
+    label.textContent = '+ Upload Receipt Photo';
+    input.value = '';
+  }
+}
+
+function receiptRowHtml(it, idx) {
+  const cat = it.category || 'Other';
+  return `
+    <tr data-idx="${idx}">
+      <td><input class="form-input" id="rr-name-${idx}" value="${(it.itemName || '').replace(/"/g, '&quot;')}" style="min-width:140px"></td>
+      <td>
+        <select class="form-select" id="rr-cat-${idx}">
+          ${SUPPLY_CATEGORIES.map(c => `<option value="${c}" ${cat === c ? 'selected' : ''}>${c}</option>`).join('')}
+        </select>
+      </td>
+      <td class="num"><input class="form-input" id="rr-qty-${idx}" type="number" min="0" step="0.01" value="${it.quantity || 1}" style="width:70px;text-align:right"></td>
+      <td class="num"><input class="form-input" id="rr-price-${idx}" type="number" min="0" step="0.01" value="${it.unitPrice != null ? it.unitPrice : ''}" style="width:90px;text-align:right"></td>
+      <td class="num"><input class="form-input" id="rr-total-${idx}" type="number" min="0" step="0.01" value="${it.total != null ? it.total : ''}" style="width:90px;text-align:right"></td>
+      <td class="num"><button class="exp-del-btn" onclick="removeReceiptRow(${idx})">Remove</button></td>
+    </tr>`;
+}
+
+function renderReceiptReview(data) {
+  receiptDraft = data;
+  receiptRowSeq = 0;
+  const items = data.items && data.items.length ? data.items : [{ itemName: '', quantity: 1, unitPrice: '', total: '' }];
+  const rowsHtml = items.map(it => receiptRowHtml(it, receiptRowSeq++)).join('');
+
+  document.getElementById('receipt-review-box').innerHTML = `
+    <div style="border:1px solid var(--border2);padding:18px;background:var(--surface2)">
+      <p style="font-size:13px;color:var(--cream-dim);margin-bottom:14px">Review what was extracted, fix anything wrong, pick a category for each item, then save.</p>
+      <div class="expense-form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
+        <div class="form-group">
+          <label class="form-label">Supplier / Shop</label>
+          <input class="form-input" id="rr-vendor" value="${(data.vendor || '').replace(/"/g, '&quot;')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purchase Date</label>
+          <input class="form-input" id="rr-date" type="date" value="${data.date || new Date().toISOString().slice(0, 10)}">
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Item</th><th>Category</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th><th></th></tr></thead>
+        <tbody id="receipt-items-body">${rowsHtml}</tbody>
+      </table>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-ghost" onclick="addReceiptRow()">+ Add Row</button>
+        <button class="btn btn-primary" onclick="saveReceiptItems()">Save All to Supplies</button>
+        <button class="btn btn-ghost" onclick="discardReceiptReview()">Discard</button>
+      </div>
+    </div>`;
+}
+
+function addReceiptRow() {
+  const tbody = document.getElementById('receipt-items-body');
+  tbody.insertAdjacentHTML('beforeend', receiptRowHtml({ itemName: '', quantity: 1, unitPrice: '', total: '' }, receiptRowSeq++));
+}
+
+function removeReceiptRow(idx) {
+  const row = document.querySelector(`#receipt-items-body tr[data-idx="${idx}"]`);
+  if (row) row.remove();
+}
+
+function discardReceiptReview() {
+  receiptDraft = null;
+  const box = document.getElementById('receipt-review-box');
+  if (box) box.innerHTML = '';
+}
+
+async function saveReceiptItems() {
+  const vendor = document.getElementById('rr-vendor').value.trim();
+  const date = document.getElementById('rr-date').value || new Date().toISOString().slice(0, 10);
+  const rows = document.querySelectorAll('#receipt-items-body tr');
+
+  const newEntries = [];
+  rows.forEach(row => {
+    const idx = row.getAttribute('data-idx');
+    const nameEl = document.getElementById(`rr-name-${idx}`);
+    const itemName = nameEl.value.trim();
+    if (!itemName) return;
+    const category = document.getElementById(`rr-cat-${idx}`).value;
+    const quantity = parseFloat(document.getElementById(`rr-qty-${idx}`).value) || 1;
+    const unitPrice = parseFloat(document.getElementById(`rr-price-${idx}`).value) || 0;
+    const totalInput = parseFloat(document.getElementById(`rr-total-${idx}`).value);
+    const totalCost = !isNaN(totalInput) ? totalInput : Math.round(quantity * unitPrice * 100) / 100;
+    newEntries.push({
+      id: uid(),
+      itemName, category, supplier: vendor, purchaseDate: date,
+      quantity, unitCost: unitPrice, totalCost,
+      currency: getSettings().currency || 'USD',
+      notes: 'Added from scanned receipt',
+    });
+  });
+
+  if (!newEntries.length) { showToast('Add at least one item with a name.', 'error'); return; }
+
+  const saved = await saveSupplies([...newEntries, ...getSupplies()]);
+  if (saved) {
+    showToast(`${newEntries.length} item${newEntries.length === 1 ? '' : 's'} added to Supplies.`, 'success');
+    discardReceiptReview();
+    renderSupplies();
+  }
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+async function renderSettings() {
+  if (!settingsCache) await loadSettings();
+  const st = getSettings();
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="settings-section" style="max-width:720px">
+      <h3>Business Assumptions</h3>
+      <p style="font-size:13px;color:var(--cream-dim);margin-bottom:20px;line-height:1.7">
+        These defaults feed the cost estimates and pricing calculator throughout the dashboard.
+        Nothing here is ever forced onto a painting or print &mdash; every suggestion built from
+        these numbers stays editable.
+      </p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Currency</label>
+          <input class="form-input" id="bs-currency" value="${st.currency}" placeholder="USD">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Profit Margin (%)</label>
+          <input class="form-input" id="bs-target-margin" type="number" min="0" max="100" value="${st.targetProfitMargin}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Minimum Acceptable Margin (%)</label>
+          <input class="form-input" id="bs-min-margin" type="number" min="0" max="100" value="${st.minAcceptableMargin}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Artist Hourly Rate</label>
+          <input class="form-input" id="bs-hourly-rate" type="number" min="0" step="0.5" value="${st.hourlyRate}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Packaging Cost (Originals)</label>
+          <input class="form-input" id="bs-pack-originals" type="number" min="0" step="0.5" value="${st.defaultPackagingCostOriginals}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Packaging Cost (Prints)</label>
+          <input class="form-input" id="bs-pack-prints" type="number" min="0" step="0.5" value="${st.defaultPackagingCostPrints}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Shipping Cost</label>
+          <input class="form-input" id="bs-shipping" type="number" min="0" step="0.5" value="${st.defaultShippingCost}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Certificate Cost (Prints)</label>
+          <input class="form-input" id="bs-certificate" type="number" min="0" step="0.5" value="${st.defaultCertificateCost}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Material Wastage (%)</label>
+          <input class="form-input" id="bs-wastage" type="number" min="0" max="100" value="${st.defaultWastagePercent}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Markup Multiplier</label>
+          <input class="form-input" id="bs-markup" type="number" min="1" step="0.1" value="${st.defaultMarkupMultiplier}">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveBusinessAssumptions()" style="margin-top:8px">Save Assumptions</button>
+    </div>
+
     <div class="settings-section">
       <h3>Change PIN</h3>
       <div class="form-group" style="margin-bottom:16px">
@@ -2068,6 +3266,23 @@ function renderSettings() {
       </p>
       <button class="btn btn-danger" onclick="clearAll()">Clear All Paintings</button>
     </div>`;
+}
+
+async function saveBusinessAssumptions() {
+  const settings = {
+    currency: document.getElementById('bs-currency').value.trim() || 'USD',
+    targetProfitMargin: parseFloat(document.getElementById('bs-target-margin').value) || 0,
+    minAcceptableMargin: parseFloat(document.getElementById('bs-min-margin').value) || 0,
+    hourlyRate: parseFloat(document.getElementById('bs-hourly-rate').value) || 0,
+    defaultPackagingCostOriginals: parseFloat(document.getElementById('bs-pack-originals').value) || 0,
+    defaultPackagingCostPrints: parseFloat(document.getElementById('bs-pack-prints').value) || 0,
+    defaultShippingCost: parseFloat(document.getElementById('bs-shipping').value) || 0,
+    defaultCertificateCost: parseFloat(document.getElementById('bs-certificate').value) || 0,
+    defaultWastagePercent: parseFloat(document.getElementById('bs-wastage').value) || 0,
+    defaultMarkupMultiplier: parseFloat(document.getElementById('bs-markup').value) || 1,
+  };
+  const saved = await saveSettings(settings);
+  if (saved) showToast('Business assumptions saved.', 'success');
 }
 
 async function changePin() {

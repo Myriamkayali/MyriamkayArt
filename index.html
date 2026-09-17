@@ -1542,22 +1542,7 @@
 
 <!-- ══ PRINTS ══ -->
 <section id="prints">
-  <div style="min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 40px;">
-    <p class="section-eyebrow" style="margin-bottom: 24px;">Fine Art Prints</p>
-    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Coming<br><em style="font-style:italic; color: var(--terracotta);">Soon</em></h2>
-    <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
-    <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">A curated selection of fine art prints is on its way. Follow on Instagram and turn on story &amp; post notifications to be the first to know when they drop.</p>
-    <a href="https://instagram.com/myriamkay.art" target="_blank" style="display:inline-flex;align-items:center;gap:18px;padding:18px 28px;border:1px solid rgba(107,66,38,0.25);background:rgba(107,66,38,0.04);text-decoration:none;transition:all 0.25s;max-width:360px;width:100%;" onmouseover="this.style.borderColor='var(--terracotta)';this.style.background='rgba(184,92,56,0.07)'" onmouseout="this.style.borderColor='rgba(107,66,38,0.25)';this.style.background='rgba(107,66,38,0.04)'">
-      <div style="width:44px;height:44px;border:1px solid rgba(107,66,38,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--umber);">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
-      </div>
-      <div style="text-align:left;">
-        <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown-light);margin-bottom:3px;line-height:1;">Instagram</p>
-        <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--umber);line-height:1;">@myriamkay.art</p>
-      </div>
-      <span style="margin-left:auto;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);white-space:nowrap;">Follow →</span>
-    </a>
-  </div>
+  <div id="prints-content"></div>
 </section>
 
 <!-- ══ COMMISSION ══ -->
@@ -2118,6 +2103,97 @@
     initScrollReveal('.avail-card');
   }
 
+  async function getPrintsPublic() {
+    try {
+      const res = await fetch('/api/prints');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function inquirePrint(title, price) {
+    const lines = [
+      `Hi Myriam! I'm interested in the print "${title}".`,
+      price ? `Listed price: $${price}` : null,
+      ``,
+      `Could you tell me more about it?`,
+    ].filter(l => l !== null).join('\n');
+    window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
+  }
+
+  async function renderPrintsSection() {
+    const wrap = document.getElementById('prints-content');
+    if (!wrap) return;
+
+    const all = await getPrintsPublic();
+    const prints = all.filter(pr => pr.status !== 'Private');
+
+    if (!prints.length) {
+      wrap.innerHTML = `
+        <div style="min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 40px;">
+          <p class="section-eyebrow" style="margin-bottom: 24px;">Fine Art Prints</p>
+          <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Coming<br><em style="font-style:italic; color: var(--terracotta);">Soon</em></h2>
+          <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
+          <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">A curated selection of fine art prints is on its way. Follow on Instagram and turn on story &amp; post notifications to be the first to know when they drop.</p>
+          <a href="https://instagram.com/myriamkay.art" target="_blank" style="display:inline-flex;align-items:center;gap:18px;padding:18px 28px;border:1px solid rgba(107,66,38,0.25);background:rgba(107,66,38,0.04);text-decoration:none;transition:all 0.25s;max-width:360px;width:100%;" onmouseover="this.style.borderColor='var(--terracotta)';this.style.background='rgba(184,92,56,0.07)'" onmouseout="this.style.borderColor='rgba(107,66,38,0.25)';this.style.background='rgba(107,66,38,0.04)'">
+            <div style="width:44px;height:44px;border:1px solid rgba(107,66,38,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--umber);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
+            </div>
+            <div style="text-align:left;">
+              <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown-light);margin-bottom:3px;line-height:1;">Instagram</p>
+              <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--umber);line-height:1;">@myriamkay.art</p>
+            </div>
+            <span style="margin-left:auto;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);white-space:nowrap;">Follow →</span>
+          </a>
+        </div>`;
+      return;
+    }
+
+    const cards = prints.map(pr => {
+      const editionSize = Number(pr.editionSize) || 0;
+      const numberSold = Number(pr.numberSold) || 0;
+      const numberRemaining = Math.max(0, editionSize - numberSold);
+      const soldOut = pr.status === 'Sold Out' || numberRemaining <= 0;
+      const dims = pr.width && pr.height ? `${pr.width} × ${pr.height} cm` : '';
+      const price = pr.price ? `$${Number(pr.price).toLocaleString()}` : 'Inquire for price';
+      const safeTitle = (pr.title || '').replace(/'/g, "\\'");
+      const imgHtml = pr.imageData
+        ? `<img class="print-img-bg" src="${pr.imageData}" alt="${pr.title}" style="object-fit:cover;display:block" loading="lazy">`
+        : `<div class="print-img-bg gp-1" style="height:100%"></div>`;
+
+      return `<div class="print-card">
+        <div class="print-img">
+          ${imgHtml}
+          <span class="print-badge" style="${soldOut ? 'background:var(--umber)' : ''}">${soldOut ? 'Sold Out' : 'Limited Edition'}</span>
+        </div>
+        <div class="print-info">
+          <p class="print-title">${pr.title}</p>
+          <p class="print-edition">Physical Limited Edition Print${dims ? ' · ' + dims : ''}</p>
+          <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown-light);margin-bottom:16px">Edition of ${editionSize} — ${soldOut ? 'sold out' : `${numberRemaining} remaining`}</p>
+          ${pr.description ? `<p style="font-size:14px;color:var(--brown-mid);line-height:1.7;margin-bottom:20px">${pr.description}</p>` : ''}
+          <div class="print-footer">
+            <p class="print-price">${price}</p>
+            ${soldOut
+              ? `<span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light)">Sold Out</span>`
+              : `<button class="btn-order" onclick="inquirePrint('${safeTitle}','${pr.price || ''}')">Inquire →</button>`}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <div class="prints-header">
+        <p class="section-eyebrow">Fine Art Prints</p>
+        <h2 class="section-title">Limited <em>Editions</em></h2>
+        <p>Physical, museum-quality prints, produced and shipped in small, numbered editions. Once an edition sells out, it's gone for good.</p>
+      </div>
+      <div class="prints-grid">${cards}</div>`;
+
+    initScrollReveal('.print-card');
+  }
+
   async function renderIgFeed() {
     const grid = document.getElementById('ig-feed-grid');
     if (!grid) return;
@@ -2169,6 +2245,7 @@
       else if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
       if (id === 'collection') renderGallery(); // async, intentionally not awaited
       if (id === 'contact') renderIgFeed();
+      if (id === 'prints') renderPrintsSection(); // async, intentionally not awaited
     }
   }
 
