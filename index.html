@@ -2151,7 +2151,7 @@
         <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown-light);margin-bottom:16px">${current.remaining > 0 ? `${current.remaining} of ${current.editionSize} remaining` : 'Sold out at this size'}</p>
         ${pr.description ? `<p style="font-size:14px;color:var(--brown-mid);line-height:1.7;margin-bottom:20px;white-space:pre-line">${pr.description}</p>` : ''}
         <div class="print-footer">
-          <p class="print-price">${current.price ? `$${current.price.toLocaleString()}` : 'Inquire for price'}</p>
+          <p class="print-price">${current.price ? `€${current.price.toLocaleString()}` : 'Inquire for price'}</p>
           ${allSoldOut || current.remaining <= 0
             ? `<span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light)">Sold Out</span>`
             : `<button class="btn-order" onclick="openOrderModal('${pr.id}', '${current.size}')">Order This Print →</button>`}
