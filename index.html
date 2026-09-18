@@ -517,24 +517,33 @@
     border: 1px solid rgba(107,66,38,0.12);
   }
 
-  .print-product {
-    max-width: 880px;
-    margin: 0 auto;
+  /* Lookbook + shop panel, side by side on desktop (sticky buy-box pattern) */
+  .prints-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 56px;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 64px;
     align-items: start;
-    background: var(--cream);
-    border: 1px solid rgba(107,66,38,0.12);
-    padding: 32px;
+    max-width: 1320px;
+    margin: 0 auto;
   }
 
   /* Editorial photoshoot gallery */
+  .print-hero-shot {
+    width: 100%;
+    margin-bottom: 18px;
+    overflow: hidden;
+    background: var(--linen);
+  }
+  .print-hero-shot img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.9s ease;
+  }
+  .print-hero-shot:hover img { transform: scale(1.02); }
   .print-gallery {
-    column-count: 3;
+    column-count: 2;
     column-gap: 18px;
-    max-width: 1100px;
-    margin: 0 auto 72px;
   }
   .print-gallery-item {
     break-inside: avoid;
@@ -550,40 +559,61 @@
   }
   .print-gallery-item:hover img { transform: scale(1.035); }
 
-  /* Print + size selector */
-  .print-select-section {
-    max-width: 720px;
-    margin: 0 auto;
-    text-align: center;
+  /* Sticky shop panel */
+  .print-shop-panel { position: sticky; top: calc(var(--nav-h) + 32px); }
+  .print-shop-panel-inner {
+    background: var(--cream);
+    border: 1px solid rgba(107,66,38,0.14);
+    padding: 28px;
   }
+  .print-shop-preview {
+    width: 100%;
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    margin-bottom: 22px;
+    background: var(--linen);
+  }
+  .print-shop-preview img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+    transition: opacity 0.3s ease;
+  }
+  .print-shop-eyebrow {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--terracotta); margin-bottom: 10px;
+  }
+  .print-shop-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(24px, 2.6vw, 30px);
+    font-style: italic;
+    color: var(--umber);
+    margin-bottom: 22px;
+    line-height: 1.15;
+  }
+
+  /* Print + size selector */
+  .print-select-section { text-align: left; }
   .print-chip-row {
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    padding: 6px 4px 22px;
-    justify-content: flex-start;
-    scroll-snap-type: x proximity;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
   }
   .print-chip {
-    flex: 0 0 92px;
-    scroll-snap-align: start;
     cursor: pointer;
     text-align: center;
-    opacity: 0.5;
+    opacity: 0.55;
     transition: opacity 0.25s;
   }
   .print-chip img {
-    width: 92px; height: 114px; object-fit: cover;
+    width: 100%; aspect-ratio: 3/4; object-fit: cover;
+    display: block;
     border: 2px solid transparent;
     transition: border-color 0.25s, transform 0.25s;
   }
   .print-chip:hover img { transform: translateY(-2px); }
   .print-chip.active { opacity: 1; }
   .print-chip.active img { border-color: var(--terracotta); }
-  .print-chip p {
-    font-size: 10px; letter-spacing: 0.04em; margin-top: 8px; color: var(--brown-mid);
-    font-family: 'Jost', sans-serif; line-height: 1.3;
-  }
 
   .print-img {
     width: 100%;
@@ -748,7 +778,51 @@
 
   /* ── COMMISSION ── */
   #commission {
-    padding: calc(var(--nav-h) + 80px) 80px 100px;
+    padding: calc(var(--nav-h) + 56px) 24px 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--nav-h));
+  }
+
+  .commission-pause-card {
+    max-width: 560px;
+    width: 100%;
+    text-align: center;
+    background: var(--cream);
+    border: 1px solid rgba(107,66,38,0.14);
+    padding: 56px 48px;
+  }
+  .commission-pause-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(184,92,56,0.3);
+    background: rgba(184,92,56,0.06);
+    color: var(--terracotta);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+  }
+  .commission-ig-link {
+    display: flex; align-items: center; gap: 18px;
+    padding: 18px 24px;
+    border: 1px solid rgba(107,66,38,0.25);
+    background: rgba(107,66,38,0.04);
+    text-decoration: none;
+    transition: all 0.25s;
+    max-width: 380px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .commission-ig-link:hover {
+    border-color: var(--terracotta);
+    background: rgba(184,92,56,0.07);
+  }
+  .commission-ig-icon {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(107,66,38,0.2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--umber);
   }
 
   .commission-layout {
@@ -1118,11 +1192,13 @@
     .gallery-grid { grid-template-columns: repeat(2,1fr); }
     #prints { padding: 100px 24px 60px; }
     .prints-grid { grid-template-columns: 1fr; }
-    .print-product { grid-template-columns: 1fr; gap: 24px; padding: 20px; }
+    .prints-layout { grid-template-columns: 1fr; gap: 40px; }
+    .print-shop-panel { position: static; }
     .print-gallery { column-count: 2; column-gap: 10px; }
     .print-gallery-item { margin-bottom: 10px; }
     .premiere-grid { grid-template-columns: 1fr; max-width: 420px; }
-    #commission { padding: 100px 24px 60px; }
+    #commission { padding: calc(var(--nav-h) + 40px) 20px 60px; min-height: auto; }
+    .commission-pause-card { padding: 40px 28px; }
     .commission-layout { grid-template-columns: 1fr; gap: 40px; }
     .commission-form { position: relative; top: auto; padding: 28px; }
     #contact { grid-template-columns: 1fr; padding: 100px 24px 60px; gap: 40px; }
@@ -1135,7 +1211,10 @@
 
   @media (max-width: 600px) {
     nav { padding: 0 18px; }
+    .nav-logo img { height: 42px; }
     .nav-burger { display: flex; }
+    .print-chip-row { grid-template-columns: repeat(3, 1fr); }
+    .print-shop-panel-inner { padding: 22px; }
     .nav-links {
       position: fixed;
       top: 0; right: 0;
@@ -1168,7 +1247,8 @@
     .filter-tabs { gap: 6px; }
     .filter-tab { padding: 7px 12px; font-size: 9px; }
     #prints { padding: 80px 18px 48px; }
-    #commission { padding: 80px 18px 48px; }
+    #commission { padding: calc(var(--nav-h) + 24px) 14px 48px; }
+    .commission-pause-card { padding: 32px 20px; }
     .commission-form { padding: 24px 18px; }
     .instagram-card { flex-wrap: wrap; }
     .ig-cta { width: 100%; margin-top: 8px; }
@@ -1433,7 +1513,7 @@
 <body>
 
 <nav id="main-nav">
-  <a class="nav-logo" onclick="showSection('home')"><img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/logo-signature-kayali-EJlBbPbrXgDeLnR2VcwooZfo2IIiO1.png" alt="Myriam Kayali"></a>
+  <a class="nav-logo" onclick="showSection('home')"><img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/logo-signature-full-hVSYxu8lcGmbFj6kNGY5PqaVfmiscs.png" alt="Myriam Kayali"></a>
   <ul class="nav-links" id="nav-links">
     <li><a onclick="showSection('home');closeMobileNav()">Home</a></li>
     <li><a onclick="showSection('about');closeMobileNav()">About</a></li>
@@ -1617,13 +1697,15 @@
 
 <!-- ══ COMMISSION ══ -->
 <section id="commission">
-  <div style="min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 40px;">
-    <p class="section-eyebrow" style="margin-bottom: 24px;">Commissions</p>
-    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--umber); margin-bottom: 28px;">Not Taking<br><em style="font-style:italic; color: var(--terracotta);">Commissions</em></h2>
-    <div style="width: 48px; height: 1px; background: var(--terracotta); margin: 0 auto 32px;"></div>
-    <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.8; max-width: 420px; margin-bottom: 48px;">I'm not accepting new commissions at the moment while I focus on current work. Follow along on Instagram, I'll share an update as soon as commissions reopen.</p>
-    <a href="https://instagram.com/myriamkay.art" target="_blank" style="display:inline-flex;align-items:center;gap:18px;padding:18px 28px;border:1px solid rgba(107,66,38,0.25);background:rgba(107,66,38,0.04);text-decoration:none;transition:all 0.25s;max-width:360px;width:100%;" onmouseover="this.style.borderColor='var(--terracotta)';this.style.background='rgba(184,92,56,0.07)'" onmouseout="this.style.borderColor='rgba(107,66,38,0.25)';this.style.background='rgba(107,66,38,0.04)'">
-      <div style="width:44px;height:44px;border:1px solid rgba(107,66,38,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--umber);">
+  <div class="commission-pause-card">
+    <div class="commission-pause-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+    </div>
+    <p class="section-eyebrow" style="margin-bottom: 18px;">Commissions</p>
+    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(38px, 4.6vw, 56px); font-weight: 300; line-height: 1.1; color: var(--umber); margin-bottom: 22px;">Commissions Are<br><em style="font-style:italic; color: var(--terracotta);">Paused</em> For Now</h2>
+    <p style="font-size: 16px; font-weight: 400; color: var(--brown-light); line-height: 1.85; max-width: 440px; margin: 0 auto 36px;">Thank you for thinking of me for something one-of-a-kind, it truly means a lot. My hands are full with the current collection at the moment, so I've paused new commissions while I finish this body of work. Follow along on Instagram for a peek at what's coming, and I'll share the moment I reopen.</p>
+    <a href="https://instagram.com/myriamkay.art" target="_blank" class="commission-ig-link">
+      <div class="commission-ig-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
       </div>
       <div style="text-align:left;">
@@ -1632,6 +1714,7 @@
       </div>
       <span style="margin-left:auto;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);white-space:nowrap;">Follow →</span>
     </a>
+    <p style="margin-top:28px;font-size:13px;color:var(--brown-light)">Have a question in the meantime? <a href="#contact" onclick="showSection('contact')" style="color:var(--terracotta);text-decoration:underline;text-underline-offset:3px;">Get in touch</a></p>
   </div>
 </section>
 
@@ -2165,23 +2248,32 @@
     if (printSelectedIndex >= purchasablePrints.length) printSelectedIndex = 0;
     printSelectedSize = 'A1';
 
-    const galleryHtml = PRINT_GALLERY_IMAGES.map((src, i) => `
+    const [heroSrc, ...restGallery] = PRINT_GALLERY_IMAGES;
+    const galleryHtml = restGallery.map((src, i) => `
       <div class="print-gallery-item">
-        <img src="${src}" alt="Home Premiere, photoshoot ${i + 1}" loading="lazy">
+        <img src="${src}" alt="Home Premiere, photoshoot ${i + 2}" loading="lazy">
       </div>`).join('');
 
     wrap.innerHTML = `
       <div class="prints-header" style="max-width:640px">
         <p class="section-eyebrow">Fine Art Prints</p>
-        <h2 class="section-title">Limited Edition <em>Prints</em></h2>
+        <h2 class="section-title">Shop the <em>Prints</em></h2>
+        <p style="font-size:13px;letter-spacing:0.04em;color:var(--brown-light);margin-top:18px">Currently shipping to Europe and the Middle East only.</p>
       </div>
 
-      <div class="print-gallery">${galleryHtml}</div>
+      <div class="prints-layout">
+        <div class="print-editorial-col">
+          <div class="print-hero-shot"><img src="${heroSrc}" alt="Home Premiere, photoshoot 1" loading="lazy"></div>
+          <div class="print-gallery">${galleryHtml}</div>
+        </div>
 
-      <div class="print-select-section" id="print-select-section"></div>`;
+        <aside class="print-shop-panel">
+          <div class="print-shop-panel-inner" id="print-select-section"></div>
+        </aside>
+      </div>`;
 
     renderPrintSelector();
-    initScrollReveal('.print-gallery-item');
+    initScrollReveal('.print-gallery-item, .print-hero-shot');
   }
 
   function renderPrintSelector() {
@@ -2190,11 +2282,10 @@
     const pr = purchasablePrints[printSelectedIndex];
 
     const chipsHtml = purchasablePrints.map((p, i) => `
-      <div class="print-chip ${i === printSelectedIndex ? 'active' : ''}" onclick="printsSelectPrint(${i})">
+      <div class="print-chip ${i === printSelectedIndex ? 'active' : ''}" onclick="printsSelectPrint(${i})" title="${p.title}">
         ${p.imageData
           ? `<img src="${p.imageData}" alt="${p.title}" loading="lazy">`
-          : `<div class="gp-1" style="width:92px;height:114px"></div>`}
-        <p>${p.title}</p>
+          : `<div class="gp-1" style="width:100%;aspect-ratio:3/4"></div>`}
       </div>`).join('');
 
     const sizeTagsHtml = PRINT_SIZES.map(size => {
@@ -2207,12 +2298,15 @@
     }).join('');
 
     host.innerHTML = `
-      <p class="home-section-eyebrow">Choose Your Print</p>
-      <h3 style="font-family:'Cormorant Garamond',serif;font-size:clamp(24px,3vw,32px);font-style:italic;color:var(--umber);margin-bottom:22px">${pr.title}</h3>
+      <div class="print-shop-preview">
+        ${pr.imageData ? `<img src="${pr.imageData}" alt="${pr.title}" loading="lazy">` : ''}
+      </div>
+      <p class="print-shop-eyebrow">Shop the Collection</p>
+      <h3 class="print-shop-title">${pr.title}</h3>
       <div class="print-chip-row">${chipsHtml}</div>
-      <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin:26px 0 12px">Select Size</p>
-      <div class="print-sizes" style="justify-content:center;margin-bottom:32px">${sizeTagsHtml}</div>
-      <button class="btn-order" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
+      <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin-bottom:12px">Select Size</p>
+      <div class="print-sizes" style="margin-bottom:28px">${sizeTagsHtml}</div>
+      <button class="btn-order" style="width:100%;padding:15px 22px" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
     `;
   }
 
