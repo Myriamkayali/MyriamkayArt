@@ -1212,12 +1212,7 @@ async function savePrints(prints) {
   }
 }
 
-const PRINT_SIZE_NAMES = ['20×30cm', '28×35cm', '30×45cm', '40×60cm', '50×75cm', '60×90cm', '70×105cm', '80×120cm'];
-
-function fmtEUR(n) {
-  const v = Math.round(Number(n) || 0);
-  return (v < 0 ? '-€' : '€') + Math.abs(v).toLocaleString();
-}
+const PRINT_SIZE_NAMES = ['A4', 'A3', 'A2', 'A1'];
 
 // Metrics for one size option of a print (price, edition, costs all live per-size now).
 function computeSizeMetrics(opt) {
@@ -2193,7 +2188,7 @@ async function renderPrintsList() {
               ${statusBadge}
               <span class="pc-badge cat">${m.numberSold}/${m.editionSize} sold</span>
             </div>
-            <p style="font-size:11px;color:var(--terra-light);margin-top:8px">${m.minPrice ? `from ${fmtEUR(m.minPrice)}` : 'No price set'} · ${m.profitMargin.toFixed(0)}% best margin</p>
+            <p style="font-size:11px;color:var(--terra-light);margin-top:8px">${m.minPrice ? `from ${fmtUSD(m.minPrice)}` : 'No price set'} · ${m.profitMargin.toFixed(0)}% best margin</p>
           </div>
         </div>`;
     });
@@ -2313,9 +2308,9 @@ function updatePrintTotals() {
       certificateCost: document.getElementById(`pr-${size}-certificate`).value,
     };
     const m = computeSizeMetrics(opt);
-    document.getElementById(`pr-${size}-total-cost`).textContent = fmtEUR(m.totalCostPerUnit);
+    document.getElementById(`pr-${size}-total-cost`).textContent = fmtUSD(m.totalCostPerUnit);
     const profitEl = document.getElementById(`pr-${size}-profit`);
-    profitEl.textContent = fmtEUR(m.profitPerUnit);
+    profitEl.textContent = fmtUSD(m.profitPerUnit);
     profitEl.style.color = m.profitPerUnit >= 0 ? '' : '#e74c3c';
     document.getElementById(`pr-${size}-margin`).textContent = opt.price ? `${m.profitMargin.toFixed(1)}%` : '—';
     document.getElementById(`pr-${size}-remaining`).textContent = m.numberRemaining;
@@ -2910,7 +2905,7 @@ function generatePricingInsights(summary) {
 
   // Remaining print edition potential
   if (summary.printUnitsRemaining > 0) {
-    insights.push(`If every remaining print sells at its current price, that's ${fmtEUR(summary.remainingPotentialRevenue)} in revenue and ${fmtEUR(summary.remainingPotentialProfit)} in profit across ${summary.printsWithRemaining} edition${summary.printsWithRemaining === 1 ? '' : 's'}.`);
+    insights.push(`If every remaining print sells at its current price, that's ${fmtUSD(summary.remainingPotentialRevenue)} in revenue and ${fmtUSD(summary.remainingPotentialProfit)} in profit across ${summary.printsWithRemaining} edition${summary.printsWithRemaining === 1 ? '' : 's'}.`);
   }
 
   // Material cost trend, this month vs last
@@ -3038,8 +3033,8 @@ async function renderDashboard() {
         </div>
         <div class="kpi-card">
           <p class="kpi-label">Revenue — Prints</p>
-          <p class="kpi-value">${fmtEUR(summary.revenuePrints)}</p>
-          <p class="kpi-sub">${summary.numberPrintsSold} unit${summary.numberPrintsSold === 1 ? '' : 's'} sold &middot; in &euro;</p>
+          <p class="kpi-value">${fmtUSD(summary.revenuePrints)}</p>
+          <p class="kpi-sub">${summary.numberPrintsSold} unit${summary.numberPrintsSold === 1 ? '' : 's'} sold</p>
         </div>
         <div class="kpi-card">
           <p class="kpi-label">Print Units Remaining</p>
@@ -3055,8 +3050,8 @@ async function renderDashboard() {
         </div>
         <div class="kpi-card">
           <p class="kpi-label">Profit — Prints</p>
-          <p class="kpi-value ${summary.profitPrints >= 0 ? 'pos' : 'neg'}">${fmtEUR(summary.profitPrints)}</p>
-          <p class="kpi-sub">from units sold &middot; in &euro;</p>
+          <p class="kpi-value ${summary.profitPrints >= 0 ? 'pos' : 'neg'}">${fmtUSD(summary.profitPrints)}</p>
+          <p class="kpi-sub">from units sold</p>
         </div>
         <div class="kpi-card">
           <p class="kpi-label">Total Material Costs</p>

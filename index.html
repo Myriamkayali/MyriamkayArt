@@ -530,6 +530,62 @@
     padding: 32px;
   }
 
+  /* Editorial photoshoot gallery */
+  .print-gallery {
+    column-count: 3;
+    column-gap: 18px;
+    max-width: 1100px;
+    margin: 0 auto 72px;
+  }
+  .print-gallery-item {
+    break-inside: avoid;
+    margin-bottom: 18px;
+    overflow: hidden;
+    background: var(--linen);
+  }
+  .print-gallery-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.7s ease;
+  }
+  .print-gallery-item:hover img { transform: scale(1.035); }
+
+  /* Print + size selector */
+  .print-select-section {
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .print-chip-row {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 6px 4px 22px;
+    justify-content: flex-start;
+    scroll-snap-type: x proximity;
+  }
+  .print-chip {
+    flex: 0 0 92px;
+    scroll-snap-align: start;
+    cursor: pointer;
+    text-align: center;
+    opacity: 0.5;
+    transition: opacity 0.25s;
+  }
+  .print-chip img {
+    width: 92px; height: 114px; object-fit: cover;
+    border: 2px solid transparent;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+  .print-chip:hover img { transform: translateY(-2px); }
+  .print-chip.active { opacity: 1; }
+  .print-chip.active img { border-color: var(--terracotta); }
+  .print-chip p {
+    font-size: 10px; letter-spacing: 0.04em; margin-top: 8px; color: var(--brown-mid);
+    font-family: 'Jost', sans-serif; line-height: 1.3;
+  }
+
   .print-img {
     width: 100%;
     aspect-ratio: 4/5;
@@ -1064,6 +1120,8 @@
     #prints { padding: 100px 24px 60px; }
     .prints-grid { grid-template-columns: 1fr; }
     .print-product { grid-template-columns: 1fr; gap: 24px; padding: 20px; }
+    .print-gallery { column-count: 2; column-gap: 10px; }
+    .print-gallery-item { margin-bottom: 10px; }
     .premiere-grid { grid-template-columns: 1fr; max-width: 420px; }
     #commission { padding: 100px 24px 60px; }
     .commission-layout { grid-template-columns: 1fr; gap: 40px; }
@@ -2067,20 +2125,24 @@
       </div>`;
   }
 
-  let purchasablePrints = [];
-  let printCarouselIndex = 0;
-  let printCarouselSize = null;
+  // Photoshoot lookbook images — separate from the print product data below.
+  const PRINT_GALLERY_IMAGES = [
+    'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/gallery-IMG_8572-ZTxd085vj437RjyI2Qd2edfH6zzGGt.jpg',
+    'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/gallery-E82B8AEE-2C83-431A-9CAA-0D65377D0309-NHgly4Goz3arCdlM513pEAN6rquse3.jpg',
+    'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/gallery-IMG_8583-mZyiVBTOAf0GpmcYHQH8gjfcddL87O.jpg',
+    'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/gallery-IMG_8584-RYv0zSEfxCYElFim8bPl8iVFI6y89m.jpg',
+    'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/gallery-IMG_8585-tHzOc3BeaRah0MVfm0zOFzygdKKAx2.jpg',
+    'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/gallery-IMG_8587-yqrMJPL5bfVO1oMk3qMBU7zLDTPpTT.jpg',
+    'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/gallery-IMG_8586-wzxjlLMuYrYKNtIMO4Vq4V5ydU9dUm.jpg',
+  ];
 
-  function printOfferedSizes(pr) {
-    return (pr.sizeOptions || [])
-      .filter(o => Number(o.price) > 0)
-      .map(o => ({
-        size: o.size,
-        price: Number(o.price) || 0,
-        editionSize: Number(o.editionSize) || 0,
-        remaining: Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0)),
-      }));
-  }
+  // Print names, in display order — separate from the gallery images above.
+  const PRINT_NAME_ORDER = ['Tarboosh Daze', 'Castania Aalkhat', 'Fayrouz Calling', 'Beirut Over Coffee', 'Serving Breakfast', 'Cup From the Past'];
+  const PRINT_SIZES = ['A1', 'A2', 'A3', 'A4'];
+
+  let purchasablePrints = [];
+  let printSelectedIndex = 0;
+  let printSelectedSize = 'A1';
 
   async function renderPrintsSection() {
     const wrap = document.getElementById('prints-content');
@@ -2088,126 +2150,97 @@
 
     const all = await getPrintsPublic();
     printsPublicCache = all;
-    purchasablePrints = all.filter(pr => pr.status !== 'Private' && printOfferedSizes(pr).length > 0);
+    purchasablePrints = PRINT_NAME_ORDER
+      .map(name => all.find(pr => pr.title === name && pr.status !== 'Private'))
+      .filter(Boolean);
 
     if (!purchasablePrints.length) {
       wrap.innerHTML = comingSoonPrintsHtml();
       return;
     }
 
-    if (printCarouselIndex >= purchasablePrints.length) printCarouselIndex = 0;
-    const firstOffered = printOfferedSizes(purchasablePrints[printCarouselIndex]);
-    printCarouselSize = (firstOffered.find(o => o.remaining > 0) || firstOffered[0]).size;
+    if (printSelectedIndex >= purchasablePrints.length) printSelectedIndex = 0;
+    printSelectedSize = 'A1';
+
+    const galleryHtml = PRINT_GALLERY_IMAGES.map((src, i) => `
+      <div class="print-gallery-item">
+        <img src="${src}" alt="Home Premiere, photoshoot ${i + 1}" loading="lazy">
+      </div>`).join('');
 
     wrap.innerHTML = `
-      <div class="prints-header">
+      <div class="prints-header" style="max-width:640px">
         <p class="section-eyebrow">Fine Art Prints</p>
-        <h2 class="section-title">Limited <em>Editions</em></h2>
-        <p>One print, ${purchasablePrints.length} scene${purchasablePrints.length === 1 ? '' : 's'} to choose from. Slide through the collection, pick a painting, then pick a size — A4 through A1, produced and shipped in small, numbered editions.</p>
+        <h2 class="section-title">Limited Edition <em>Prints</em></h2>
       </div>
-      <div class="print-product" id="print-product"></div>`;
 
-    renderPrintProduct();
+      <div class="print-gallery">${galleryHtml}</div>
+
+      <div class="print-select-section" id="print-select-section"></div>`;
+
+    renderPrintSelector();
+    initScrollReveal('.print-gallery-item');
   }
 
-  function renderPrintProduct() {
-    const host = document.getElementById('print-product');
+  function renderPrintSelector() {
+    const host = document.getElementById('print-select-section');
     if (!host) return;
-    const pr = purchasablePrints[printCarouselIndex];
-    const offered = printOfferedSizes(pr);
-    const current = offered.find(o => o.size === printCarouselSize) || offered.find(o => o.remaining > 0) || offered[0];
-    const allSoldOut = pr.status === 'Sold Out' || offered.every(o => o.remaining <= 0);
+    const pr = purchasablePrints[printSelectedIndex];
 
-    const imgHtml = pr.imageData
-      ? `<img src="${pr.imageData}" alt="${pr.title}" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">`
-      : `<div class="gp-1" style="width:100%;height:100%"></div>`;
+    const chipsHtml = purchasablePrints.map((p, i) => `
+      <div class="print-chip ${i === printSelectedIndex ? 'active' : ''}" onclick="printsSelectPrint(${i})">
+        ${p.imageData
+          ? `<img src="${p.imageData}" alt="${p.title}" loading="lazy">`
+          : `<div class="gp-1" style="width:92px;height:114px"></div>`}
+        <p>${p.title}</p>
+      </div>`).join('');
 
-    const dotsHtml = purchasablePrints.length > 1 ? `
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:14px">
-        ${purchasablePrints.map((_, i) => `<span onclick="printsGoTo(${i})" style="width:${i === printCarouselIndex ? '22px' : '7px'};height:7px;background:${i === printCarouselIndex ? 'var(--terracotta)' : 'rgba(107,66,38,0.25)'};cursor:pointer;transition:all 0.25s"></span>`).join('')}
-      </div>` : '';
-
-    const arrowsHtml = purchasablePrints.length > 1 ? `
-      <button onclick="printsPrev()" aria-label="Previous" style="position:absolute;top:50%;left:12px;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(30,15,7,0.55);color:var(--linen);border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;">‹</button>
-      <button onclick="printsNext()" aria-label="Next" style="position:absolute;top:50%;right:12px;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(30,15,7,0.55);color:var(--linen);border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;">›</button>` : '';
-
-    const sizeTagsHtml = offered.map(o => `
-      <span class="size-tag ${o.size === current.size ? 'active' : ''}" style="${o.remaining <= 0 ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : ''}"
-        onclick="${o.remaining > 0 ? `printsSelectSize('${o.size}')` : ''}">${o.size}</span>`).join('');
+    const sizeTagsHtml = PRINT_SIZES.map(size => {
+      const opt = (pr.sizeOptions || []).find(o => o.size === size);
+      const editionSize = opt ? Number(opt.editionSize) || 0 : 0;
+      const numberSold = opt ? Number(opt.numberSold) || 0 : 0;
+      const soldOut = editionSize > 0 && (editionSize - numberSold) <= 0;
+      return `<span class="size-tag ${size === printSelectedSize ? 'active' : ''}" style="${soldOut ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : ''}"
+        onclick="${soldOut ? '' : `printsSelectSizeTag('${size}')`}">${size}</span>`;
+    }).join('');
 
     host.innerHTML = `
-      <div>
-        <div class="print-img" id="print-carousel-media">
-          ${imgHtml}
-          <span class="print-badge" style="${allSoldOut ? 'background:var(--umber)' : ''}">${allSoldOut ? 'Sold Out' : 'Limited Edition'}</span>
-          ${arrowsHtml}
-        </div>
-        ${dotsHtml}
-      </div>
-      <div class="print-info" style="padding:0 4px">
-        <p class="print-title">${pr.title}</p>
-        <p class="print-edition">Physical Limited Edition Print</p>
-        <div class="print-sizes">${sizeTagsHtml}</div>
-        <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown-light);margin-bottom:16px">${current.remaining > 0 ? `${current.remaining} of ${current.editionSize} remaining` : 'Sold out at this size'}</p>
-        ${pr.description ? `<p style="font-size:14px;color:var(--brown-mid);line-height:1.7;margin-bottom:20px;white-space:pre-line">${pr.description}</p>` : ''}
-        <div class="print-footer">
-          <p class="print-price">${current.price ? `€${current.price.toLocaleString()}` : 'Inquire for price'}</p>
-          ${allSoldOut || current.remaining <= 0
-            ? `<span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light)">Sold Out</span>`
-            : `<button class="btn-order" onclick="openOrderModal('${pr.id}', '${current.size}')">Order This Print →</button>`}
-        </div>
-      </div>`;
-
-    const media = document.getElementById('print-carousel-media');
-    if (media && purchasablePrints.length > 1) {
-      let touchStartX = null;
-      media.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
-      media.addEventListener('touchend', e => {
-        if (touchStartX === null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        if (dx > 40) printsPrev();
-        else if (dx < -40) printsNext();
-        touchStartX = null;
-      }, { passive: true });
-    }
-
-    initScrollReveal('#print-product');
+      <p class="home-section-eyebrow">Choose Your Print</p>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:clamp(24px,3vw,32px);font-style:italic;color:var(--umber);margin-bottom:22px">${pr.title}</h3>
+      <div class="print-chip-row">${chipsHtml}</div>
+      <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin:26px 0 12px">Select Size</p>
+      <div class="print-sizes" style="justify-content:center;margin-bottom:32px">${sizeTagsHtml}</div>
+      <button class="btn-order" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
+    `;
   }
 
-  function printsGoTo(i) {
-    printCarouselIndex = i;
-    printCarouselSize = null;
-    renderPrintProduct();
+  function printsSelectPrint(i) {
+    printSelectedIndex = i;
+    printSelectedSize = 'A1';
+    renderPrintSelector();
   }
 
-  function printsPrev() {
-    printCarouselIndex = (printCarouselIndex - 1 + purchasablePrints.length) % purchasablePrints.length;
-    printCarouselSize = null;
-    renderPrintProduct();
-  }
-
-  function printsNext() {
-    printCarouselIndex = (printCarouselIndex + 1) % purchasablePrints.length;
-    printCarouselSize = null;
-    renderPrintProduct();
-  }
-
-  function printsSelectSize(size) {
-    printCarouselSize = size;
-    renderPrintProduct();
+  function printsSelectSizeTag(size) {
+    printSelectedSize = size;
+    renderPrintSelector();
   }
 
   // ── ORDER FLOW (multi-step modal) ──
   let orderState = null;
 
+  function orderSizeAvailable(o) {
+    const editionSize = Number(o.editionSize) || 0;
+    const numberSold = Number(o.numberSold) || 0;
+    return editionSize <= 0 || (editionSize - numberSold) > 0; // no edition set yet = treat as available
+  }
+
   function openOrderModal(printId, size) {
     const print = printsPublicCache.find(p => p.id === printId);
     if (!print) return;
-    const offered = (print.sizeOptions || []).filter(o => Number(o.price) > 0);
-    if (!offered.length) return;
-    const initial = offered.find(o => o.size === size && Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0)) > 0)
-      || offered.find(o => Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0)) > 0)
-      || offered[0];
+    const options = PRINT_SIZES.map(s => (print.sizeOptions || []).find(o => o.size === s) || { size: s });
+    const initial = options.find(o => o.size === size && orderSizeAvailable(o))
+      || options.find(orderSizeAvailable)
+      || options[0];
+    if (!initial) return;
     orderState = {
       print,
       size: initial.size,
@@ -2252,15 +2285,13 @@
   }
 
   function orderSizeSelectorHtml() {
-    const offered = (orderState.print.sizeOptions || []).filter(o => Number(o.price) > 0);
-    if (offered.length <= 1) return '';
+    const options = PRINT_SIZES.map(s => (orderState.print.sizeOptions || []).find(o => o.size === s) || { size: s });
     return `<div class="form-group">
       <label>Size</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${offered.map(o => {
-          const remaining = Math.max(0, (Number(o.editionSize) || 0) - (Number(o.numberSold) || 0));
-          const disabled = remaining <= 0;
-          return `<span class="size-tag ${o.size === orderState.size ? 'active' : ''}" style="${disabled ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : 'cursor:pointer'}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">${o.size} — €${Number(o.price).toLocaleString()}</span>`;
+        ${options.map(o => {
+          const disabled = !orderSizeAvailable(o);
+          return `<span class="size-tag ${o.size === orderState.size ? 'active' : ''}" style="${disabled ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : 'cursor:pointer'}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">${o.size}</span>`;
         }).join('')}
       </div>
     </div>`;

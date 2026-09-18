@@ -66,8 +66,10 @@ async function sendEmail({ to, subject, html }) {
 }
 
 function orderLinesHtml(order) {
-  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` — ${order.printSize}` : ''}<br>
-    Quantity: ${order.quantity} × ${fmtMoney(order.price)} — Total: ${fmtMoney(order.price * order.quantity)}</p>`;
+  const priceLine = order.price > 0
+    ? `Quantity: ${order.quantity} × ${fmtMoney(order.price)} — Total: ${fmtMoney(order.price * order.quantity)}`
+    : `Quantity: ${order.quantity} — price to be confirmed`;
+  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` — ${order.printSize}` : ''}<br>${priceLine}</p>`;
 }
 
 function notifyMyriamEmailHtml(order) {
@@ -149,8 +151,12 @@ module.exports = async function handler(req, res) {
       const print = prints.find(p => p.id === printId);
       if (!print) return res.status(404).json({ error: 'That print could not be found.' });
 
-      const sizeOption = (print.sizeOptions || []).find(o => o.size === size && Number(o.price) > 0);
-      if (!sizeOption) return res.status(400).json({ error: 'That size is not currently available for this print.' });
+      const sizeOption = (print.sizeOptions || []).find(o => o.size === size) || { size };
+      const editionSize = Number(sizeOption.editionSize) || 0;
+      const numberSold = Number(sizeOption.numberSold) || 0;
+      if (editionSize > 0 && (editionSize - numberSold) <= 0) {
+        return res.status(400).json({ error: 'That size is sold out.' });
+      }
 
       const order = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
