@@ -2577,6 +2577,7 @@
     if (target) {
       target.style.display = id === 'contact' ? 'grid' : 'block';
       if (id === 'about') target.style.display = 'grid';
+      if (id === 'commission') target.style.display = 'flex';
       target.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (id === 'home') { renderHome(); renderAvailableStrip(); renderExhibitionSection(); }
