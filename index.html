@@ -46,15 +46,14 @@
   nav.scrolled { box-shadow: 0 2px 24px rgba(30,15,7,0.08); }
 
   .nav-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    color: var(--umber);
-    text-decoration: none;
+    display: block;
     cursor: pointer;
   }
-  .nav-logo span { font-style: italic; color: var(--terracotta); }
+  .nav-logo img {
+    display: block;
+    height: 34px;
+    width: auto;
+  }
 
   .nav-links {
     display: flex; gap: 36px; list-style: none;
@@ -1434,7 +1433,7 @@
 <body>
 
 <nav id="main-nav">
-  <a class="nav-logo" onclick="showSection('home')">Myriam <span>Kayali</span></a>
+  <a class="nav-logo" onclick="showSection('home')"><img src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/logo-signature-ohWGS4ZvVJM5fJLwZ1t1eYMa4zUdTW.png" alt="Myriam Kayali"></a>
   <ul class="nav-links" id="nav-links">
     <li><a onclick="showSection('home');closeMobileNav()">Home</a></li>
     <li><a onclick="showSection('about');closeMobileNav()">About</a></li>
