@@ -86,7 +86,7 @@ function notifyMyriamEmailHtml(order) {
       <p><strong>${order.clientName}</strong><br>
       ${order.clientEmail}<br>
       ${order.clientPhone}</p>
-      <p>${order.shippingStreet}<br>${order.shippingCity}, ${order.shippingCountry} ${order.shippingPostalCode}</p>
+      <p>${order.shippingBuilding ? order.shippingBuilding + '<br>' : ''}${order.shippingStreet}${order.shippingApartment ? ', ' + order.shippingApartment : ''}<br>${order.shippingCity}, ${order.shippingCountry} ${order.shippingPostalCode}</p>
       <p style="color:#999;font-size:12px">Order ${order.id}, ${order.createdAt}</p>
     </div>`;
 }
@@ -141,7 +141,7 @@ module.exports = async function handler(req, res) {
     if (body.action === 'create') {
       const {
         printId, size, clientName, clientEmail, clientPhone,
-        shippingStreet, shippingCity, shippingCountry, shippingPostalCode, quantity,
+        shippingBuilding, shippingStreet, shippingApartment, shippingCity, shippingCountry, shippingPostalCode, quantity,
       } = body;
 
       if (!printId || !size || !clientName || !clientEmail || !clientPhone || !shippingStreet || !shippingCity || !shippingCountry || !shippingPostalCode) {
@@ -174,7 +174,9 @@ module.exports = async function handler(req, res) {
         clientName: String(clientName).trim(),
         clientEmail: String(clientEmail).trim(),
         clientPhone: String(clientPhone).trim(),
+        shippingBuilding: String(shippingBuilding || '').trim(),
         shippingStreet: String(shippingStreet).trim(),
+        shippingApartment: String(shippingApartment || '').trim(),
         shippingCity: String(shippingCity).trim(),
         shippingCountry: String(shippingCountry).trim(),
         shippingPostalCode: String(shippingPostalCode).trim(),

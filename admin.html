@@ -2434,7 +2434,7 @@ async function renderOrders() {
         <p style="font-size:11px;color:var(--muted)">${o.clientPhone}</p>
       </td>
       <td style="font-size:12px">
-        ${o.shippingStreet}<br>${o.shippingCity}, ${o.shippingCountry} ${o.shippingPostalCode}
+        ${o.shippingBuilding ? o.shippingBuilding + '<br>' : ''}${o.shippingStreet}${o.shippingApartment ? ', ' + o.shippingApartment : ''}<br>${o.shippingCity}, ${o.shippingCountry} ${o.shippingPostalCode}
       </td>
       <td>
         <p style="color:var(--cream)">${o.printTitle}</p>

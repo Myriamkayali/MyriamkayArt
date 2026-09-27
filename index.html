@@ -2395,6 +2395,38 @@
   const PRINT_SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
   function sizeLabel(size) { return PRINT_SIZE_DIMENSIONS[size] ? `${size} (${PRINT_SIZE_DIMENSIONS[size]})` : size; }
 
+  // Dial codes offered in the order form, matching the site's Europe + Middle East shipping scope.
+  const PHONE_COUNTRY_CODES = [
+    { dial: '+961', label: 'Lebanon (+961)' },
+    { dial: '+971', label: 'UAE (+971)' },
+    { dial: '+966', label: 'Saudi Arabia (+966)' },
+    { dial: '+974', label: 'Qatar (+974)' },
+    { dial: '+965', label: 'Kuwait (+965)' },
+    { dial: '+973', label: 'Bahrain (+973)' },
+    { dial: '+968', label: 'Oman (+968)' },
+    { dial: '+962', label: 'Jordan (+962)' },
+    { dial: '+20', label: 'Egypt (+20)' },
+    { dial: '+90', label: 'Turkey (+90)' },
+    { dial: '+44', label: 'United Kingdom (+44)' },
+    { dial: '+33', label: 'France (+33)' },
+    { dial: '+49', label: 'Germany (+49)' },
+    { dial: '+39', label: 'Italy (+39)' },
+    { dial: '+34', label: 'Spain (+34)' },
+    { dial: '+31', label: 'Netherlands (+31)' },
+    { dial: '+32', label: 'Belgium (+32)' },
+    { dial: '+41', label: 'Switzerland (+41)' },
+    { dial: '+43', label: 'Austria (+43)' },
+    { dial: '+351', label: 'Portugal (+351)' },
+    { dial: '+30', label: 'Greece (+30)' },
+    { dial: '+357', label: 'Cyprus (+357)' },
+    { dial: '+353', label: 'Ireland (+353)' },
+    { dial: '+45', label: 'Denmark (+45)' },
+    { dial: '+46', label: 'Sweden (+46)' },
+    { dial: '+47', label: 'Norway (+47)' },
+    { dial: '+48', label: 'Poland (+48)' },
+    { dial: '', label: 'Other (enter full number)' },
+  ];
+
   let purchasablePrints = [];
   let printSelectedIndex = 0;
   let printSelectedSize = PRINT_SIZES[0];
@@ -2488,7 +2520,7 @@
       <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin-bottom:12px">Select Size</p>
       <div class="print-size-list">${sizeRowsHtml}</div>
       <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:10px">Shipping isn't included in the price above. The cost is calculated based on your location and shown at checkout.</p>
-      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:22px">Sizes are approximate. Since some paintings are square rather than a standard rectangle, final print dimensions (and price) may be adjusted slightly to preserve the original proportions.</p>
+      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:22px">Sizes are approximate. Since some paintings are square rather than a standard rectangle, final print dimensions may be adjusted slightly to preserve the original proportions.</p>
       <button class="btn-order" style="width:100%;padding:15px 22px" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
     `;
   }
@@ -2525,7 +2557,7 @@
       print,
       size: initial.size,
       step: 1,
-      form: { name: '', email: '', phone: '', street: '', city: '', country: '', postal: '', quantity: 1 },
+      form: { name: '', email: '', phoneCode: '+961', phone: '', building: '', apartment: '', street: '', city: '', country: '', postal: '', quantity: 1 },
     };
     document.getElementById('order-modal').style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -2595,8 +2627,20 @@
         ${orderSizeSelectorHtml()}
         <div class="form-group"><label>Full Name</label><input class="form-input" id="ord-name" value="${form.name}"></div>
         <div class="form-group"><label>Email</label><input class="form-input" type="email" inputmode="email" id="ord-email" value="${form.email}"></div>
-        <div class="form-group"><label>Phone</label><input class="form-input" type="tel" inputmode="tel" id="ord-phone" value="${form.phone}"></div>
-        <div class="form-group"><label>Street Address</label><input class="form-input" id="ord-street" value="${form.street}"></div>
+        <div class="form-group">
+          <label>Phone</label>
+          <div style="display:flex;gap:8px">
+            <select class="form-input" id="ord-phone-code" style="flex:0 0 150px">
+              ${PHONE_COUNTRY_CODES.map(c => `<option value="${c.dial}" ${c.dial === form.phoneCode ? 'selected' : ''}>${c.label}</option>`).join('')}
+            </select>
+            <input class="form-input" type="tel" inputmode="tel" id="ord-phone" value="${form.phone}" placeholder="Number" style="flex:1">
+          </div>
+        </div>
+        <div class="form-group"><label>Building Name <span style="text-transform:none;letter-spacing:0;color:var(--brown-light)">(optional)</span></label><input class="form-input" id="ord-building" value="${form.building}"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Street Address</label><input class="form-input" id="ord-street" value="${form.street}"></div>
+          <div class="form-group"><label>Apartment <span style="text-transform:none;letter-spacing:0;color:var(--brown-light)">(optional)</span></label><input class="form-input" id="ord-apartment" value="${form.apartment}"></div>
+        </div>
         <div class="form-row">
           <div class="form-group"><label>City</label><input class="form-input" id="ord-city" value="${form.city}"></div>
           <div class="form-group"><label>Postal Code</label><input class="form-input" id="ord-postal" value="${form.postal}"></div>
@@ -2627,8 +2671,9 @@
         <div style="font-size:13px;color:var(--brown-mid);line-height:1.9;background:var(--cream-dark);padding:16px 18px;margin-bottom:20px">
           <p>${form.name}</p>
           <p>${form.email}</p>
-          <p>${form.phone}</p>
-          <p>${form.street}</p>
+          <p>${form.phoneCode} ${form.phone}</p>
+          ${form.building ? `<p>${form.building}</p>` : ''}
+          <p>${form.street}${form.apartment ? ', ' + form.apartment : ''}</p>
           <p>${form.city}, ${form.postal}</p>
           <p>${form.country}</p>
         </div>
@@ -2653,7 +2698,10 @@
     orderState.form = {
       name: document.getElementById('ord-name').value.trim(),
       email: document.getElementById('ord-email').value.trim(),
+      phoneCode: document.getElementById('ord-phone-code').value,
       phone: document.getElementById('ord-phone').value.trim(),
+      building: document.getElementById('ord-building').value.trim(),
+      apartment: document.getElementById('ord-apartment').value.trim(),
       street: document.getElementById('ord-street').value.trim(),
       city: document.getElementById('ord-city').value.trim(),
       country: document.getElementById('ord-country').value.trim(),
@@ -2701,8 +2749,10 @@
           size,
           clientName: form.name,
           clientEmail: form.email,
-          clientPhone: form.phone,
+          clientPhone: `${form.phoneCode} ${form.phone}`.trim(),
+          shippingBuilding: form.building,
           shippingStreet: form.street,
+          shippingApartment: form.apartment,
           shippingCity: form.city,
           shippingCountry: form.country,
           shippingPostalCode: form.postal,
