@@ -1353,8 +1353,10 @@
         #170c05 1.5px, #170c05 3px);
     box-shadow: 0 14px 34px rgba(30,15,7,0.4), 0 0 0 1px rgba(244,237,224,0.08);
     animation: vinylSpin 6s linear infinite;
+    animation-play-state: paused;
     transition: transform 0.3s ease;
   }
+  .vinyl-player.playing .vinyl-disc { animation-play-state: running; }
   .vinyl-player:hover .vinyl-disc { transform: scale(1.03); }
   @keyframes vinylSpin { to { transform: rotate(360deg); } }
 
@@ -1380,20 +1382,6 @@
     box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
   }
 
-  .vinyl-control-badge {
-    position: absolute;
-    bottom: -4px; right: -4px;
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: var(--terracotta);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--linen);
-    box-shadow: 0 4px 12px rgba(30,15,7,0.35), 0 0 0 3px var(--cream);
-    pointer-events: none;
-  }
-  .vinyl-control-badge .vinyl-icon-pause { display: none; }
-  .vinyl-player.playing .vinyl-control-badge .vinyl-icon-play { display: none; }
-  .vinyl-player.playing .vinyl-control-badge .vinyl-icon-pause { display: block; }
 
   .vinyl-arm {
     position: absolute;
@@ -1421,28 +1409,20 @@
     bottom: calc(100% + 12px);
     right: 0;
     white-space: nowrap;
-    background: var(--umber);
-    color: var(--cream);
-    font-family: 'Hanken Grotesk', sans-serif;
-    font-size: 11.5px;
-    letter-spacing: 0.02em;
-    padding: 8px 14px;
+    color: var(--brown-light);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.01em;
     opacity: 0;
     transform: translateY(4px);
     transition: opacity 0.25s, transform 0.25s;
     pointer-events: none;
   }
-  .vinyl-tooltip::after {
-    content: '';
-    position: absolute; top: 100%; right: 22px;
-    border: 5px solid transparent;
-    border-top-color: var(--umber);
-  }
   .vinyl-player:hover .vinyl-tooltip { opacity: 1; transform: translateY(0); }
 
   @media (max-width: 600px) {
     .vinyl-player { width: 100px; height: 100px; top: auto; bottom: 24px; right: 20px; }
-    .vinyl-control-badge { width: 30px; height: 30px; }
     .vinyl-arm { height: 40px; }
     .vinyl-tooltip { display: none; }
   }
@@ -1811,12 +1791,8 @@
   <div class="vinyl-disc">
     <img class="vinyl-cover-img" src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/vinyl-fairuz-cover-CRtTUgc9MTCIq1enPtHyd5F94MbsCn.jpg" alt="Fairuz, Greatest Hits" draggable="false">
   </div>
-  <div class="vinyl-control-badge">
-    <svg class="vinyl-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-    <svg class="vinyl-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
-  </div>
   <div class="vinyl-arm"></div>
-  <p class="vinyl-tooltip">Fairuz &middot; click to listen, drag to move</p>
+  <p class="vinyl-tooltip">A little Fairuz while you browse? &#9834;</p>
 </div>
 <div style="position:fixed;bottom:0;left:0;width:2px;height:2px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1;">
   <div id="yt-audio-mount"></div>
@@ -2768,7 +2744,7 @@
       <div class="print-chip-row">${chipsHtml}</div>
       <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin-bottom:12px">Select Size</p>
       <div class="print-size-list">${sizeRowsHtml}</div>
-      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:10px">Shipping isn't included in the price above. The cost is calculated based on your location.</p>
+      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:10px">Shipping isn't included in the price above. The cost is calculated based on your location, and I'll share the final price with you once your order is placed.</p>
       <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:22px">Sizes are approximate. Since some paintings are square rather than a standard rectangle, final print dimensions may be adjusted slightly to preserve the original proportions.</p>
       <button class="btn-order" style="width:100%;padding:15px 22px" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
     `;
@@ -3138,7 +3114,9 @@
         onStateChange: e => {
           const vinyl = document.getElementById('vinyl-player');
           if (!vinyl) return;
-          vinyl.classList.toggle('playing', e.data === YT.PlayerState.PLAYING);
+          const isPlaying = e.data === YT.PlayerState.PLAYING;
+          vinyl.classList.toggle('playing', isPlaying);
+          vinyl.setAttribute('aria-label', isPlaying ? 'Pause music' : 'Play music');
         },
       },
     });
