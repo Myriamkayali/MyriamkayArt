@@ -339,26 +339,32 @@
   .about-chapter.about-chapter--story { display: block; }
   .story-row {
     display: grid;
-    grid-template-columns: 6fr 5fr;
-    gap: 70px;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
     align-items: center;
-    margin-bottom: 64px;
+    margin-bottom: 36px;
   }
   .story-row:last-child { margin-bottom: 0; }
   .story-row .about-text { padding-top: 0; }
+  /* Photos zigzag: middle row puts them on the left */
+  .story-row:nth-of-type(even) .story-snaps { order: -1; }
   .story-snaps {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    flex-wrap: wrap;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 12px 0;
   }
   .polaroid.polaroid--mini {
-    width: 180px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 250px;
     padding: 9px 9px 30px;
   }
+  .story-snaps:has(> :nth-child(3)) .polaroid--mini { max-width: 190px; }
   .polaroid--mini img { aspect-ratio: auto; }
-  .story-snaps .polaroid--mini + .polaroid--mini { margin-left: -18px; margin-top: 28px; }
-  .story-snaps .polaroid--mini:nth-child(3) { margin-top: 8px; }
+  .story-snaps .polaroid--mini + .polaroid--mini { margin-left: -18px; margin-top: 40px; }
+  .story-snaps .polaroid--mini:nth-child(3) { margin-top: -20px; }
   .polaroid--mini::before { width: 56px; height: 18px; top: -9px; }
 
   .about-heading {
@@ -1442,9 +1448,9 @@
     .about-polaroids .polaroid--small { width: min(46%, 180px); align-self: flex-end; margin: 0 0 -18px -18%; }
     .about-polaroids .polaroid--small.polaroid--tuck { width: min(38%, 150px); align-self: flex-start; margin: 30px 0 0 -12%; }
     .about-polaroids .polaroid--large { width: min(84%, 340px); }
-    .story-row { grid-template-columns: 1fr; gap: 28px; margin-bottom: 48px; }
-    .story-snaps { flex-wrap: nowrap; }
-    .polaroid.polaroid--mini { width: auto; flex: 1 1 0; max-width: 170px; min-width: 0; padding: 7px 7px 24px; }
+    .story-row { grid-template-columns: 1fr; gap: 20px; margin-bottom: 40px; }
+    .story-row:nth-of-type(even) .story-snaps { order: 0; }
+    .polaroid.polaroid--mini { max-width: 190px; padding: 7px 7px 24px; }
     .story-snaps .polaroid--mini + .polaroid--mini { margin-left: -10px; margin-top: 18px; }
     #collection { padding: calc(var(--nav-h) + 40px) 16px 60px; }
     .gallery-grid { grid-template-columns: repeat(2,1fr); }
