@@ -5,6 +5,11 @@ const PRINTS_PATH = 'mk-data/prints.json';
 const CONFIG_PATH = 'mk-data/config.json';
 const DEFAULT_PIN = '1234';
 
+const SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
+function sizeLabel(size) {
+  return SIZE_DIMENSIONS[size] ? `${size} (${SIZE_DIMENSIONS[size]})` : size;
+}
+
 async function readBlob(path) {
   try {
     const { blobs } = await list({ prefix: path });
@@ -69,7 +74,7 @@ function orderLinesHtml(order) {
   const priceLine = order.price > 0
     ? `Quantity: ${order.quantity} × ${fmtMoney(order.price)} — Total: ${fmtMoney(order.price * order.quantity)}`
     : `Quantity: ${order.quantity} — price to be confirmed`;
-  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` — ${order.printSize}` : ''}<br>${priceLine}</p>`;
+  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` — ${sizeLabel(order.printSize)}` : ''}<br>${priceLine}</p>`;
 }
 
 function notifyMyriamEmailHtml(order) {

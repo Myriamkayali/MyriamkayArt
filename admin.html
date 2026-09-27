@@ -1213,6 +1213,7 @@ async function savePrints(prints) {
 }
 
 const PRINT_SIZE_NAMES = ['A4', 'A3', 'A2', 'A1'];
+const PRINT_SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
 const DISPLAY_PRICE_MARKUP = 0.01; // conversion-cost markup applied on top of base_price for the public display_price
 
 function suggestDisplayPrice(basePrice) {
@@ -2215,7 +2216,7 @@ function sizeOptionBlockHtml(size, opt) {
   const o = opt || { base_price: '', display_price: '', editionSize: '', numberSold: 0, paperCost: '', productionCost: '', packagingCost: '', shippingCost: '', certificateCost: '' };
   return `
     <div style="border:1px solid var(--border);padding:18px;margin-bottom:14px;background:var(--surface)">
-      <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--cream);margin-bottom:14px">${size}</p>
+      <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--cream);margin-bottom:14px">${size}${PRINT_SIZE_DIMENSIONS[size] ? ` <span style="font-size:13px;color:var(--muted);font-style:normal">(${PRINT_SIZE_DIMENSIONS[size]})</span>` : ''}</p>
       <div class="expense-form-grid">
         <div class="form-group"><label class="form-label">Base Price <span style="font-weight:400;color:var(--muted)">(true price, used for margins)</span></label><input class="form-input" id="pr-${size}-base" type="number" min="0" step="0.5" value="${o.base_price}" oninput="onBasePriceInput('${size}')"></div>
         <div class="form-group"><label class="form-label">Display Price <span style="font-weight:400;color:var(--muted)">(shown to clients, +1% conversion cost)</span></label><input class="form-input" id="pr-${size}-display" type="number" min="0" step="0.5" value="${o.display_price}" oninput="updatePrintTotals()"></div>

@@ -2249,6 +2249,8 @@
   // Print names, in display order — separate from the gallery images above.
   const PRINT_NAME_ORDER = ['Tarboosh Daze', 'Castania Aalkhat', 'Fayrouz Calling', 'Beirut Over Coffee', 'Serving Breakfast', 'Cup From the Past'];
   const PRINT_SIZES = ['A1', 'A2', 'A3', 'A4'];
+  const PRINT_SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
+  function sizeLabel(size) { return PRINT_SIZE_DIMENSIONS[size] ? `${size} (${PRINT_SIZE_DIMENSIONS[size]})` : size; }
 
   let purchasablePrints = [];
   let printSelectedIndex = 0;
@@ -2321,7 +2323,7 @@
       const active = size === printSelectedSize;
       return `<div class="print-size-row ${active ? 'active' : ''} ${soldOut ? 'disabled' : ''}"
         onclick="${soldOut ? '' : `printsSelectSizeTag('${size}')`}">
-        <span class="size-name">${size}${soldOut ? ' — Sold Out' : ''}</span>
+        <span class="size-name">${sizeLabel(size)}${soldOut ? ' — Sold Out' : ''}</span>
         <span class="size-price">${price}</span>
       </div>`;
     }).join('');
@@ -2412,7 +2414,7 @@
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid rgba(107,66,38,0.12)">
       <div>
         <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--umber);line-height:1.2">${print.title}</p>
-        <p style="font-size:11px;color:var(--brown-light);letter-spacing:0.04em;margin-top:2px">${size}${price ? ' · ' + price : ''}</p>
+        <p style="font-size:11px;color:var(--brown-light);letter-spacing:0.04em;margin-top:2px">${sizeLabel(size)}${price ? ' · ' + price : ''}</p>
       </div>
     </div>`;
   }
@@ -2426,7 +2428,7 @@
           const disabled = !orderSizeAvailable(o);
           const price = o.display_price ? `$${Number(o.display_price).toLocaleString()}` : '';
           return `<div class="print-size-row ${o.size === orderState.size ? 'active' : ''} ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">
-            <span class="size-name">${o.size}${disabled ? ' — Sold Out' : ''}</span>
+            <span class="size-name">${sizeLabel(o.size)}${disabled ? ' — Sold Out' : ''}</span>
             <span class="size-price">${price}</span>
           </div>`;
         }).join('')}
@@ -2474,7 +2476,7 @@
         <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--umber);margin-bottom:18px">Review Your Order</p>
         ${orderSummaryHtml()}
         <div style="font-size:14px;color:var(--brown-mid);line-height:1.9;margin-bottom:4px">
-          <p>Size: ${orderState.size} · Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
+          <p>Size: ${sizeLabel(orderState.size)} · Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
         </div>
         <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:16px">Shipping isn't included — I'll follow up with a shipping cost based on your location before payment.</p>
         <div style="font-size:13px;color:var(--brown-mid);line-height:1.9;background:var(--cream-dark);padding:16px 18px;margin-bottom:20px">
@@ -2495,7 +2497,7 @@
       body.innerHTML = `
         <div style="text-align:center;padding:16px 0 4px">
           <p style="font-family:'Cormorant Garamond',serif;font-size:30px;font-style:italic;color:var(--umber);margin-bottom:14px">Order Received</p>
-          <p style="font-size:14px;color:var(--brown-mid);line-height:1.8;margin-bottom:18px">Thank you, ${(form.name || '').split(' ')[0] || 'there'}! Your order for <strong>${print.title}</strong> (${orderState.size}) has been received.</p>
+          <p style="font-size:14px;color:var(--brown-mid);line-height:1.8;margin-bottom:18px">Thank you, ${(form.name || '').split(' ')[0] || 'there'}! Your order for <strong>${print.title}</strong> (${sizeLabel(orderState.size)}) has been received.</p>
           <p style="font-size:13px;color:var(--brown-light);line-height:1.8;margin-bottom:28px">A confirmation email is on its way to ${form.email}. Myriam will follow up directly with a payment link once your order is ready to process.</p>
           <button class="form-submit" onclick="closeOrderModal()">Close</button>
         </div>`;
