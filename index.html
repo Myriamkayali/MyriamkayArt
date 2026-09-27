@@ -1215,6 +1215,99 @@
   }
   .nav-overlay.open { display: block; }
 
+  /* ── FLOATING VINYL MUSIC PLAYER ── */
+  .vinyl-player {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 300;
+    width: 72px;
+    height: 72px;
+    cursor: pointer;
+  }
+  .vinyl-disc {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      repeating-radial-gradient(circle at 50% 50%,
+        #2a170c 0px, #2a170c 1.5px,
+        #170c05 1.5px, #170c05 3px);
+    box-shadow: 0 8px 22px rgba(30,15,7,0.35), 0 0 0 1px rgba(244,237,224,0.08);
+    animation: vinylSpin 6s linear infinite;
+    animation-play-state: paused;
+    transition: transform 0.3s ease;
+  }
+  .vinyl-player:hover .vinyl-disc { transform: scale(1.04); }
+  .vinyl-player.playing .vinyl-disc { animation-play-state: running; }
+  @keyframes vinylSpin { to { transform: rotate(360deg); } }
+
+  .vinyl-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--terracotta);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--linen);
+    box-shadow: 0 0 0 1px rgba(244,237,224,0.5);
+  }
+  .vinyl-label .vinyl-icon-pause { display: none; }
+  .vinyl-player.playing .vinyl-label .vinyl-icon-play { display: none; }
+  .vinyl-player.playing .vinyl-label .vinyl-icon-pause { display: block; }
+
+  .vinyl-arm {
+    position: absolute;
+    top: -6px; right: 2px;
+    width: 4px; height: 40px;
+    background: linear-gradient(var(--brown-light), var(--umber));
+    border-radius: 3px;
+    transform-origin: top center;
+    transform: rotate(-28deg);
+    transition: transform 0.4s ease;
+    box-shadow: 0 2px 6px rgba(30,15,7,0.3);
+  }
+  .vinyl-arm::before {
+    content: '';
+    position: absolute; top: -3px; left: -3px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--brown-light);
+  }
+  .vinyl-player.playing .vinyl-arm { transform: rotate(-6deg); }
+
+  .vinyl-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    right: 0;
+    white-space: nowrap;
+    background: var(--umber);
+    color: var(--cream);
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    padding: 8px 14px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+  }
+  .vinyl-tooltip::after {
+    content: '';
+    position: absolute; top: 100%; right: 22px;
+    border: 5px solid transparent;
+    border-top-color: var(--umber);
+  }
+  .vinyl-player:hover .vinyl-tooltip { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 600px) {
+    .vinyl-player { width: 58px; height: 58px; bottom: 18px; right: 18px; }
+    .vinyl-label { width: 24px; height: 24px; }
+    .vinyl-arm { height: 32px; }
+    .vinyl-tooltip { display: none; }
+  }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 900px) {
     nav { padding: 0 24px; }
@@ -1563,6 +1656,22 @@
   </button>
 </nav>
 <div class="nav-overlay" id="nav-overlay" onclick="closeMobileNav()"></div>
+
+<!-- ══ FLOATING VINYL MUSIC PLAYER ══ -->
+<div id="vinyl-player" class="vinyl-player" onclick="toggleVinylMusic()" role="button" aria-label="Play music" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleVinylMusic();}">
+  <div class="vinyl-disc">
+    <div class="vinyl-grooves"></div>
+    <div class="vinyl-label">
+      <svg class="vinyl-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="vinyl-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </div>
+  </div>
+  <div class="vinyl-arm"></div>
+  <p class="vinyl-tooltip">Fairuz &middot; click to listen</p>
+</div>
+<div style="position:fixed;bottom:0;left:0;width:2px;height:2px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1;">
+  <div id="yt-audio-mount"></div>
+</div>
 
 <!-- ══ HOME ══ -->
 <section id="home" class="active">
@@ -2684,6 +2793,50 @@
   renderAvailableStrip();
   renderExhibitionSection();
   initScrollReveal('.premiere-card, .about-content, .about-image-wrap, .process-step, .commission-form, .contact-left, .contact-form');
+
+  // ── FLOATING VINYL MUSIC PLAYER (YouTube IFrame API, audio only) ──
+  const VINYL_VIDEO_ID = 'Hi99qg3GsDU';
+  let ytPlayer = null;
+  let ytReady = false;
+  let playRequested = false;
+
+  function loadYouTubeApi() {
+    if (window.YT && window.YT.Player) { createYtPlayer(); return; }
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+    window.onYouTubeIframeAPIReady = createYtPlayer;
+  }
+
+  function createYtPlayer() {
+    ytPlayer = new YT.Player('yt-audio-mount', {
+      height: '2', width: '2',
+      videoId: VINYL_VIDEO_ID,
+      playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, playsinline: 1, rel: 0 },
+      events: {
+        onReady: () => { ytReady = true; if (playRequested) ytPlayer.playVideo(); },
+        onStateChange: e => {
+          const vinyl = document.getElementById('vinyl-player');
+          if (!vinyl) return;
+          vinyl.classList.toggle('playing', e.data === YT.PlayerState.PLAYING);
+        },
+      },
+    });
+  }
+
+  function toggleVinylMusic() {
+    const vinyl = document.getElementById('vinyl-player');
+    if (!ytPlayer) {
+      loadYouTubeApi();
+      playRequested = true;
+      if (vinyl) vinyl.classList.add('playing');
+      return;
+    }
+    if (!ytReady) { playRequested = true; return; }
+    const state = ytPlayer.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  }
 </script>
 </body>
 </html>
