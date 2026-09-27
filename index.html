@@ -362,6 +362,8 @@
     padding: 9px 9px 30px;
   }
   .story-snaps:has(> :nth-child(3)) .polaroid--mini { max-width: 190px; }
+  /* Landscape shots get a little extra width so they don't look tiny */
+  .story-snaps .polaroid--mini.polaroid--wide { flex-grow: 1.4; max-width: 240px; }
   .polaroid--mini img { aspect-ratio: auto; }
   .story-snaps .polaroid--mini + .polaroid--mini { margin-left: -18px; margin-top: 40px; }
   .story-snaps .polaroid--mini:nth-child(3) { margin-top: -20px; }
@@ -1451,6 +1453,7 @@
     .story-row { grid-template-columns: 1fr; gap: 20px; margin-bottom: 40px; }
     .story-row:nth-of-type(even) .story-snaps { order: 0; }
     .polaroid.polaroid--mini { max-width: 190px; padding: 7px 7px 24px; }
+    .story-snaps .polaroid--mini.polaroid--wide { max-width: 220px; }
     .story-snaps .polaroid--mini + .polaroid--mini { margin-left: -10px; margin-top: 18px; }
     #collection { padding: calc(var(--nav-h) + 40px) 16px 60px; }
     .gallery-grid { grid-template-columns: repeat(2,1fr); }
@@ -1945,7 +1948,7 @@
       </div>
       <div class="story-snaps">
         <figure class="polaroid polaroid--mini tilt-l"><img src="images/about/03a-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy"></figure>
-        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03b-teen.jpg" alt="Teenage Myriam taking an elevator mirror selfie with a brown backpack" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03e-sketches.jpg" alt="Pencil sketches of buildings and cityscapes spread on a bed" loading="lazy"></figure>
       </div>
     </div>
 
@@ -1956,9 +1959,9 @@
         <p>Like so many Lebanese, I was trying to understand a world that suddenly felt unfamiliar.</p>
       </div>
       <div class="story-snaps">
-        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03c-flag.jpg" alt="Myriam in a face mask holding a Lebanese flag in front of a Red Cross ambulance" loading="lazy"></figure>
-        <figure class="polaroid polaroid--mini tilt-l"><img src="images/about/03d-protest.jpg" alt="Night crowd with Lebanese flags in downtown Beirut" loading="lazy"></figure>
-        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03e-sketches.jpg" alt="Pencil sketches of buildings and cityscapes spread on a bed" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini polaroid--wide tilt-r"><img src="images/about/03c-flag.jpg" alt="Myriam in a face mask holding a Lebanese flag in front of a Red Cross ambulance" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini polaroid--wide tilt-l"><img src="images/about/03d-protest.jpg" alt="Night crowd with Lebanese flags in downtown Beirut" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03b-teen.jpg" alt="Teenage Myriam taking an elevator mirror selfie with a brown backpack" loading="lazy"></figure>
       </div>
     </div>
 
