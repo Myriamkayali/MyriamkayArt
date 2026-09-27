@@ -1422,17 +1422,16 @@
     font-style: italic;
     font-size: 13px;
     letter-spacing: 0.01em;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity 0.25s, transform 0.25s;
+    transition: opacity 0.25s;
     pointer-events: none;
   }
-  .vinyl-player:hover .vinyl-tooltip { opacity: 1; transform: translateY(0); }
+  /* When the record sits on the left side, anchor the line to the left */
+  .vinyl-player.on-left .vinyl-tooltip { right: auto; left: 0; }
 
   @media (max-width: 600px) {
     .vinyl-player { width: 100px; height: 100px; top: auto; bottom: 24px; right: 20px; }
     .vinyl-arm { height: 40px; }
-    .vinyl-tooltip { display: none; }
+    .vinyl-tooltip { font-size: 12px; bottom: calc(100% + 8px); }
   }
 
   /* ── RESPONSIVE ── */
@@ -3175,6 +3174,7 @@
       const toLeft = rect.left + rect.width / 2 < window.innerWidth / 2;
       const left = toLeft ? MARGIN : window.innerWidth - rect.width - MARGIN;
       const pos = clamp(left, rect.top);
+      vinyl.classList.toggle('on-left', toLeft);
       vinyl.classList.add('settling');
       place(pos.left, pos.top);
       setTimeout(() => vinyl.classList.remove('settling'), 750);
