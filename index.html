@@ -1549,6 +1549,19 @@
   }
   .home-section-title em { font-style: italic; color: var(--terracotta); }
 
+  /* Order confirmation: WhatsApp button */
+  .order-whatsapp-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    background: #25D366 !important;
+    color: #fff !important;
+    border-color: #25D366 !important;
+  }
+  .order-whatsapp-btn:hover { background: #1EBE5A !important; }
+
   /* Home: about the artist teaser */
   .home-about-inner {
     max-width: 1080px;
@@ -2345,6 +2358,9 @@
 </div>
 
 <script>
+  // Myriam's WhatsApp (+961 3 678 875), used by every click-to-chat link on the site.
+  const MYRIAM_WHATSAPP = '9613678875';
+
   function sendContactWhatsApp() {
     const name    = document.getElementById('ct-name').value.trim();
     const subject = document.getElementById('ct-subject').value.trim();
@@ -2364,7 +2380,7 @@
       message,
     ].filter(l => l !== null).join('\n');
 
-    window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
+    window.open(`https://wa.me/${MYRIAM_WHATSAPP}?text=${encodeURIComponent(lines)}`, '_blank');
   }
 
   let activeFilter = 'All';
@@ -2602,7 +2618,7 @@
       ``,
       `Could you tell me more about it?`,
     ].filter(l => l !== null).join('\n');
-    window.open(`https://wa.me/9613678875?text=${encodeURIComponent(lines)}`, '_blank');
+    window.open(`https://wa.me/${MYRIAM_WHATSAPP}?text=${encodeURIComponent(lines)}`, '_blank');
   }
 
   let exhibitionCache = null;
@@ -2990,6 +3006,34 @@
     </div>`;
   }
 
+  // Pre-filled WhatsApp message with the full order, sent by the client to Myriam.
+  function orderWhatsAppUrl() {
+    const { print, size, form, orderId } = orderState;
+    const opt = orderSelectedOption();
+    const price = opt ? Number(opt.display_price) || 0 : 0;
+    const qty = form.quantity || 1;
+    const lines = [
+      `Hi Myriam! I just placed an order for a print on your website.`,
+      ``,
+      `Print: ${print.title}`,
+      `Size: ${sizeLabel(size)}`,
+      `Quantity: ${qty}`,
+      price ? `Price: $${price.toLocaleString()}${qty > 1 ? ` each, $${(price * qty).toLocaleString()} total` : ''} (shipping not included)` : null,
+      orderId ? `Order ref: ${orderId}` : null,
+      ``,
+      `Name: ${form.name}`,
+      `Phone: ${`${form.phoneCode} ${form.phone}`.trim()}`,
+      `Email: ${form.email}`,
+      ``,
+      `Shipping address:`,
+      form.building || null,
+      `${form.street}${form.apartment ? ', ' + form.apartment : ''}`,
+      `${form.city}, ${form.postal}`,
+      form.country,
+    ].filter(l => l !== null).join('\n');
+    return `https://wa.me/${MYRIAM_WHATSAPP}?text=${encodeURIComponent(lines)}`;
+  }
+
   function orderSelectedOption() {
     return (orderState.print.sizeOptions || []).find(o => o.size === orderState.size) || null;
   }
@@ -3098,8 +3142,12 @@
         <div style="text-align:center;padding:16px 0 4px">
           <p style="font-family:'Fraunces',serif;font-size:30px;font-style:italic;color:var(--umber);margin-bottom:14px">Order Received</p>
           <p style="font-size:14px;color:var(--brown-mid);line-height:1.8;margin-bottom:18px">Thank you, ${(form.name || '').split(' ')[0] || 'there'}! Your order for <strong>${print.title}</strong> (${sizeLabel(orderState.size)}) has been received.</p>
-          <p style="font-size:13px;color:var(--brown-light);line-height:1.8;margin-bottom:28px">A confirmation email is on its way to ${form.email}. Myriam will follow up directly with a payment link once your order is ready to process.</p>
-          <button class="form-submit" onclick="closeOrderModal()">Close</button>
+          <p style="font-size:13px;color:var(--brown-light);line-height:1.8;margin-bottom:22px">${orderState.confirmationSent ? `A confirmation email is on its way to ${form.email}. ` : ''}Send your order to me on WhatsApp so we can chat about shipping and payment. It's the quickest way to reach me.</p>
+          <a class="form-submit order-whatsapp-btn" href="${orderWhatsAppUrl()}" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.79-1.31l-.34-.2-3.56.93.95-3.47-.22-.36a9.4 9.4 0 0 1-1.44-5.02c0-5.2 4.23-9.43 9.43-9.43 2.52 0 4.89.98 6.67 2.77a9.37 9.37 0 0 1 2.76 6.67c0 5.2-4.23 9.43-9.43 9.43zm8.02-17.45A11.27 11.27 0 0 0 12.04.75C5.8.75.72 5.83.72 12.07c0 2 .52 3.94 1.51 5.66L.62 23.25l5.65-1.48a11.3 11.3 0 0 0 5.77 1.47h.01c6.24 0 11.32-5.08 11.32-11.32 0-3.02-1.18-5.87-3.3-8z"/></svg>
+            Send my order on WhatsApp
+          </a>
+          <button onclick="closeOrderModal()" style="display:block;width:100%;text-align:center;background:none;border:none;color:var(--brown-light);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-top:14px;padding:8px;">Close</button>
         </div>`;
     }
   }
@@ -3172,10 +3220,15 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.error) throw new Error(data.error || 'Could not place order.');
 
+      orderState.orderId = data.orderId || '';
+      orderState.confirmationSent = !!data.confirmationSent;
       orderState.step = 3;
       renderOrderStep();
     } catch (e) {
-      alert(e.message || 'Something went wrong placing your order. Please try again, or message us on Instagram.');
+      // Still let the client reach Myriam: offer to send the same order on WhatsApp.
+      orderState.orderId = '';
+      const msg = (e.message || 'Something went wrong placing your order.') + '\n\nWould you like to send your order to Myriam on WhatsApp instead?';
+      if (confirm(msg)) window.location.href = orderWhatsAppUrl();
       if (btn) { btn.disabled = false; btn.textContent = 'Place Order'; btn.style.opacity = '1'; }
     }
   }

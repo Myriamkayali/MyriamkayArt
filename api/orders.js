@@ -5,6 +5,11 @@ const PRINTS_PATH = 'mk-data/prints.json';
 const CONFIG_PATH = 'mk-data/config.json';
 const DEFAULT_PIN = '1234';
 
+// Automatic order emails (alert to Myriam + client confirmation) are OFF for now:
+// orders are followed up on WhatsApp instead. To turn them back on, finish the
+// Resend setup (see CLAUDE.md) and set ORDER_EMAILS_ENABLED=true in Vercel.
+const ORDER_EMAILS_ENABLED = process.env.ORDER_EMAILS_ENABLED === 'true';
+
 const SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
 function sizeLabel(size) {
   return SIZE_DIMENSIONS[size] ? `${size} (${SIZE_DIMENSIONS[size]})` : size;
@@ -170,7 +175,7 @@ module.exports = async function handler(req, res) {
 
       // Order is already saved at this point — email failures below must never fail the request.
       const emailResults = { notifySent: false, confirmationSent: false, emailError: null };
-      try {
+      if (ORDER_EMAILS_ENABLED) try {
         const notifyTo = process.env.NOTIFY_EMAIL;
         if (notifyTo) {
           await sendEmail({ to: notifyTo, subject: `New order: ${order.printTitle}`, html: notifyMyriamEmailHtml(order) });
