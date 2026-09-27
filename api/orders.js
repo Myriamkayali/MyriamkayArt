@@ -72,9 +72,9 @@ async function sendEmail({ to, subject, html }) {
 
 function orderLinesHtml(order) {
   const priceLine = order.price > 0
-    ? `Quantity: ${order.quantity} × ${fmtMoney(order.price)} — Total: ${fmtMoney(order.price * order.quantity)}`
-    : `Quantity: ${order.quantity} — price to be confirmed`;
-  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` — ${sizeLabel(order.printSize)}` : ''}<br>${priceLine}</p>`;
+    ? `Quantity: ${order.quantity} × ${fmtMoney(order.price)}. Total: ${fmtMoney(order.price * order.quantity)}`
+    : `Quantity: ${order.quantity}, price to be confirmed`;
+  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` · ${sizeLabel(order.printSize)}` : ''}<br>${priceLine}</p>`;
 }
 
 function notifyMyriamEmailHtml(order) {
@@ -87,7 +87,7 @@ function notifyMyriamEmailHtml(order) {
       ${order.clientEmail}<br>
       ${order.clientPhone}</p>
       <p>${order.shippingStreet}<br>${order.shippingCity}, ${order.shippingCountry} ${order.shippingPostalCode}</p>
-      <p style="color:#999;font-size:12px">Order ${order.id} — ${order.createdAt}</p>
+      <p style="color:#999;font-size:12px">Order ${order.id}, ${order.createdAt}</p>
     </div>`;
 }
 
@@ -96,7 +96,7 @@ function clientConfirmationEmailHtml(order) {
   return `
     <div style="font-family:Georgia,serif;color:#1E0F07;max-width:480px;line-height:1.6">
       <p>Hi ${firstName},</p>
-      <p>Thank you so much — your order has been received!</p>
+      <p>Thank you so much, your order has been received!</p>
       ${orderLinesHtml(order)}
       <p>I'll be in touch directly with payment instructions shortly. No need to do anything else for now.</p>
       <p>Thank you for supporting my work!<br>Myriam</p>

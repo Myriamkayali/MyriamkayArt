@@ -1761,7 +1761,7 @@
         <div class="contact-icon" style="color:var(--cream);font-family:'Cormorant Garamond',serif;">◇</div>
         <div class="contact-detail-text">
           <p class="d-label">Response time</p>
-          <p class="d-value">Within 2–3 business days</p>
+          <p class="d-value">Within 2-3 business days</p>
         </div>
       </div>
     </div>
@@ -2231,7 +2231,7 @@
       </div>`;
   }
 
-  // Photoshoot lookbook images — separate from the print product data below.
+  // Photoshoot lookbook images (separate from the print product data below).
   const PRINT_GALLERY_IMAGES = [
     'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-gallery-1-wqIjrKzkSqUfXfhx5wZ9tjaevqrKoA.jpg',
     'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-gallery-2-YkKAQqWPjQXSPwy9vQbH48bpc9unC8.jpg',
@@ -2246,7 +2246,7 @@
     'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-gallery-11-jI3nWNDA4U5BxLeKhr4KkTVkCaxFno.png',
   ];
 
-  // Print names, in display order — separate from the gallery images above.
+  // Print names, in display order (separate from the gallery images above).
   const PRINT_NAME_ORDER = ['Tarboosh Daze', 'Castania Aalkhat', 'Fayrouz Calling', 'Beirut Over Coffee', 'Serving Breakfast', 'Cup From the Past'];
   const PRINT_SIZES = ['A1', 'A2', 'A3', 'A4'];
   const PRINT_SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
@@ -2324,7 +2324,7 @@
       const active = size === printSelectedSize;
       return `<div class="print-size-row ${active ? 'active' : ''} ${soldOut ? 'disabled' : ''}"
         onclick="${soldOut ? '' : `printsSelectSizeTag('${size}')`}">
-        <span class="size-name">${sizeLabel(size)}${soldOut ? ' — Sold Out' : ''}</span>
+        <span class="size-name">${sizeLabel(size)}${soldOut ? ' · Sold Out' : ''}</span>
         <span class="size-price">${price}</span>
       </div>`;
     }).join('');
@@ -2339,12 +2339,12 @@
         ${pr.imageData ? `<img src="${pr.imageData}" alt="${pr.title}" loading="lazy">` : ''}
       </div>
       <p class="print-shop-eyebrow">Shop the Collection</p>
-      <h3 class="print-shop-title">${pr.title}${selectedPrice ? ` <span style="color:var(--terracotta)">— ${selectedPrice}</span>` : ''}</h3>
-      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:18px">Printed on Hahnemühle German Etching paper — premium, museum-quality archival stock.</p>
+      <h3 class="print-shop-title">${pr.title}${selectedPrice ? ` <span style="color:var(--terracotta)">· ${selectedPrice}</span>` : ''}</h3>
+      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:18px">Printed on Hahnemühle German Etching paper, a premium, museum-quality archival stock.</p>
       <div class="print-chip-row">${chipsHtml}</div>
       <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin-bottom:12px">Select Size</p>
       <div class="print-size-list">${sizeRowsHtml}</div>
-      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:10px">Shipping isn't included in the price above — the cost is calculated based on your location and shown at checkout.</p>
+      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:10px">Shipping isn't included in the price above. The cost is calculated based on your location and shown at checkout.</p>
       <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:22px">Sizes are approximate. Since some paintings are square rather than a standard rectangle, final print dimensions (and price) may be adjusted slightly to preserve the original proportions.</p>
       <button class="btn-order" style="width:100%;padding:15px 22px" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
     `;
@@ -2430,7 +2430,7 @@
           const disabled = !orderSizeAvailable(o);
           const price = o.display_price ? `$${Number(o.display_price).toLocaleString()}` : '';
           return `<div class="print-size-row ${o.size === orderState.size ? 'active' : ''} ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">
-            <span class="size-name">${sizeLabel(o.size)}${disabled ? ' — Sold Out' : ''}</span>
+            <span class="size-name">${sizeLabel(o.size)}${disabled ? ' · Sold Out' : ''}</span>
             <span class="size-price">${price}</span>
           </div>`;
         }).join('')}
@@ -2480,7 +2480,7 @@
         <div style="font-size:14px;color:var(--brown-mid);line-height:1.9;margin-bottom:4px">
           <p>Size: ${sizeLabel(orderState.size)} · Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
         </div>
-        <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:16px">Shipping isn't included — I'll follow up with a shipping cost based on your location before payment.</p>
+        <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:16px">Shipping isn't included. I'll follow up with a shipping cost based on your location before payment.</p>
         <div style="font-size:13px;color:var(--brown-mid);line-height:1.9;background:var(--cream-dark);padding:16px 18px;margin-bottom:20px">
           <p>${form.name}</p>
           <p>${form.email}</p>
