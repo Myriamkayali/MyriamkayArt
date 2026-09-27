@@ -74,7 +74,7 @@ CSS custom properties defined on `:root`:
 - `--umber: #1E0F07` — dark text / buttons
 - `--brown-light: #A07858` — secondary text
 
-Fonts: **Cormorant Garamond** (headings) and **Jost** (body) from Google Fonts.
+Fonts on the public site (index.html): **Fraunces** (headings, variable `opsz`/`wght` axis) and **Hanken Grotesk** (body) from Google Fonts — switched from Cormorant Garamond/Jost for a livelier, more expressive feel. admin.html still uses Cormorant Garamond/Jost (internal dashboard, not restyled).
 
 ## Image Storage — Vercel Blob
 
