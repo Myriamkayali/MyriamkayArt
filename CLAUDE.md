@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Personal artist portfolio and studio management system for Myriam Kayali, an oil painter based in Beirut. Two standalone HTML files — no build step, no framework, no dependencies.
+Personal artist portfolio and studio management system for Myriam Kayali, an acrylic painter based in Beirut. Two standalone HTML files — no build step, no framework, no dependencies.
 
 - **`index.html`** — Public-facing portfolio website (SPA)
 - **`admin.html`** — PIN-protected admin dashboard for managing paintings
@@ -38,7 +38,7 @@ All data persists in `localStorage`. No backend or server.
   id: string,          // timestamp-based
   title: string,
   year: number,
-  medium: string,      // e.g. "Oil on linen"
+  medium: string,      // e.g. "Acrylic on canvas"
   category: string,    // "Portrait" | "Figure" | "Study"
   width: number,       // cm
   height: number,      // cm

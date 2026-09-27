@@ -6,7 +6,7 @@
 <title>Myriam Kayali Art</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Hanken+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Hanken+Grotesk:wght@300..700&family=Caveat:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
     --cream: #F4EDE0;
@@ -259,7 +259,7 @@
     to   { transform: translateX(-50%); }
   }
 
-  /* ── ABOUT ── (chapters: one photo + text each, alternating sides) */
+  /* ── ABOUT ── (story chapters: text + polaroids, sides alternate) */
   #about {
     padding: calc(var(--nav-h) + 80px) 80px 120px;
     max-width: 1240px;
@@ -267,62 +267,90 @@
   }
   .about-chapter {
     display: grid;
-    grid-template-columns: 5fr 4fr;
-    gap: 80px;
-    align-items: center;
+    grid-template-columns: 5fr 6fr;
+    gap: 90px;
+    align-items: start;
     margin-bottom: 140px;
   }
   .about-chapter:last-child { margin-bottom: 0; }
-  .about-chapter:nth-child(even) { grid-template-columns: 4fr 5fr; }
-  .about-chapter:nth-child(even) .about-photo { order: 2; }
+  .about-chapter:nth-child(even) { grid-template-columns: 6fr 5fr; }
+  .about-chapter:nth-child(even) .about-polaroids { order: 2; }
+  .about-text { padding-top: 24px; }
 
-  .about-photo {
-    margin: 0;
-    max-width: 480px;
-    justify-self: center;
-    width: 100%;
-    transform: rotate(-1.2deg);
-    transition: transform 0.5s ease;
+  /* Polaroids stay beside the text while it scrolls */
+  .about-polaroids {
+    position: sticky;
+    top: calc(var(--nav-h) + 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  .about-chapter:nth-child(even) .about-photo { transform: rotate(1.2deg); }
-  .about-photo:hover, .about-chapter:nth-child(even) .about-photo:hover { transform: rotate(0deg) scale(1.01); }
-  .about-photo img {
+  .polaroid {
+    margin: 0;
+    width: min(100%, 360px);
+    background: #fff;
+    padding: 14px 14px 0;
+    box-shadow: 0 2px 4px rgba(30,15,7,0.06), 0 18px 38px rgba(30,15,7,0.16);
+    transition: transform 0.45s cubic-bezier(.22,1,.36,1), box-shadow 0.45s ease;
+    position: relative;
+  }
+  .polaroid img {
     display: block;
     width: 100%;
-    height: auto;
-    max-height: 640px;
+    aspect-ratio: 4 / 5;
     object-fit: cover;
-    border: 10px solid #fff;
-    box-shadow: 0 18px 40px rgba(30, 15, 7, 0.14);
     background: var(--cream-dark);
   }
-  .about-photo figcaption {
-    margin-top: 14px;
-    font-family: 'Fraunces', serif;
-    font-style: italic;
-    font-size: 15px;
-    color: var(--brown-light);
+  .polaroid figcaption {
+    font-family: 'Caveat', cursive;
+    font-size: 24px;
+    color: var(--umber);
     text-align: center;
+    padding: 12px 6px 18px;
+    line-height: 1.1;
   }
-  .about-chapter--intro .about-photo { max-width: 520px; }
+  /* A strip of tape on top */
+  .polaroid::before {
+    content: '';
+    position: absolute;
+    top: -12px; left: 50%;
+    width: 84px; height: 24px;
+    transform: translateX(-50%) rotate(-3deg);
+    background: rgba(234, 224, 206, 0.85);
+    box-shadow: 0 1px 2px rgba(30,15,7,0.08);
+  }
+  .polaroid.tilt-l  { transform: rotate(-3deg); }
+  .polaroid.tilt-r  { transform: rotate(2.5deg); }
+  .polaroid.tilt-l2 { transform: rotate(-1.5deg); }
+  .polaroid:hover {
+    transform: rotate(0deg) scale(1.03);
+    box-shadow: 0 4px 8px rgba(30,15,7,0.08), 0 26px 50px rgba(30,15,7,0.2);
+    z-index: 2;
+  }
+  /* Stacked polaroids overlap a little, like they were tossed on a table */
+  .about-polaroids .polaroid + .polaroid { margin-top: -48px; }
+  .about-polaroids .polaroid:nth-child(2) { align-self: flex-end; width: min(88%, 320px); }
+  .about-polaroids .polaroid:nth-child(3) { align-self: flex-start; width: min(88%, 320px); }
+  .about-polaroids--three .polaroid { width: min(80%, 300px); }
+  .about-polaroids--three .polaroid:first-child { align-self: flex-start; }
 
-  .about-num {
-    display: block;
-    font-family: 'Fraunces', serif;
-    font-size: 15px;
-    letter-spacing: 0.2em;
-    color: var(--terracotta);
-    margin-bottom: 14px;
-  }
   .about-heading {
     font-family: 'Fraunces', serif;
-    font-size: clamp(32px, 3.4vw, 48px);
+    font-size: clamp(34px, 3.6vw, 52px);
     font-weight: 300;
     line-height: 1.12;
     color: var(--umber);
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
   .about-heading em { font-style: italic; color: var(--terracotta); }
+  .about-text p.about-pull {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 24px;
+    line-height: 1.45;
+    color: var(--terracotta);
+    margin: 28px 0;
+  }
   .about-ctas {
     display: flex;
     flex-wrap: wrap;
@@ -1392,9 +1420,14 @@
     .hero-image { min-height: 50vh; }
     .hero-text { padding: 60px 24px; }
     #about { padding: 100px 20px 60px; }
-    .about-chapter, .about-chapter:nth-child(even) { grid-template-columns: 1fr; gap: 32px; margin-bottom: 88px; }
-    .about-chapter:nth-child(even) .about-photo { order: 0; }
-    .about-photo img { max-height: 520px; border-width: 7px; }
+    .about-chapter, .about-chapter:nth-child(even) { grid-template-columns: 1fr; gap: 40px; margin-bottom: 96px; }
+    .about-chapter:nth-child(even) .about-polaroids { order: 0; }
+    .about-polaroids { position: relative; top: auto; flex-direction: row; justify-content: center; padding: 0 8px; }
+    .about-polaroids .polaroid { width: min(78%, 300px); padding: 10px 10px 0; }
+    .about-polaroids .polaroid + .polaroid { margin-top: 36px; margin-left: -22%; }
+    .about-polaroids--three .polaroid { width: min(56%, 220px); }
+    .about-polaroids--three .polaroid + .polaroid { margin-left: -16%; }
+    .polaroid figcaption { font-size: 20px; padding: 8px 4px 12px; }
     #collection { padding: calc(var(--nav-h) + 40px) 16px 60px; }
     .gallery-grid { grid-template-columns: repeat(2,1fr); }
     #prints { padding: 100px 24px 60px; }
@@ -1856,126 +1889,124 @@
 </section>
 
 <!-- ══ ABOUT ══
-     One chapter per image. To swap a photo, replace the file in images/about/
-     with the same name (any aspect ratio works, the frame follows the image). -->
+     Story chapters: text on one side, polaroids on the other (sides alternate).
+     To swap a photo, replace the file in images/about/ keeping the same name
+     (any aspect ratio works). Captions are the <figcaption> under each image. -->
 <section id="about">
 
-  <article class="about-chapter about-chapter--intro">
-    <figure class="about-photo">
-      <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel in a garden, palette in hand" loading="eager">
-      <figcaption>Mid painting, paint on my hands, as usual.</figcaption>
-    </figure>
+  <article class="about-chapter">
+    <div class="about-polaroids">
+      <figure class="polaroid tilt-l">
+        <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel in a garden, palette in hand" loading="eager">
+        <figcaption>paint everywhere, as usual</figcaption>
+      </figure>
+      <figure class="polaroid tilt-r">
+        <img src="images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="eager">
+        <figcaption>by day</figcaption>
+      </figure>
+    </div>
     <div class="about-text">
-      <p class="section-eyebrow">The artist</p>
-      <h2 class="section-title">Hi, I'm<br><em>Myriam</em></h2>
-      <p>I'm an oil painter based in Beirut, and I paint memory. The places, objects and small rituals that make somewhere feel like home.</p>
-      <p>This page is less about my paintings and more about the person holding the brush. So pull up a chair.</p>
+      <p class="section-eyebrow">About me</p>
+      <h2 class="section-title">Hi, I'm <em>Myriam.</em></h2>
+      <p>I'm a Lebanese artist based in Beirut, but painting isn't my full time job.</p>
+      <p>By day, I work as a technical consultant in a fintech company. By night (and every free moment I can find), you'll usually find me in my studio with a large canvas, acrylic paint everywhere, and music playing in the background.</p>
+      <p class="about-pull">Art became the balance I didn't know I needed.</p>
     </div>
   </article>
 
   <article class="about-chapter">
-    <figure class="about-photo">
-      <img src="images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="lazy">
-      <figcaption>Headphones on, world off.</figcaption>
-    </figure>
+    <div class="about-polaroids">
+      <figure class="polaroid tilt-r">
+        <img src="images/about/03-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy">
+        <figcaption>my first studio</figcaption>
+      </figure>
+    </div>
     <div class="about-text">
-      <span class="about-num">01</span>
-      <h3 class="about-heading">Two <em>rhythms</em></h3>
-      <p>Not every day starts at the easel. Plenty of them start with headphones on, a laptop under my arm and a to do list that keeps growing.</p>
-      <p>I like that pace, but it's loud. In a fast world that constantly demands more, painting allows me to slow down and feel grounded.</p>
+      <h3 class="about-heading">It didn't start as a <em>career.</em></h3>
+      <p>Growing up, I was always creative. I loved drawing, making things with my hands, and paying attention to the little details that most people walk past.</p>
+      <p>But painting became something much deeper after one of the hardest periods in Lebanon's history.</p>
+      <p>The Beirut explosion, the economic crisis, Covid, and graduating into so much uncertainty all happened within a short period of time. Like many Lebanese, I was trying to make sense of a world that suddenly felt unfamiliar.</p>
+      <p class="about-pull">Painting became the one place where everything slowed down.</p>
+      <p>I started buying bigger canvases, putting on music, and spending hours completely lost in the process. It wasn't about creating beautiful paintings anymore. It became a way to process emotions, feel grounded, and find a sense of calm.</p>
     </div>
   </article>
 
   <article class="about-chapter">
-    <figure class="about-photo">
-      <img src="images/about/03-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy">
-      <figcaption>Early works. Medium: mouse on screen.</figcaption>
-    </figure>
+    <div class="about-polaroids about-polaroids--three">
+      <figure class="polaroid tilt-l">
+        <img src="images/about/04-roots.jpg" alt="Traditional Lebanese stone house with a red tiled roof against the mountains" loading="lazy">
+        <figcaption>home</figcaption>
+      </figure>
+      <figure class="polaroid tilt-r">
+        <img src="images/about/05-rituals.jpg" alt="Street seller in a red fez pouring a drink from a golden jug for a child" loading="lazy">
+        <figcaption>the little rituals</figcaption>
+      </figure>
+      <figure class="polaroid tilt-l2">
+        <img src="images/about/06-home.jpg" alt="Friends around a coffee table with a Monopoly game, maté, tea and snacks" loading="lazy">
+        <figcaption>always around the table</figcaption>
+      </figure>
+    </div>
     <div class="about-text">
-      <span class="about-num">02</span>
-      <h3 class="about-heading">Where it <em>started</em></h3>
-      <p>Long before linen and oil paint, there was a chunky beige computer, a very serious face and Microsoft Paint.</p>
-      <p>I was already choosing colours and filling in shapes before I could explain what I was making. Some things never change.</p>
+      <h3 class="about-heading">Why <em>Lebanon?</em></h3>
+      <p>People often ask why so much of my work is inspired by Lebanon.</p>
+      <p>The answer is simple.</p>
+      <p class="about-pull">It's home.</p>
+      <p>It's the smell of rain on Beirut's streets, family gatherings that somehow always end around the table, old cafés, childhood snacks, backgammon games, balconies, conversations over coffee, and the ordinary moments we rarely think to preserve.</p>
+      <p>Those are the memories that shaped me.</p>
+      <p>As cities modernize and traditions slowly disappear, I find myself wanting to hold onto them before they're forgotten.</p>
+      <p>Painting has become my way of doing that.</p>
     </div>
   </article>
 
   <article class="about-chapter">
-    <figure class="about-photo">
-      <img src="images/about/04-roots.jpg" alt="Traditional Lebanese stone house with a red tiled roof against the mountains" loading="lazy">
-      <figcaption>The kind of house I could paint forever.</figcaption>
-    </figure>
+    <div class="about-polaroids">
+      <figure class="polaroid tilt-r">
+        <img src="images/about/07-beirut.jpg" alt="Old Beirut house with arched windows and a tree budding with new leaves" loading="lazy">
+        <figcaption>a walk through Beirut</figcaption>
+      </figure>
+    </div>
     <div class="about-text">
-      <span class="about-num">03</span>
-      <h3 class="about-heading">Stone, red roofs <em>and mountains</em></h3>
-      <p>Lebanon is small, but it holds so much. Sandstone houses with red tiled roofs tucked into the hills, triple arched windows, iron balconies.</p>
-      <p>These are the shapes I grew up around, and they find their way into almost everything I paint. They reflect my childhood, my family, my culture, and resilience.</p>
+      <h3 class="about-heading">Where inspiration <em>comes from</em></h3>
+      <p>Some paintings begin with a memory.</p>
+      <p>Others start with a walk through Beirut, a conversation, an old photograph, or something so ordinary that most people wouldn't notice it.</p>
+      <p>Lately, I've also been exploring what happens when nostalgia meets popular culture, reimagining iconic movie scenes with Lebanese traditions, food, and everyday objects.</p>
+      <p>It's my way of asking a simple question:</p>
+      <p class="about-pull">What if these stories had happened in Lebanon?</p>
     </div>
   </article>
 
   <article class="about-chapter">
-    <figure class="about-photo">
-      <img src="images/about/05-rituals.jpg" alt="Street seller in a red fez pouring a drink from a golden jug for a child" loading="lazy">
-      <figcaption>Everyone stops to watch.</figcaption>
-    </figure>
+    <div class="about-polaroids">
+      <figure class="polaroid tilt-l">
+        <img src="images/about/08-slow.jpg" alt="Sunlit corner with books under arched windows looking onto a yellow Beirut building" loading="lazy">
+        <figcaption>a feeling of home</figcaption>
+      </figure>
+    </div>
     <div class="about-text">
-      <span class="about-num">04</span>
-      <h3 class="about-heading">The little <em>rituals</em></h3>
-      <p>A seller in a red fez pouring from a golden jug, a kid waiting for his cup, a whole crowd pausing to watch.</p>
-      <p>I'm drawn to scenes that bring nostalgia, happiness, and a sense of belonging. Moments and objects that are slowly disappearing as the world around us modernizes. I want to catch them before they go.</p>
+      <h3 class="about-heading">About my <em>paintings</em></h3>
+      <p>I work primarily with acrylic on canvas.</p>
+      <p>I love building texture by hand, layering paint, and creating pieces that reward a second look. Many of my paintings include small details that Lebanese viewers immediately recognize: objects from childhood, familiar foods, or subtle cultural references that quietly tell a bigger story.</p>
+      <p>Whether I'm painting an old Beirut building or a modern street, what I'm really painting is a feeling.</p>
+      <p class="about-pull">A feeling of comfort.<br>A feeling of home.</p>
     </div>
   </article>
 
   <article class="about-chapter">
-    <figure class="about-photo">
-      <img src="images/about/06-home.jpg" alt="Friends' feet around a coffee table with a Monopoly game, maté, tea and snacks" loading="lazy">
-      <figcaption>Nobody wants to lose this one.</figcaption>
-    </figure>
-    <div class="about-text">
-      <span class="about-num">05</span>
-      <h3 class="about-heading">Home is <em>people</em></h3>
-      <p>Mismatched socks, maté, a bowl of chips and a game of Monopoly that somehow lasts all afternoon.</p>
-      <p>For me, home is less about a place and more about who is sitting around the table. That feeling of belonging is exactly what I try to put on canvas.</p>
+    <div class="about-polaroids">
+      <figure class="polaroid tilt-r">
+        <img src="images/about/09-next.jpg" alt="The Art Times newspaper featuring Myriam Kayali's art, next to a cappuccino and maamoul" loading="lazy">
+        <figcaption>coffee, maamoul &amp; a little news</figcaption>
+      </figure>
     </div>
-  </article>
-
-  <article class="about-chapter">
-    <figure class="about-photo">
-      <img src="images/about/07-beirut.jpg" alt="Old Beirut house with arched windows and a tree budding with new leaves" loading="lazy">
-      <figcaption>Old Beirut, new leaves.</figcaption>
-    </figure>
     <div class="about-text">
-      <span class="about-num">06</span>
-      <h3 class="about-heading">Spring always <em>returns</em></h3>
-      <p>Painting stopped being just a hobby for me during a period of intense change, after the Beirut explosion, the economic crisis, Covid, and graduating into uncertainty. Painting became the place where I could put everything I was carrying. I went bigger, larger canvases, music in the background, just me and the painting.</p>
-      <p>Beirut feels like me. Even through everything it endures, it continues to fight, and spring always returns.</p>
-    </div>
-  </article>
-
-  <article class="about-chapter">
-    <figure class="about-photo">
-      <img src="images/about/08-slow.jpg" alt="Sunlit corner with books under arched windows looking onto a yellow Beirut building" loading="lazy">
-      <figcaption>Give me a corner like this and I'm set.</figcaption>
-    </figure>
-    <div class="about-text">
-      <span class="about-num">07</span>
-      <h3 class="about-heading">Past and <em>present</em></h3>
-      <p>Arched windows from another century, a shelf of new books, afternoon light on an old stone wall.</p>
-      <p>Sometimes I paint the present too, modern buildings and urban scenes that carry the same comfort I find in memories from the past. Often I mix the two, the way they exist together in real life.</p>
-    </div>
-  </article>
-
-  <article class="about-chapter about-chapter--closing">
-    <figure class="about-photo">
-      <img src="images/about/09-next.jpg" alt="The Art Times newspaper announcing Myriam Kayali's art in Dubai, next to a cappuccino and maamoul" loading="lazy">
-      <figcaption>Coffee, maamoul and a little bit of news.</figcaption>
-    </figure>
-    <div class="about-text">
-      <span class="about-num">08</span>
-      <h3 class="about-heading">A gentle <em>archive</em></h3>
+      <h3 class="about-heading">Why I <em>paint</em></h3>
+      <p>I don't paint to recreate the past exactly as it was.</p>
+      <p>I paint to preserve the emotions attached to it.</p>
+      <p>Every painting becomes a small archive of memories, my own, but hopefully yours too.</p>
+      <p>If someone stands in front of one of my paintings and suddenly remembers a place, a person, or a moment they hadn't thought about in years, then I've done what I set out to do.</p>
       <div class="about-quote">
-        <blockquote>"I paint to remember and to hold onto moments that might otherwise slip away. A gentle archive of memory and belonging."</blockquote>
+        <blockquote>“I'm not trying to paint Lebanon as it was. I'm trying to paint how it felt.”</blockquote>
       </div>
-      <p>That archive keeps growing, and lately it has started to travel. I quietly hope that when someone stands in front of one of my paintings, it brings back a familiar feeling or a memory they didn't realize they were missing.</p>
       <div class="about-ctas">
         <a class="btn-primary" onclick="showSection('collection')">See the Collection</a>
         <a class="about-link" onclick="showSection('contact')">Or just say hello &rarr;</a>
@@ -2224,13 +2255,13 @@
 
   const gpColors = ['gp-1','gp-2','gp-3','gp-4','gp-5','gp-6','gp-7'];
   const fallback = [
-    { id:'f1', title:'Untitled I', year:2024, medium:'Oil on linen', category:'Portrait', width:90, height:120, imageData:null, available:true },
-    { id:'f2', title:'Morning Light', year:2024, medium:'Oil on linen', category:'Figure', width:60, height:80, imageData:null, available:true },
-    { id:'f3', title:'Study in Ochre', year:2023, medium:'Oil on panel', category:'Study', width:40, height:50, imageData:null, available:true },
-    { id:'f4', title:'Figure with Shadow', year:2023, medium:'Oil on linen', category:'Figure', width:70, height:100, imageData:null, available:true },
-    { id:'f5', title:'Seated', year:2023, medium:'Oil on linen', category:'Figure', width:80, height:100, imageData:null, available:false },
-    { id:'f6', title:'Portrait in Umber', year:2022, medium:'Oil on panel', category:'Portrait', width:50, height:70, imageData:null, available:true },
-    { id:'f7', title:'Repose', year:2022, medium:'Oil on linen', category:'Figure', width:100, height:130, imageData:null, available:true },
+    { id:'f1', title:'Untitled I', year:2024, medium:'Acrylic on canvas', category:'Portrait', width:90, height:120, imageData:null, available:true },
+    { id:'f2', title:'Morning Light', year:2024, medium:'Acrylic on canvas', category:'Figure', width:60, height:80, imageData:null, available:true },
+    { id:'f3', title:'Study in Ochre', year:2023, medium:'Acrylic on panel', category:'Study', width:40, height:50, imageData:null, available:true },
+    { id:'f4', title:'Figure with Shadow', year:2023, medium:'Acrylic on canvas', category:'Figure', width:70, height:100, imageData:null, available:true },
+    { id:'f5', title:'Seated', year:2023, medium:'Acrylic on canvas', category:'Figure', width:80, height:100, imageData:null, available:false },
+    { id:'f6', title:'Portrait in Umber', year:2022, medium:'Acrylic on panel', category:'Portrait', width:50, height:70, imageData:null, available:true },
+    { id:'f7', title:'Repose', year:2022, medium:'Acrylic on canvas', category:'Figure', width:100, height:130, imageData:null, available:true },
   ];
 
   function renderGalleryItem(p, i) {
@@ -3015,7 +3046,7 @@
   renderHome();
   renderAvailableStrip();
   renderExhibitionSection();
-  initScrollReveal('.premiere-card, .about-photo, .about-text, .process-step, .commission-form, .contact-left, .contact-form');
+  initScrollReveal('.premiere-card, .about-polaroids, .about-text, .process-step, .commission-form, .contact-left, .contact-form');
 
   // ── FLOATING VINYL MUSIC PLAYER (YouTube IFrame API, audio only) ──
   const VINYL_VIDEO_ID = 'Hi99qg3GsDU';
