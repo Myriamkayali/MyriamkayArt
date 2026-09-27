@@ -1530,6 +1530,11 @@
     .site-footer { padding: 32px 18px; }
     .ig-feed-grid { grid-template-columns: repeat(3,1fr); }
     .home-extra-section { padding: 60px 24px; }
+    .home-about-inner { grid-template-columns: 1fr; gap: 36px; }
+    .home-about-snaps { flex-direction: row; justify-content: center; }
+    .home-about-snaps .polaroid:first-child { align-self: auto; width: min(64%, 260px); padding: 10px 10px 34px; }
+    .home-about-snaps .polaroid--small { width: min(42%, 170px); align-self: flex-end; margin: 0 0 -18px -14%; }
+    .home-prints-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .avail-card { flex: 0 0 220px; }
     .dubai-grid { grid-template-columns: 1fr 1fr; }
     .exhibition-img-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1553,6 +1558,64 @@
     color: var(--umber); margin-bottom: 36px;
   }
   .home-section-title em { font-style: italic; color: var(--terracotta); }
+
+  /* Home: about the artist teaser */
+  .home-about-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 5fr 6fr;
+    gap: 80px;
+    align-items: center;
+    text-align: left;
+  }
+  .home-about-snaps { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
+  .home-about-snaps .polaroid:first-child { align-self: flex-start; width: min(100%, 340px); }
+  .home-about-text .home-section-title { margin-bottom: 24px; }
+  .home-about-text p {
+    font-size: 17px;
+    color: var(--brown-mid);
+    line-height: 1.85;
+    margin-bottom: 18px;
+    max-width: 520px;
+  }
+  .home-about-text p.home-about-pull {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 23px;
+    line-height: 1.45;
+    color: var(--terracotta);
+    margin: 26px 0;
+  }
+
+  /* Home: prints teaser */
+  .home-prints-intro {
+    max-width: 560px;
+    margin: -16px auto 36px;
+    font-size: 16px;
+    color: var(--brown-light);
+    line-height: 1.75;
+  }
+  .home-prints-grid {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 20px;
+    text-align: left;
+  }
+  .home-print-card { cursor: pointer; }
+  .home-print-card-img {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--cream-dark);
+    margin-bottom: 12px;
+  }
+  .home-print-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .home-print-card:hover .home-print-card-img img { transform: scale(1.04); }
+  .home-print-card-title { font-family: 'Fraunces', serif; font-size: 16px; color: var(--umber); line-height: 1.3; }
+  .home-print-card-price { font-size: 12px; letter-spacing: 0.04em; color: var(--brown-light); margin-top: 4px; }
+  .home-prints-note { font-size: 13px; color: var(--brown-light); margin-top: 28px; }
 
   /* Available scroll strip */
   .avail-scroll {
@@ -1836,6 +1899,29 @@
       </div>
     </div>
   </div>
+
+  <!-- ── ABOUT THE ARTIST (teaser; full story lives in #about) ── -->
+  <div class="home-extra-section home-about">
+    <div class="home-about-inner">
+      <div class="home-about-snaps">
+        <figure class="polaroid tilt-l">
+          <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel, palette in hand" loading="lazy">
+        </figure>
+        <figure class="polaroid polaroid--small tilt-r">
+          <img src="images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="lazy">
+        </figure>
+      </div>
+      <div class="home-about-text">
+        <p class="home-section-eyebrow">The Artist</p>
+        <h2 class="home-section-title">Hi, I'm <em>Myriam.</em></h2>
+        <p>I'm a Lebanese artist based in Beirut. By day I work as a technical consultant in fintech. By evening the laptop closes, the music starts, and my studio becomes my favourite place to disappear for a few hours.</p>
+        <p>I paint Lebanon, not exactly as it was, but how it felt. The smell of rain on Beirut's streets, family gathered around a table, the snacks we grew up eating. The little things that quietly become part of who we are.</p>
+        <p class="home-about-pull">Art became the balance I didn't know I needed.</p>
+        <a class="avail-view-all" onclick="showSection('about')">Read my story &rarr;</a>
+      </div>
+    </div>
+  </div>
+
   <!-- ── AVAILABLE PIECES ── -->
   <div class="home-extra-section">
     <p class="home-section-eyebrow">Original Works</p>
@@ -1845,6 +1931,9 @@
     </div>
     <a class="avail-view-all" onclick="showSection('collection')">Browse full collection →</a>
   </div>
+
+  <!-- ── PRINTS (teaser, filled by renderHomePrints(); stays hidden if no prints are live) ── -->
+  <div class="home-extra-section" id="home-prints-wrap" style="display:none"></div>
 
   <!-- ── HOME PREMIERE (teaser) ── -->
   <div class="home-extra-section">
@@ -2581,6 +2670,45 @@
     initScrollReveal('.avail-card');
   }
 
+  // Home page prints teaser: one card per live print, links into the Prints section.
+  async function renderHomePrints() {
+    const wrap = document.getElementById('home-prints-wrap');
+    if (!wrap) return;
+    const all = await getPrintsPublic();
+    const prints = PRINT_NAME_ORDER
+      .map(name => all.find(pr => pr.title === name && pr.status !== 'Private'))
+      .filter(Boolean);
+    if (!prints.length) { wrap.style.display = 'none'; return; }
+
+    const lowest = pr => {
+      const prices = (pr.sizeOptions || []).map(o => Number(o.display_price) || 0).filter(n => n > 0);
+      return prices.length ? Math.min(...prices) : 0;
+    };
+    const cards = prints.map((pr, i) => {
+      const from = lowest(pr);
+      return `<div class="home-print-card" onclick="openPrintFromHome(${i})">
+        <div class="home-print-card-img">${pr.imageData ? `<img src="${pr.imageData}" alt="${pr.title}, fine art print" loading="lazy">` : ''}</div>
+        <p class="home-print-card-title">${pr.title}</p>
+        ${from ? `<p class="home-print-card-price">from $${from.toLocaleString()}</p>` : ''}
+      </div>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <p class="home-section-eyebrow">Fine Art Prints</p>
+      <h2 class="home-section-title">Take a piece of <em>home</em> with you</h2>
+      <p class="home-prints-intro">Some of my favourite paintings, printed on museum quality Hahnemühle paper and available in four sizes.</p>
+      <div class="home-prints-grid">${cards}</div>
+      <p class="home-prints-note">Currently shipping to Europe and the Middle East.</p>
+      <a class="avail-view-all" onclick="showSection('prints')">Shop the Prints &rarr;</a>`;
+    wrap.style.display = '';
+    initScrollReveal('.home-print-card');
+  }
+
+  function openPrintFromHome(i) {
+    printSelectedIndex = i;
+    showSection('prints');
+  }
+
   async function getPrintsPublic() {
     try {
       const res = await fetch('/api/prints');
@@ -3056,7 +3184,7 @@
       if (id === 'commission') target.style.display = 'flex';
       target.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (id === 'home') { renderHome(); renderAvailableStrip(); renderExhibitionSection(); }
+      if (id === 'home') { renderHome(); renderAvailableStrip(); renderHomePrints(); renderExhibitionSection(); }
       else if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
       if (id === 'collection') renderGallery(); // async, intentionally not awaited
       if (id === 'contact') renderIgFeed();
@@ -3101,8 +3229,9 @@
   showSection('home');
   renderHome();
   renderAvailableStrip();
+  renderHomePrints();
   renderExhibitionSection();
-  initScrollReveal('.premiere-card, .about-polaroids, .about-text, .process-step, .commission-form, .contact-left, .contact-form');
+  initScrollReveal('.premiere-card, .about-polaroids, .about-text, .home-about-snaps, .home-about-text, .process-step, .commission-form, .contact-left, .contact-form');
 
   // ── FLOATING VINYL MUSIC PLAYER (YouTube IFrame API, audio only) ──
   const VINYL_VIDEO_ID = 'Hi99qg3GsDU';
