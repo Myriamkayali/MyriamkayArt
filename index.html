@@ -1763,6 +1763,7 @@
     .home-about-text p.home-about-pull { font-size: 21px; }
     .home-prints-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
     .interview-section { padding: 64px 20px; }
+    .dubai-section { padding: 64px 20px 0; }
     .interview-inner { grid-template-columns: 1fr; gap: 32px; padding: 32px 24px; }
   }
   @media (max-width: 600px) {
@@ -1799,7 +1800,20 @@
     .premiere-grid::-webkit-scrollbar { display: none; }
     .premiere-card { flex: 0 0 72%; scroll-snap-align: start; }
     .dubai-grid { grid-template-columns: 1fr 1fr; }
-    .exhibition-img-grid { grid-template-columns: repeat(2, 1fr); }
+    /* Phones: exhibition photos swipe sideways like the prints */
+    .exhibition-img-grid {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -20px 20px;
+      padding: 0 20px 12px;
+      scroll-padding: 0 20px;
+      scrollbar-width: none;
+    }
+    .exhibition-img-grid::-webkit-scrollbar { display: none; }
+    .exhibition-img-grid-cell { flex: 0 0 78%; aspect-ratio: 4 / 5; scroll-snap-align: start; }
     .hero .btn-secondary { margin-left: 0; margin-top: 12px; }
   }
 
