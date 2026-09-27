@@ -2248,7 +2248,7 @@
 
   // Print names, in display order — separate from the gallery images above.
   const PRINT_NAME_ORDER = ['Tarboosh Daze', 'Castania Aalkhat', 'Fayrouz Calling', 'Beirut Over Coffee', 'Serving Breakfast', 'Cup From the Past'];
-  const PRINT_SIZES = ['20×30cm', '28×35cm', '30×45cm', '40×60cm', '50×75cm', '60×90cm', '70×105cm', '80×120cm'];
+  const PRINT_SIZES = ['A1', 'A2', 'A3', 'A4'];
 
   let purchasablePrints = [];
   let printSelectedIndex = 0;
@@ -2317,7 +2317,7 @@
       const editionSize = opt ? Number(opt.editionSize) || 0 : 0;
       const numberSold = opt ? Number(opt.numberSold) || 0 : 0;
       const soldOut = editionSize > 0 && (editionSize - numberSold) <= 0;
-      const price = opt && opt.display_price ? `€${Number(opt.display_price).toLocaleString()}` : '';
+      const price = opt && opt.display_price ? `$${Number(opt.display_price).toLocaleString()}` : '';
       const active = size === printSelectedSize;
       return `<div class="print-size-row ${active ? 'active' : ''} ${soldOut ? 'disabled' : ''}"
         onclick="${soldOut ? '' : `printsSelectSizeTag('${size}')`}">
@@ -2328,7 +2328,7 @@
 
     const selectedPrice = (() => {
       const opt = (pr.sizeOptions || []).find(o => o.size === printSelectedSize);
-      return opt && opt.display_price ? `€${Number(opt.display_price).toLocaleString()}` : '';
+      return opt && opt.display_price ? `$${Number(opt.display_price).toLocaleString()}` : '';
     })();
 
     host.innerHTML = `
@@ -2340,6 +2340,8 @@
       <div class="print-chip-row">${chipsHtml}</div>
       <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin-bottom:12px">Select Size</p>
       <div class="print-size-list">${sizeRowsHtml}</div>
+      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:10px">Shipping isn't included in the price above — the cost is calculated based on your location and shown at checkout.</p>
+      <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:22px">Sizes are approximate. Since some paintings are square rather than a standard rectangle, final print dimensions (and price) may be adjusted slightly to preserve the original proportions.</p>
       <button class="btn-order" style="width:100%;padding:15px 22px" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
     `;
   }
@@ -2406,7 +2408,7 @@
   function orderSummaryHtml() {
     const { print, size } = orderState;
     const opt = orderSelectedOption();
-    const price = opt && opt.display_price ? `€${Number(opt.display_price).toLocaleString()}` : '';
+    const price = opt && opt.display_price ? `$${Number(opt.display_price).toLocaleString()}` : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid rgba(107,66,38,0.12)">
       <div>
         <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--umber);line-height:1.2">${print.title}</p>
@@ -2422,7 +2424,7 @@
       <div class="print-size-list">
         ${options.map(o => {
           const disabled = !orderSizeAvailable(o);
-          const price = o.display_price ? `€${Number(o.display_price).toLocaleString()}` : '';
+          const price = o.display_price ? `$${Number(o.display_price).toLocaleString()}` : '';
           return `<div class="print-size-row ${o.size === orderState.size ? 'active' : ''} ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">
             <span class="size-name">${o.size}${disabled ? ' — Sold Out' : ''}</span>
             <span class="size-price">${price}</span>
@@ -2471,9 +2473,10 @@
         <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--terracotta);margin-bottom:4px">Step 2 of 2</p>
         <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--umber);margin-bottom:18px">Review Your Order</p>
         ${orderSummaryHtml()}
-        <div style="font-size:14px;color:var(--brown-mid);line-height:1.9;margin-bottom:8px">
-          <p>Size: ${orderState.size} · Quantity: ${form.quantity} · Total: €${total.toLocaleString()}</p>
+        <div style="font-size:14px;color:var(--brown-mid);line-height:1.9;margin-bottom:4px">
+          <p>Size: ${orderState.size} · Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
         </div>
+        <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:16px">Shipping isn't included — I'll follow up with a shipping cost based on your location before payment.</p>
         <div style="font-size:13px;color:var(--brown-mid);line-height:1.9;background:var(--cream-dark);padding:16px 18px;margin-bottom:20px">
           <p>${form.name}</p>
           <p>${form.email}</p>
