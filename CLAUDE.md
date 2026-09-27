@@ -87,7 +87,7 @@ Images uploaded in the admin are sent to `POST /api/upload` (an Edge function at
 The admin Dashboard screen (`showScreen('dashboard')`) tracks studio finances and site traffic:
 
 - **Revenue** is derived from existing paintings with `status: 'Sold'` (their `price` field) — no separate revenue record. A painting's optional `soldDate` field (added via the Edit form, auto-filled to today when status is set to Sold) drives month-level revenue trends; paintings marked Sold without a `soldDate` fall back to their `year` field for yearly-only totals.
-- **Expenses** are a new record type stored at `mk-data/expenses.json` in Blob via `api/expenses.js`, following the same `readBlob`/`writeBlob`/PIN-protected-POST pattern as `api/paintings.js`. Each entry: `{ id, amount, category, date, note }`.
+- **Expenses** are a new record type stored at `mk-data/expenses.json` in Blob via `api/expenses.js`, following the same `lib/blob.js` + PIN-protected-POST pattern as `api/paintings.js`. Each entry: `{ id, amount, category, date, note }`.
 - **Traffic** pulls from the Vercel Web Analytics REST API via `api/traffic.js` (PIN-protected GET). Requires these env variables in the Vercel dashboard:
   - `VERCEL_API_TOKEN` — access token from vercel.com/account/tokens, scoped to this project/team
   - `VERCEL_PROJECT_ID` — Project Settings → General → "Project ID"
@@ -114,6 +114,14 @@ The admin Dashboard screen (`showScreen('dashboard')`) tracks studio finances an
 - **Emails (Resend)**: on order creation, two emails fire automatically and non-fatally (the order still saves even if email sending fails or isn't configured yet) — a notification to `NOTIFY_EMAIL` with full order details, and a warm "order received" confirmation to the client (no payment/automation language). Separately, admin's "Send payment link to client" button (Orders tab) fires a third email with the pasted payment link and flips `paymentStatus` to "Link Sent" — this only ever happens when Myriam explicitly triggers it, never automatically.
 - **Required Vercel env vars**: `RESEND_API_KEY` (from resend.com — also requires verifying myriamkay.art's DNS with Resend before it can send from your own domain), `RESEND_FROM_EMAIL` (e.g. `Myriam Kayali Art <orders@myriamkay.art>`, defaults to that if unset — will fail to actually deliver until the domain is verified), `NOTIFY_EMAIL` (where new-order alerts go — if unset, that email is simply skipped, the client confirmation still sends).
 - **Admin Orders tab** (`showScreen('orders')`, `renderOrders()`): one row per order — client info, shipping address, print/size, price × qty, date, an editable status dropdown, and a payment-link input + "Send payment link to client" button.
+
+## Blob storage access — lib/blob.js
+
+Every `/api` function reads and writes its JSON through `lib/blob.js` (`readJson`, `writeJson`, `setPublicCache`), never through `list()`. `list()` is a Vercel Blob **Advanced Operation** and the free tier allows only 2,000/month; calling it on every page view got the store paused for 30 days in Sept 2026. Rules:
+
+- Reads fetch the blob's public URL directly (store base URL derived from `BLOB_READ_WRITE_TOKEN`, or `BLOB_PUBLIC_BASE_URL` if set). A missing file returns `null`; any other failure **throws** (flagged `storageUnavailable`) so a failed read is never treated as empty and written back over real data, and the PIN never silently falls back to the default.
+- Use `{ fresh: true }` before any read-modify-write, for PIN/config checks, and for admin reads. Public reads use the CDN copy.
+- Public GETs (`/api/paintings`, `/api/prints`, `/api/exhibition`) call `setPublicCache()`: edge-cached for 60s (`s-maxage=60, stale-while-revalidate=600`). admin.html requests them with `?fresh=1`, which bypasses that cache so edits always start from the latest data. Error responses are always `no-store`.
 
 ## Deployment
 

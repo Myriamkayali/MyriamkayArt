@@ -1,29 +1,8 @@
-const { put, list } = require('@vercel/blob');
+const { readJson, writeJson, setPublicCache } = require('../lib/blob');
 
 const PRINTS_PATH = 'mk-data/prints.json';
 const CONFIG_PATH = 'mk-data/config.json';
 const DEFAULT_PIN = '1234';
-
-async function readBlob(path) {
-  try {
-    const { blobs } = await list({ prefix: path });
-    const blob = blobs.find(b => b.pathname === path);
-    if (!blob) return null;
-    const res = await fetch(blob.url + '?t=' + Date.now()); // bypass CDN cache
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-async function writeBlob(path, data) {
-  await put(path, JSON.stringify(data), {
-    access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: 'application/json',
-  });
-}
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -44,26 +23,28 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const prints = await readBlob(PRINTS_PATH);
+      const fresh = setPublicCache(req, res); // public page views hit the edge cache; admin passes ?fresh=1
+      const prints = await readJson(PRINTS_PATH, { fresh });
       return res.status(200).json(prints || []);
     }
 
     if (req.method === 'POST') {
       const { prints, pin } = await parseBody(req);
-      const config   = await readBlob(CONFIG_PATH);
+      const config   = await readJson(CONFIG_PATH, { fresh: true });
       const validPin = config?.pin || DEFAULT_PIN;
 
       if (!pin) return res.status(401).json({ error: 'PIN missing' });
       if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
       if (!Array.isArray(prints)) return res.status(400).json({ error: 'Invalid data — expected array' });
 
-      await writeBlob(PRINTS_PATH, prints);
+      await writeJson(PRINTS_PATH, prints);
       return res.status(200).json({ ok: true });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (e) {
     console.error('prints handler error:', e);
+    res.setHeader('Cache-Control', 'no-store'); // never let the edge cache an error
     return res.status(500).json({ error: e.message || 'Internal server error' });
   }
 };

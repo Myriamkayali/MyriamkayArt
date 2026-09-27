@@ -1,19 +1,7 @@
-const { list } = require('@vercel/blob');
+const { readJson } = require('../lib/blob');
 
 const CONFIG_PATH = 'mk-data/config.json';
 const DEFAULT_PIN = '1234';
-
-async function readBlob(path) {
-  try {
-    const { blobs } = await list({ prefix: path });
-    const blob = blobs.find(b => b.pathname === path);
-    if (!blob) return null;
-    const res = await fetch(blob.url + '?t=' + Date.now()); // bypass CDN cache
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
 
 function isoDate(d) { return d.toISOString().slice(0, 10); }
 
@@ -51,7 +39,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const pin = req.query?.pin;
-    const config = await readBlob(CONFIG_PATH);
+    const config = await readJson(CONFIG_PATH, { fresh: true });
     const validPin = config?.pin || DEFAULT_PIN;
     if (!pin) return res.status(401).json({ error: 'PIN missing' });
     if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });

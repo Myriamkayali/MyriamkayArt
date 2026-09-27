@@ -1,4 +1,4 @@
-const { put, list } = require('@vercel/blob');
+const { readJson, writeJson, setPublicCache } = require('../lib/blob');
 
 const EXHIBITION_PATH = 'mk-data/exhibition.json';
 const CONFIG_PATH     = 'mk-data/config.json';
@@ -13,27 +13,6 @@ const DEFAULT_EXHIBITION = {
   pressTitle: 'Myriam Kayali Paints a Love Letter to Beirut',
   pressSubtitle: 'Through colour, memory and emotion, the artist captures the city that continues to shape her.',
 };
-
-async function readBlob(path) {
-  try {
-    const { blobs } = await list({ prefix: path });
-    const blob = blobs.find(b => b.pathname === path);
-    if (!blob) return null;
-    const res = await fetch(blob.url + '?t=' + Date.now()); // bypass CDN cache
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-async function writeBlob(path, data) {
-  await put(path, JSON.stringify(data), {
-    access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: 'application/json',
-  });
-}
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -54,26 +33,35 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const exhibition = await readBlob(EXHIBITION_PATH);
+      const fresh = setPublicCache(req, res); // public page views hit the edge cache; admin passes ?fresh=1
+      let exhibition;
+      try {
+        exhibition = await readJson(EXHIBITION_PATH, { fresh });
+      } catch (e) {
+        // Home page still renders the default exhibition text if storage is unavailable.
+        console.error('exhibition read error:', e);
+        res.setHeader('Cache-Control', 'no-store');
+      }
       return res.status(200).json(exhibition || DEFAULT_EXHIBITION);
     }
 
     if (req.method === 'POST') {
       const { data, pin } = await parseBody(req);
-      const config   = await readBlob(CONFIG_PATH);
+      const config   = await readJson(CONFIG_PATH, { fresh: true });
       const validPin = config?.pin || DEFAULT_PIN;
 
       if (!pin) return res.status(401).json({ error: 'PIN missing' });
       if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
       if (!data || typeof data !== 'object') return res.status(400).json({ error: 'Invalid data — expected object' });
 
-      await writeBlob(EXHIBITION_PATH, data);
+      await writeJson(EXHIBITION_PATH, data);
       return res.status(200).json({ ok: true });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (e) {
     console.error('exhibition handler error:', e);
+    res.setHeader('Cache-Control', 'no-store'); // never let the edge cache an error
     return res.status(500).json({ error: e.message || 'Internal server error' });
   }
 };

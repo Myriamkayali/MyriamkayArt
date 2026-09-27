@@ -1033,7 +1033,7 @@ function getPaintings() { return paintingsCache || []; }
 
 async function loadPaintings() {
   try {
-    const res = await fetch('/api/paintings');
+    const res = await fetch('/api/paintings?fresh=1');
     paintingsCache = await res.json();
   } catch {
     paintingsCache = paintingsCache || [];
@@ -1181,7 +1181,7 @@ function getPrints() { return printsCache || []; }
 
 async function loadPrints() {
   try {
-    const res = await fetch('/api/prints');
+    const res = await fetch('/api/prints?fresh=1');
     printsCache = await res.json();
   } catch {
     printsCache = printsCache || [];
@@ -3900,7 +3900,7 @@ let exhibitionImages = [];
 
 async function loadExhibition() {
   try {
-    const res = await fetch('/api/exhibition');
+    const res = await fetch('/api/exhibition?fresh=1');
     exhibitionData = await res.json();
     exhibitionImages = (exhibitionData.images || []).slice();
   } catch {

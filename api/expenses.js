@@ -1,29 +1,8 @@
-const { put, list } = require('@vercel/blob');
+const { readJson, writeJson } = require('../lib/blob');
 
 const EXPENSES_PATH = 'mk-data/expenses.json';
 const CONFIG_PATH   = 'mk-data/config.json';
 const DEFAULT_PIN   = '1234';
-
-async function readBlob(path) {
-  try {
-    const { blobs } = await list({ prefix: path });
-    const blob = blobs.find(b => b.pathname === path);
-    if (!blob) return null;
-    const res = await fetch(blob.url + '?t=' + Date.now()); // bypass CDN cache
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-async function writeBlob(path, data) {
-  await put(path, JSON.stringify(data), {
-    access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: 'application/json',
-  });
-}
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -44,20 +23,21 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const expenses = await readBlob(EXPENSES_PATH);
+      res.setHeader('Cache-Control', 'no-store');
+      const expenses = await readJson(EXPENSES_PATH, { fresh: true });
       return res.status(200).json(expenses || []);
     }
 
     if (req.method === 'POST') {
       const { expenses, pin } = await parseBody(req);
-      const config   = await readBlob(CONFIG_PATH);
+      const config   = await readJson(CONFIG_PATH, { fresh: true });
       const validPin = config?.pin || DEFAULT_PIN;
 
       if (!pin) return res.status(401).json({ error: 'PIN missing' });
       if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
       if (!Array.isArray(expenses)) return res.status(400).json({ error: 'Invalid data — expected array' });
 
-      await writeBlob(EXPENSES_PATH, expenses);
+      await writeJson(EXPENSES_PATH, expenses);
       return res.status(200).json({ ok: true });
     }
 

@@ -1,4 +1,4 @@
-const { put, list } = require('@vercel/blob');
+const { readJson, writeJson } = require('../lib/blob');
 
 const ORDERS_PATH = 'mk-data/orders.json';
 const PRINTS_PATH = 'mk-data/prints.json';
@@ -8,27 +8,6 @@ const DEFAULT_PIN = '1234';
 const SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
 function sizeLabel(size) {
   return SIZE_DIMENSIONS[size] ? `${size} (${SIZE_DIMENSIONS[size]})` : size;
-}
-
-async function readBlob(path) {
-  try {
-    const { blobs } = await list({ prefix: path });
-    const blob = blobs.find(b => b.pathname === path);
-    if (!blob) return null;
-    const res = await fetch(blob.url + '?t=' + Date.now());
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-async function writeBlob(path, data) {
-  await put(path, JSON.stringify(data), {
-    access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: 'application/json',
-  });
 }
 
 async function parseBody(req) {
@@ -125,11 +104,12 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const pin = req.query?.pin;
-      const config = await readBlob(CONFIG_PATH);
+      const config = await readJson(CONFIG_PATH, { fresh: true });
       const validPin = config?.pin || DEFAULT_PIN;
       if (!pin) return res.status(401).json({ error: 'PIN missing' });
       if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
-      const orders = await readBlob(ORDERS_PATH);
+      res.setHeader('Cache-Control', 'no-store');
+      const orders = await readJson(ORDERS_PATH, { fresh: true });
       return res.status(200).json(orders || []);
     }
 
@@ -152,7 +132,7 @@ module.exports = async function handler(req, res) {
       }
       const qty = Math.max(1, parseInt(quantity) || 1);
 
-      const prints = (await readBlob(PRINTS_PATH)) || [];
+      const prints = (await readJson(PRINTS_PATH, { fresh: true })) || [];
       const print = prints.find(p => p.id === printId);
       if (!print) return res.status(404).json({ error: 'That print could not be found.' });
 
@@ -184,9 +164,9 @@ module.exports = async function handler(req, res) {
         paymentStatus: 'New',
       };
 
-      const orders = (await readBlob(ORDERS_PATH)) || [];
+      const orders = (await readJson(ORDERS_PATH, { fresh: true })) || [];
       orders.unshift(order);
-      await writeBlob(ORDERS_PATH, orders);
+      await writeJson(ORDERS_PATH, orders);
 
       // Order is already saved at this point — email failures below must never fail the request.
       const emailResults = { notifySent: false, confirmationSent: false, emailError: null };
@@ -207,12 +187,12 @@ module.exports = async function handler(req, res) {
     }
 
     // ── Everything below is admin-only ──
-    const config = await readBlob(CONFIG_PATH);
+    const config = await readJson(CONFIG_PATH, { fresh: true });
     const validPin = config?.pin || DEFAULT_PIN;
     if (!body.pin) return res.status(401).json({ error: 'PIN missing' });
     if (body.pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
 
-    const orders = (await readBlob(ORDERS_PATH)) || [];
+    const orders = (await readJson(ORDERS_PATH, { fresh: true })) || [];
 
     if (body.action === 'update') {
       const idx = orders.findIndex(o => o.id === body.orderId);
@@ -221,7 +201,7 @@ module.exports = async function handler(req, res) {
       allowed.forEach(f => {
         if (body.patch && body.patch[f] !== undefined) orders[idx][f] = body.patch[f];
       });
-      await writeBlob(ORDERS_PATH, orders);
+      await writeJson(ORDERS_PATH, orders);
       return res.status(200).json({ ok: true });
     }
 
@@ -233,13 +213,16 @@ module.exports = async function handler(req, res) {
 
       await sendEmail({ to: order.clientEmail, subject: 'Payment link for your order', html: paymentLinkEmailHtml(order) });
       order.paymentStatus = 'Link Sent';
-      await writeBlob(ORDERS_PATH, orders);
+      await writeJson(ORDERS_PATH, orders);
       return res.status(200).json({ ok: true });
     }
 
     return res.status(400).json({ error: 'Unknown action.' });
   } catch (e) {
     console.error('orders handler error:', e);
+    if (e.storageUnavailable) {
+      return res.status(503).json({ error: "Orders can't be placed right now. Please try again in a little while, or message me on Instagram @myriamkay.art." });
+    }
     const status = e.missingConfig ? 200 : 500;
     return res.status(status).json({ error: e.message || 'Internal server error', configured: !e.missingConfig });
   }

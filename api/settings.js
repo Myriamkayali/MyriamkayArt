@@ -1,4 +1,4 @@
-const { put, list } = require('@vercel/blob');
+const { readJson, writeJson } = require('../lib/blob');
 
 const SETTINGS_PATH = 'mk-data/settings.json';
 const CONFIG_PATH   = 'mk-data/config.json';
@@ -16,27 +16,6 @@ const DEFAULT_SETTINGS = {
   defaultWastagePercent: 10,    // % added to material cost for waste/offcuts
   defaultMarkupMultiplier: 2,   // simple markup-on-cost fallback logic
 };
-
-async function readBlob(path) {
-  try {
-    const { blobs } = await list({ prefix: path });
-    const blob = blobs.find(b => b.pathname === path);
-    if (!blob) return null;
-    const res = await fetch(blob.url + '?t=' + Date.now());
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-async function writeBlob(path, data) {
-  await put(path, JSON.stringify(data), {
-    access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: 'application/json',
-  });
-}
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -57,13 +36,14 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const settings = await readBlob(SETTINGS_PATH);
+      res.setHeader('Cache-Control', 'no-store');
+      const settings = await readJson(SETTINGS_PATH, { fresh: true });
       return res.status(200).json({ ...DEFAULT_SETTINGS, ...(settings || {}) });
     }
 
     if (req.method === 'POST') {
       const { settings, pin } = await parseBody(req);
-      const config   = await readBlob(CONFIG_PATH);
+      const config   = await readJson(CONFIG_PATH, { fresh: true });
       const validPin = config?.pin || DEFAULT_PIN;
 
       if (!pin) return res.status(401).json({ error: 'PIN missing' });
@@ -71,7 +51,7 @@ module.exports = async function handler(req, res) {
       if (!settings || typeof settings !== 'object') return res.status(400).json({ error: 'Invalid data — expected object' });
 
       const merged = { ...DEFAULT_SETTINGS, ...settings };
-      await writeBlob(SETTINGS_PATH, merged);
+      await writeJson(SETTINGS_PATH, merged);
       return res.status(200).json({ ok: true });
     }
 

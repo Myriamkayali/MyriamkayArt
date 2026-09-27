@@ -1,29 +1,8 @@
-const { put, list } = require('@vercel/blob');
+const { readJson, writeJson } = require('../lib/blob');
 
 const SUPPLIES_PATH = 'mk-data/supplies.json';
 const CONFIG_PATH   = 'mk-data/config.json';
 const DEFAULT_PIN   = '1234';
-
-async function readBlob(path) {
-  try {
-    const { blobs } = await list({ prefix: path });
-    const blob = blobs.find(b => b.pathname === path);
-    if (!blob) return null;
-    const res = await fetch(blob.url + '?t=' + Date.now());
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-async function writeBlob(path, data) {
-  await put(path, JSON.stringify(data), {
-    access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: 'application/json',
-  });
-}
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -44,20 +23,21 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const supplies = await readBlob(SUPPLIES_PATH);
+      res.setHeader('Cache-Control', 'no-store');
+      const supplies = await readJson(SUPPLIES_PATH, { fresh: true });
       return res.status(200).json(supplies || []);
     }
 
     if (req.method === 'POST') {
       const { supplies, pin } = await parseBody(req);
-      const config   = await readBlob(CONFIG_PATH);
+      const config   = await readJson(CONFIG_PATH, { fresh: true });
       const validPin = config?.pin || DEFAULT_PIN;
 
       if (!pin) return res.status(401).json({ error: 'PIN missing' });
       if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
       if (!Array.isArray(supplies)) return res.status(400).json({ error: 'Invalid data — expected array' });
 
-      await writeBlob(SUPPLIES_PATH, supplies);
+      await writeJson(SUPPLIES_PATH, supplies);
       return res.status(200).json({ ok: true });
     }
 
