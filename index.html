@@ -1237,12 +1237,10 @@
         #2a170c 0px, #2a170c 1.5px,
         #170c05 1.5px, #170c05 3px);
     box-shadow: 0 14px 34px rgba(30,15,7,0.4), 0 0 0 1px rgba(244,237,224,0.08);
-    animation: vinylSpin 5s linear infinite;
-    animation-play-state: paused;
+    animation: vinylSpin 6s linear infinite;
     transition: transform 0.3s ease;
   }
   .vinyl-player:hover .vinyl-disc { transform: scale(1.03); }
-  .vinyl-player.playing .vinyl-disc { animation-play-state: running; }
   @keyframes vinylSpin { to { transform: rotate(360deg); } }
 
   .vinyl-cover-img {
@@ -1755,7 +1753,6 @@
         </div>
         <div class="premiere-info">
           <p class="premiere-title">Piece II</p>
-          <p class="premiere-note">In Progress</p>
         </div>
       </div>
       <div class="premiere-card">
