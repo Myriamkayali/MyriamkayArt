@@ -615,6 +615,30 @@
   .print-chip.active { opacity: 1; }
   .print-chip.active img { border-color: var(--terracotta); }
 
+  /* Size + price rows (8 cm-based tiers, each with its own price) */
+  .print-size-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .print-size-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border: 1px solid rgba(107,66,38,0.18);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    font-size: 13px;
+  }
+  .print-size-row:hover { border-color: var(--terracotta); }
+  .print-size-row.active { border-color: var(--terracotta); background: rgba(184,92,56,0.06); }
+  .print-size-row.disabled { opacity: 0.4; cursor: not-allowed; }
+  .print-size-row.disabled .size-name { text-decoration: line-through; }
+  .print-size-row .size-name { color: var(--umber); }
+  .print-size-row .size-price { color: var(--brown-mid); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; }
+
   .print-img {
     width: 100%;
     aspect-ratio: 4/5;
@@ -2224,11 +2248,11 @@
 
   // Print names, in display order — separate from the gallery images above.
   const PRINT_NAME_ORDER = ['Tarboosh Daze', 'Castania Aalkhat', 'Fayrouz Calling', 'Beirut Over Coffee', 'Serving Breakfast', 'Cup From the Past'];
-  const PRINT_SIZES = ['A1', 'A2', 'A3', 'A4'];
+  const PRINT_SIZES = ['20×30cm', '28×35cm', '30×45cm', '40×60cm', '50×75cm', '60×90cm', '70×105cm', '80×120cm'];
 
   let purchasablePrints = [];
   let printSelectedIndex = 0;
-  let printSelectedSize = 'A1';
+  let printSelectedSize = PRINT_SIZES[0];
 
   async function renderPrintsSection() {
     const wrap = document.getElementById('prints-content');
@@ -2246,7 +2270,7 @@
     }
 
     if (printSelectedIndex >= purchasablePrints.length) printSelectedIndex = 0;
-    printSelectedSize = 'A1';
+    printSelectedSize = PRINT_SIZES[0];
 
     const [heroSrc, ...restGallery] = PRINT_GALLERY_IMAGES;
     const galleryHtml = restGallery.map((src, i) => `
@@ -2288,31 +2312,41 @@
           : `<div class="gp-1" style="width:100%;aspect-ratio:3/4"></div>`}
       </div>`).join('');
 
-    const sizeTagsHtml = PRINT_SIZES.map(size => {
+    const sizeRowsHtml = PRINT_SIZES.map(size => {
       const opt = (pr.sizeOptions || []).find(o => o.size === size);
       const editionSize = opt ? Number(opt.editionSize) || 0 : 0;
       const numberSold = opt ? Number(opt.numberSold) || 0 : 0;
       const soldOut = editionSize > 0 && (editionSize - numberSold) <= 0;
-      return `<span class="size-tag ${size === printSelectedSize ? 'active' : ''}" style="${soldOut ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : ''}"
-        onclick="${soldOut ? '' : `printsSelectSizeTag('${size}')`}">${size}</span>`;
+      const price = opt && opt.display_price ? `€${Number(opt.display_price).toLocaleString()}` : '';
+      const active = size === printSelectedSize;
+      return `<div class="print-size-row ${active ? 'active' : ''} ${soldOut ? 'disabled' : ''}"
+        onclick="${soldOut ? '' : `printsSelectSizeTag('${size}')`}">
+        <span class="size-name">${size}${soldOut ? ' — Sold Out' : ''}</span>
+        <span class="size-price">${price}</span>
+      </div>`;
     }).join('');
+
+    const selectedPrice = (() => {
+      const opt = (pr.sizeOptions || []).find(o => o.size === printSelectedSize);
+      return opt && opt.display_price ? `€${Number(opt.display_price).toLocaleString()}` : '';
+    })();
 
     host.innerHTML = `
       <div class="print-shop-preview">
         ${pr.imageData ? `<img src="${pr.imageData}" alt="${pr.title}" loading="lazy">` : ''}
       </div>
       <p class="print-shop-eyebrow">Shop the Collection</p>
-      <h3 class="print-shop-title">${pr.title}</h3>
+      <h3 class="print-shop-title">${pr.title}${selectedPrice ? ` <span style="color:var(--terracotta)">— ${selectedPrice}</span>` : ''}</h3>
       <div class="print-chip-row">${chipsHtml}</div>
       <p style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown-light);margin-bottom:12px">Select Size</p>
-      <div class="print-sizes" style="margin-bottom:28px">${sizeTagsHtml}</div>
+      <div class="print-size-list">${sizeRowsHtml}</div>
       <button class="btn-order" style="width:100%;padding:15px 22px" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
     `;
   }
 
   function printsSelectPrint(i) {
     printSelectedIndex = i;
-    printSelectedSize = 'A1';
+    printSelectedSize = PRINT_SIZES[0];
     renderPrintSelector();
   }
 
@@ -2372,7 +2406,7 @@
   function orderSummaryHtml() {
     const { print, size } = orderState;
     const opt = orderSelectedOption();
-    const price = opt && opt.price ? `€${Number(opt.price).toLocaleString()}` : '';
+    const price = opt && opt.display_price ? `€${Number(opt.display_price).toLocaleString()}` : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid rgba(107,66,38,0.12)">
       <div>
         <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--umber);line-height:1.2">${print.title}</p>
@@ -2385,10 +2419,14 @@
     const options = PRINT_SIZES.map(s => (orderState.print.sizeOptions || []).find(o => o.size === s) || { size: s });
     return `<div class="form-group">
       <label>Size</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="print-size-list">
         ${options.map(o => {
           const disabled = !orderSizeAvailable(o);
-          return `<span class="size-tag ${o.size === orderState.size ? 'active' : ''}" style="${disabled ? 'opacity:0.4;text-decoration:line-through;cursor:not-allowed' : 'cursor:pointer'}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">${o.size}</span>`;
+          const price = o.display_price ? `€${Number(o.display_price).toLocaleString()}` : '';
+          return `<div class="print-size-row ${o.size === orderState.size ? 'active' : ''} ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `selectOrderSize('${o.size}')`}">
+            <span class="size-name">${o.size}${disabled ? ' — Sold Out' : ''}</span>
+            <span class="size-price">${price}</span>
+          </div>`;
         }).join('')}
       </div>
     </div>`;
@@ -2426,7 +2464,7 @@
 
     if (step === 2) {
       const opt = orderSelectedOption();
-      const unitPrice = opt ? Number(opt.price) || 0 : 0;
+      const unitPrice = opt ? Number(opt.display_price) || 0 : 0;
       const total = unitPrice * (Number(form.quantity) || 1);
       body.innerHTML = `
         ${orderStepDotsHtml(2)}
@@ -2434,7 +2472,7 @@
         <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--umber);margin-bottom:18px">Review Your Order</p>
         ${orderSummaryHtml()}
         <div style="font-size:14px;color:var(--brown-mid);line-height:1.9;margin-bottom:8px">
-          <p>Size: ${orderState.size} · Quantity: ${form.quantity} · Total: $${total.toLocaleString()}</p>
+          <p>Size: ${orderState.size} · Quantity: ${form.quantity} · Total: €${total.toLocaleString()}</p>
         </div>
         <div style="font-size:13px;color:var(--brown-mid);line-height:1.9;background:var(--cream-dark);padding:16px 18px;margin-bottom:20px">
           <p>${form.name}</p>

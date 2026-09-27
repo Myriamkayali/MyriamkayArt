@@ -164,7 +164,7 @@ module.exports = async function handler(req, res) {
         printId: print.id,
         printTitle: print.title,
         printSize: size,
-        price: Number(sizeOption.price) || 0, // authoritative — never trust a client-submitted price
+        price: Number(sizeOption.display_price) || 0, // authoritative — never trust a client-submitted price. display_price is what the client is actually charged (base_price + conversion-cost markup); base_price is admin-only, for margin reporting.
         quantity: qty,
         clientName: String(clientName).trim(),
         clientEmail: String(clientEmail).trim(),

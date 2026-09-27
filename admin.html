@@ -1212,9 +1212,17 @@ async function savePrints(prints) {
   }
 }
 
-const PRINT_SIZE_NAMES = ['A4', 'A3', 'A2', 'A1'];
+const PRINT_SIZE_NAMES = ['20×30cm', '28×35cm', '30×45cm', '40×60cm', '50×75cm', '60×90cm', '70×105cm', '80×120cm'];
+const DISPLAY_PRICE_MARKUP = 0.01; // conversion-cost markup applied on top of base_price for the public display_price
+
+function suggestDisplayPrice(basePrice) {
+  const n = Number(basePrice) || 0;
+  return n > 0 ? Math.round(n * (1 + DISPLAY_PRICE_MARKUP)) : '';
+}
 
 // Metrics for one size option of a print (price, edition, costs all live per-size now).
+// Profit/margin are always computed off base_price — display_price is a client-facing
+// markup (conversion cost) and must never be treated as real profit.
 function computeSizeMetrics(opt) {
   const paper = Number(opt.paperCost) || 0;
   const production = Number(opt.productionCost) || 0;
@@ -1223,7 +1231,8 @@ function computeSizeMetrics(opt) {
   const certificate = Number(opt.certificateCost) || 0;
   const totalCostPerUnit = Math.round((paper + production + packaging + shipping + certificate) * 100) / 100;
 
-  const price = Number(opt.price) || 0;
+  const price = Number(opt.base_price) || 0;
+  const displayPrice = Number(opt.display_price) || 0;
   const editionSize = Number(opt.editionSize) || 0;
   const numberSold = Number(opt.numberSold) || 0;
   const numberRemaining = Math.max(0, editionSize - numberSold);
@@ -1233,12 +1242,12 @@ function computeSizeMetrics(opt) {
   const totalPotentialRevenue = Math.round(price * editionSize * 100) / 100;
   const totalPotentialProfit = Math.round(profitPerUnit * editionSize * 100) / 100;
 
-  return { totalCostPerUnit, profitPerUnit, profitMargin, numberRemaining, totalPotentialRevenue, totalPotentialProfit };
+  return { totalCostPerUnit, profitPerUnit, profitMargin, numberRemaining, totalPotentialRevenue, totalPotentialProfit, price, displayPrice };
 }
 
 // Aggregate metrics across every size option a print offers (list cards, dashboard summaries).
 function computePrintMetrics(pr) {
-  const options = (pr.sizeOptions || []).filter(o => Number(o.price) > 0);
+  const options = (pr.sizeOptions || []).filter(o => Number(o.base_price) > 0);
   let numberRemaining = 0, totalPotentialRevenue = 0, totalPotentialProfit = 0, numberSold = 0, editionSize = 0;
   let bestMargin = null, minPrice = null;
 
@@ -1250,7 +1259,7 @@ function computePrintMetrics(pr) {
     numberSold += Number(o.numberSold) || 0;
     editionSize += Number(o.editionSize) || 0;
     if (bestMargin === null || m.profitMargin > bestMargin) bestMargin = m.profitMargin;
-    const price = Number(o.price) || 0;
+    const price = Number(o.base_price) || 0;
     if (price > 0 && (minPrice === null || price < minPrice)) minPrice = price;
   });
 
@@ -2125,7 +2134,7 @@ async function renderPrintsList() {
     totalRemaining += m.numberRemaining;
     potentialRevenueRemaining += (pr.sizeOptions || []).reduce((sum, o) => {
       const om = computeSizeMetrics(o);
-      return sum + (Number(o.price) || 0) * om.numberRemaining;
+      return sum + (Number(o.base_price) || 0) * om.numberRemaining;
     }, 0);
   });
 
@@ -2203,12 +2212,13 @@ function findSizeOption(pr, size) {
 }
 
 function sizeOptionBlockHtml(size, opt) {
-  const o = opt || { price: '', editionSize: '', numberSold: 0, paperCost: '', productionCost: '', packagingCost: '', shippingCost: '', certificateCost: '' };
+  const o = opt || { base_price: '', display_price: '', editionSize: '', numberSold: 0, paperCost: '', productionCost: '', packagingCost: '', shippingCost: '', certificateCost: '' };
   return `
     <div style="border:1px solid var(--border);padding:18px;margin-bottom:14px;background:var(--surface)">
       <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:var(--cream);margin-bottom:14px">${size}</p>
       <div class="expense-form-grid">
-        <div class="form-group"><label class="form-label">Price</label><input class="form-input" id="pr-${size}-price" type="number" min="0" step="0.5" value="${o.price}" oninput="updatePrintTotals()"></div>
+        <div class="form-group"><label class="form-label">Base Price <span style="font-weight:400;color:var(--muted)">(true price, used for margins)</span></label><input class="form-input" id="pr-${size}-base" type="number" min="0" step="0.5" value="${o.base_price}" oninput="onBasePriceInput('${size}')"></div>
+        <div class="form-group"><label class="form-label">Display Price <span style="font-weight:400;color:var(--muted)">(shown to clients, +1% conversion cost)</span></label><input class="form-input" id="pr-${size}-display" type="number" min="0" step="0.5" value="${o.display_price}" oninput="updatePrintTotals()"></div>
         <div class="form-group"><label class="form-label">Edition Size</label><input class="form-input" id="pr-${size}-edition" type="number" min="0" value="${o.editionSize}" oninput="updatePrintTotals()"></div>
         <div class="form-group"><label class="form-label">Number Sold</label><input class="form-input" id="pr-${size}-sold" type="number" min="0" value="${o.numberSold || 0}" oninput="updatePrintTotals()"></div>
         <div class="form-group"><label class="form-label">Paper Cost</label><input class="form-input" id="pr-${size}-paper" type="number" min="0" step="0.5" value="${o.paperCost}" oninput="updatePrintTotals()"></div>
@@ -2281,7 +2291,7 @@ async function renderPrintForm() {
 
       <hr class="form-divider">
       <p class="form-section-title">Size Options &amp; Pricing</p>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Leave a size's price at 0 to not offer it on the public site. Price, edition size, and costs are all tracked separately per size.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Leave a size's base price at 0 to not offer it on the public site. Display Price is what's shown to clients and charged on orders — it auto-fills from Base Price + 1% but can be edited. Margins are always calculated off Base Price.</p>
       ${PRINT_SIZE_NAMES.map(size => sizeOptionBlockHtml(size, findSizeOption(pr, size))).join('')}
 
       <div style="display:flex;gap:12px;margin-top:8px">
@@ -2293,12 +2303,20 @@ async function renderPrintForm() {
   updatePrintTotals();
 }
 
+function onBasePriceInput(size) {
+  const baseEl = document.getElementById(`pr-${size}-base`);
+  const displayEl = document.getElementById(`pr-${size}-display`);
+  if (baseEl && displayEl) displayEl.value = suggestDisplayPrice(baseEl.value);
+  updatePrintTotals();
+}
+
 function updatePrintTotals() {
-  const el = document.getElementById(`pr-${PRINT_SIZE_NAMES[0]}-price`);
+  const el = document.getElementById(`pr-${PRINT_SIZE_NAMES[0]}-base`);
   if (!el) return;
   PRINT_SIZE_NAMES.forEach(size => {
     const opt = {
-      price: document.getElementById(`pr-${size}-price`).value,
+      base_price: document.getElementById(`pr-${size}-base`).value,
+      display_price: document.getElementById(`pr-${size}-display`).value,
       editionSize: document.getElementById(`pr-${size}-edition`).value,
       numberSold: document.getElementById(`pr-${size}-sold`).value,
       paperCost: document.getElementById(`pr-${size}-paper`).value,
@@ -2312,7 +2330,7 @@ function updatePrintTotals() {
     const profitEl = document.getElementById(`pr-${size}-profit`);
     profitEl.textContent = fmtUSD(m.profitPerUnit);
     profitEl.style.color = m.profitPerUnit >= 0 ? '' : '#e74c3c';
-    document.getElementById(`pr-${size}-margin`).textContent = opt.price ? `${m.profitMargin.toFixed(1)}%` : '—';
+    document.getElementById(`pr-${size}-margin`).textContent = opt.base_price ? `${m.profitMargin.toFixed(1)}%` : '—';
     document.getElementById(`pr-${size}-remaining`).textContent = m.numberRemaining;
   });
 }
@@ -2336,7 +2354,8 @@ async function savePrint() {
 
   const sizeOptions = PRINT_SIZE_NAMES.map(size => ({
     size,
-    price: document.getElementById(`pr-${size}-price`).value || '',
+    base_price: document.getElementById(`pr-${size}-base`).value || '',
+    display_price: document.getElementById(`pr-${size}-display`).value || '',
     editionSize: parseInt(document.getElementById(`pr-${size}-edition`).value) || 0,
     numberSold: parseInt(document.getElementById(`pr-${size}-sold`).value) || 0,
     paperCost: document.getElementById(`pr-${size}-paper`).value || '',
@@ -2848,7 +2867,7 @@ function computeBusinessSummary() {
     (pr.sizeOptions || []).forEach(opt => {
       const m = computeSizeMetrics(opt);
       const sold = Number(opt.numberSold) || 0;
-      const price = Number(opt.price) || 0;
+      const price = Number(opt.base_price) || 0;
       if (!price) return;
       revenuePrints += price * sold;
       profitPrints += m.profitPerUnit * sold;
