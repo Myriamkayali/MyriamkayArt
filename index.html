@@ -1218,13 +1218,16 @@
   /* ── FLOATING VINYL MUSIC PLAYER ── */
   .vinyl-player {
     position: fixed;
-    bottom: 28px;
-    right: 28px;
+    top: 160px;
+    right: 40px;
     z-index: 300;
-    width: 72px;
-    height: 72px;
-    cursor: pointer;
+    width: 148px;
+    height: 148px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
   }
+  .vinyl-player.dragging { cursor: grabbing; transition: none !important; }
   .vinyl-disc {
     position: absolute;
     inset: 0;
@@ -1233,45 +1236,68 @@
       repeating-radial-gradient(circle at 50% 50%,
         #2a170c 0px, #2a170c 1.5px,
         #170c05 1.5px, #170c05 3px);
-    box-shadow: 0 8px 22px rgba(30,15,7,0.35), 0 0 0 1px rgba(244,237,224,0.08);
-    animation: vinylSpin 6s linear infinite;
+    box-shadow: 0 14px 34px rgba(30,15,7,0.4), 0 0 0 1px rgba(244,237,224,0.08);
+    animation: vinylSpin 5s linear infinite;
     animation-play-state: paused;
     transition: transform 0.3s ease;
   }
-  .vinyl-player:hover .vinyl-disc { transform: scale(1.04); }
+  .vinyl-player:hover .vinyl-disc { transform: scale(1.03); }
   .vinyl-player.playing .vinyl-disc { animation-play-state: running; }
   @keyframes vinylSpin { to { transform: rotate(360deg); } }
 
-  .vinyl-label {
+  .vinyl-cover-img {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 30px; height: 30px;
+    width: 78%; height: 78%;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: inset 0 0 0 2px rgba(244,237,224,0.15), 0 0 0 1px rgba(0,0,0,0.4);
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+  .vinyl-disc::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--cream);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+  }
+
+  .vinyl-control-badge {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    width: 38px; height: 38px;
     border-radius: 50%;
     background: var(--terracotta);
     display: flex; align-items: center; justify-content: center;
     color: var(--linen);
-    box-shadow: 0 0 0 1px rgba(244,237,224,0.5);
+    box-shadow: 0 4px 12px rgba(30,15,7,0.35), 0 0 0 3px var(--cream);
+    pointer-events: none;
   }
-  .vinyl-label .vinyl-icon-pause { display: none; }
-  .vinyl-player.playing .vinyl-label .vinyl-icon-play { display: none; }
-  .vinyl-player.playing .vinyl-label .vinyl-icon-pause { display: block; }
+  .vinyl-control-badge .vinyl-icon-pause { display: none; }
+  .vinyl-player.playing .vinyl-control-badge .vinyl-icon-play { display: none; }
+  .vinyl-player.playing .vinyl-control-badge .vinyl-icon-pause { display: block; }
 
   .vinyl-arm {
     position: absolute;
-    top: -6px; right: 2px;
-    width: 4px; height: 40px;
+    top: -10px; right: 6px;
+    width: 5px; height: 62px;
     background: linear-gradient(var(--brown-light), var(--umber));
     border-radius: 3px;
     transform-origin: top center;
     transform: rotate(-28deg);
     transition: transform 0.4s ease;
     box-shadow: 0 2px 6px rgba(30,15,7,0.3);
+    pointer-events: none;
   }
   .vinyl-arm::before {
     content: '';
-    position: absolute; top: -3px; left: -3px;
-    width: 10px; height: 10px;
+    position: absolute; top: -4px; left: -4px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     background: var(--brown-light);
   }
@@ -1302,9 +1328,9 @@
   .vinyl-player:hover .vinyl-tooltip { opacity: 1; transform: translateY(0); }
 
   @media (max-width: 600px) {
-    .vinyl-player { width: 58px; height: 58px; bottom: 18px; right: 18px; }
-    .vinyl-label { width: 24px; height: 24px; }
-    .vinyl-arm { height: 32px; }
+    .vinyl-player { width: 100px; height: 100px; top: auto; bottom: 24px; right: 20px; }
+    .vinyl-control-badge { width: 30px; height: 30px; }
+    .vinyl-arm { height: 40px; }
     .vinyl-tooltip { display: none; }
   }
 
@@ -1658,16 +1684,16 @@
 <div class="nav-overlay" id="nav-overlay" onclick="closeMobileNav()"></div>
 
 <!-- ══ FLOATING VINYL MUSIC PLAYER ══ -->
-<div id="vinyl-player" class="vinyl-player" onclick="toggleVinylMusic()" role="button" aria-label="Play music" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleVinylMusic();}">
+<div id="vinyl-player" class="vinyl-player" role="button" aria-label="Play music" tabindex="0">
   <div class="vinyl-disc">
-    <div class="vinyl-grooves"></div>
-    <div class="vinyl-label">
-      <svg class="vinyl-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      <svg class="vinyl-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
-    </div>
+    <img class="vinyl-cover-img" src="https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/vinyl-fairuz-cover-CRtTUgc9MTCIq1enPtHyd5F94MbsCn.jpg" alt="Fairuz, Greatest Hits" draggable="false">
+  </div>
+  <div class="vinyl-control-badge">
+    <svg class="vinyl-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    <svg class="vinyl-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
   </div>
   <div class="vinyl-arm"></div>
-  <p class="vinyl-tooltip">Fairuz &middot; click to listen</p>
+  <p class="vinyl-tooltip">Fairuz &middot; click to listen &middot; drag to move</p>
 </div>
 <div style="position:fixed;bottom:0;left:0;width:2px;height:2px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1;">
   <div id="yt-audio-mount"></div>
@@ -2824,6 +2850,11 @@
     });
   }
 
+  // Load the API and cue the track as soon as the page is idle, so the
+  // first click is instant instead of waiting on the YouTube script + iframe.
+  if ('requestIdleCallback' in window) requestIdleCallback(loadYouTubeApi, { timeout: 3000 });
+  else setTimeout(loadYouTubeApi, 800);
+
   function toggleVinylMusic() {
     const vinyl = document.getElementById('vinyl-player');
     if (!ytPlayer) {
@@ -2837,6 +2868,61 @@
     if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
     else ytPlayer.playVideo();
   }
+
+  // ── Vinyl drag-to-move ──
+  (function initVinylDrag() {
+    const vinyl = document.getElementById('vinyl-player');
+    if (!vinyl) return;
+    let dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+    function pointerPos(e) {
+      return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+    }
+
+    function dragStart(e) {
+      const p = pointerPos(e);
+      const rect = vinyl.getBoundingClientRect();
+      vinyl.style.left = rect.left + 'px';
+      vinyl.style.top = rect.top + 'px';
+      vinyl.style.right = 'auto';
+      dragging = true; moved = false;
+      startX = p.x; startY = p.y; startLeft = rect.left; startTop = rect.top;
+      vinyl.classList.add('dragging');
+    }
+
+    function dragMove(e) {
+      if (!dragging) return;
+      const p = pointerPos(e);
+      const dx = p.x - startX, dy = p.y - startY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+      if (!moved) return;
+      e.preventDefault();
+      const w = vinyl.offsetWidth, h = vinyl.offsetHeight;
+      let left = startLeft + dx, top = startTop + dy;
+      left = Math.max(4, Math.min(window.innerWidth - w - 4, left));
+      top = Math.max(4, Math.min(window.innerHeight - h - 4, top));
+      vinyl.style.left = left + 'px';
+      vinyl.style.top = top + 'px';
+    }
+
+    function dragEnd() {
+      if (!dragging) return;
+      dragging = false;
+      vinyl.classList.remove('dragging');
+      if (!moved) toggleVinylMusic();
+    }
+
+    vinyl.addEventListener('mousedown', dragStart);
+    window.addEventListener('mousemove', dragMove);
+    window.addEventListener('mouseup', dragEnd);
+    vinyl.addEventListener('touchstart', dragStart, { passive: true });
+    window.addEventListener('touchmove', dragMove, { passive: false });
+    window.addEventListener('touchend', dragEnd);
+
+    vinyl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleVinylMusic(); }
+    });
+  })();
 </script>
 </body>
 </html>
