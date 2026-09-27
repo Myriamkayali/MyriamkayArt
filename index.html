@@ -1549,6 +1549,26 @@
   }
   .home-section-title em { font-style: italic; color: var(--terracotta); }
 
+  /* Share link buttons (painting lightbox + print panel) */
+  .share-link-btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    text-align: center;
+  }
+  .share-link-btn:hover { color: var(--terracotta); }
+  .share-link-btn--dark { width: auto; padding: 8px 0; text-align: left; color: rgba(244,237,224,0.55); }
+  .share-link-btn--dark:hover { color: var(--cream); }
+
   /* Order confirmation: WhatsApp button */
   .order-whatsapp-btn {
     display: flex !important;
@@ -1975,10 +1995,10 @@
     <div class="home-about-inner">
       <div class="home-about-snaps">
         <figure class="polaroid tilt-l">
-          <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel, palette in hand" loading="lazy">
+          <img src="/images/about/01-easel.jpg" alt="Myriam painting at an easel, palette in hand" loading="lazy">
         </figure>
         <figure class="polaroid polaroid--small tilt-r">
-          <img src="images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="lazy">
+          <img src="/images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="lazy">
         </figure>
       </div>
       <div class="home-about-text">
@@ -2085,10 +2105,10 @@
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid tilt-l">
-        <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel, palette in hand" loading="eager">
+        <img src="/images/about/01-easel.jpg" alt="Myriam painting at an easel, palette in hand" loading="eager">
       </figure>
       <figure class="polaroid polaroid--small tilt-r">
-        <img src="images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="eager">
+        <img src="/images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="eager">
       </figure>
     </div>
     <div class="about-text">
@@ -2111,8 +2131,8 @@
         <p>As a kid, I'd spend hours drawing, building little projects, or noticing tiny details that most people walked right past.</p>
       </div>
       <div class="story-snaps">
-        <figure class="polaroid polaroid--mini tilt-l"><img src="images/about/03a-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy"></figure>
-        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03e-sketches.jpg" alt="Pencil sketches of buildings and cityscapes spread on a bed" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-l"><img src="/images/about/03a-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="/images/about/03e-sketches.jpg" alt="Pencil sketches of buildings and cityscapes spread on a bed" loading="lazy"></figure>
       </div>
     </div>
 
@@ -2123,9 +2143,9 @@
         <p>Like so many Lebanese, I was trying to understand a world that suddenly felt unfamiliar.</p>
       </div>
       <div class="story-snaps">
-        <figure class="polaroid polaroid--mini polaroid--wide tilt-r"><img src="images/about/03c-flag.jpg" alt="Myriam in a face mask holding a Lebanese flag in front of a Red Cross ambulance" loading="lazy"></figure>
-        <figure class="polaroid polaroid--mini polaroid--wide tilt-l"><img src="images/about/03d-protest.jpg" alt="Night crowd with Lebanese flags in downtown Beirut" loading="lazy"></figure>
-        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03b-teen.jpg" alt="Teenage Myriam taking an elevator mirror selfie with a brown backpack" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini polaroid--wide tilt-r"><img src="/images/about/03c-flag.jpg" alt="Myriam in a face mask holding a Lebanese flag in front of a Red Cross ambulance" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini polaroid--wide tilt-l"><img src="/images/about/03d-protest.jpg" alt="Night crowd with Lebanese flags in downtown Beirut" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="/images/about/03b-teen.jpg" alt="Teenage Myriam taking an elevator mirror selfie with a brown backpack" loading="lazy"></figure>
       </div>
     </div>
 
@@ -2137,8 +2157,8 @@
         <p class="about-pull">Painting became the one place where everything slowed down.</p>
       </div>
       <div class="story-snaps">
-        <figure class="polaroid polaroid--mini tilt-l"><img src="images/about/03f-canvas.jpg" alt="Elevator mirror selfie holding a large blank canvas" loading="lazy"></figure>
-        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03g-studio.jpg" alt="Myriam painting at an easel in her studio" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-l"><img src="/images/about/03f-canvas.jpg" alt="Elevator mirror selfie holding a large blank canvas" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="/images/about/03g-studio.jpg" alt="Myriam painting at an easel in her studio" loading="lazy"></figure>
       </div>
     </div>
   </article>
@@ -2146,13 +2166,13 @@
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid tilt-l">
-        <img src="images/about/07-beirut.jpg" alt="Old Beirut house with arched windows and a tree budding with new leaves" loading="lazy">
+        <img src="/images/about/07-beirut.jpg" alt="Old Beirut house with arched windows and a tree budding with new leaves" loading="lazy">
       </figure>
       <figure class="polaroid polaroid--small tilt-r">
-        <img src="images/about/04-roots.jpg" alt="Traditional Lebanese stone house with a red tiled roof against the mountains" loading="lazy">
+        <img src="/images/about/04-roots.jpg" alt="Traditional Lebanese stone house with a red tiled roof against the mountains" loading="lazy">
       </figure>
       <figure class="polaroid polaroid--small polaroid--tuck tilt-l2">
-        <img src="images/about/04b-table.jpg" alt="Lebanese breakfast spread with hummus, foul, labneh, eggs, olives and fresh vegetables" loading="lazy">
+        <img src="/images/about/04b-table.jpg" alt="Lebanese breakfast spread with hummus, foul, labneh, eggs, olives and fresh vegetables" loading="lazy">
       </figure>
     </div>
     <div class="about-text">
@@ -2171,10 +2191,10 @@
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid tilt-r">
-        <img src="images/about/06-home.jpg" alt="Friends around a coffee table with a Monopoly game, maté, tea and snacks" loading="lazy">
+        <img src="/images/about/06-home.jpg" alt="Friends around a coffee table with a Monopoly game, maté, tea and snacks" loading="lazy">
       </figure>
       <figure class="polaroid polaroid--small tilt-l">
-        <img src="images/about/05-rituals.jpg" alt="Street seller in a red fez pouring a drink from a golden jug for a child" loading="lazy">
+        <img src="/images/about/05-rituals.jpg" alt="Street seller in a red fez pouring a drink from a golden jug for a child" loading="lazy">
       </figure>
     </div>
     <div class="about-text">
@@ -2191,7 +2211,7 @@
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid polaroid--large polaroid--artwork tilt-l">
-        <img src="images/about/08-painting.jpg" alt="Myriam's acrylic painting of friends playing a Lebanese themed Monopoly game around a coffee table" loading="lazy">
+        <img src="/images/about/08-painting.jpg" alt="Myriam's acrylic painting of friends playing a Lebanese themed Monopoly game around a coffee table" loading="lazy">
       </figure>
     </div>
     <div class="about-text">
@@ -2210,7 +2230,7 @@
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid polaroid--large tilt-r">
-        <img src="images/about/09-next.jpg" alt="The Art Times newspaper featuring Myriam Kayali's art, next to a cappuccino and maamoul" loading="lazy">
+        <img src="/images/about/09-next.jpg" alt="The Art Times newspaper featuring Myriam Kayali's art, next to a cappuccino and maamoul" loading="lazy">
       </figure>
     </div>
     <div class="about-text">
@@ -2359,6 +2379,7 @@
       <p id="lb-desc" style="font-size:15px;color:rgba(244,237,224,0.65);line-height:1.85;font-family:'Hanken Grotesk',sans-serif;font-weight:300;margin-bottom:32px;white-space:pre-wrap;"></p>
       <div id="lb-price" style="font-family:'Fraunces',serif;font-size:30px;color:var(--cream);margin-bottom:28px;"></div>
       <div id="lb-actions"></div>
+      <button class="share-link-btn share-link-btn--dark" onclick="shareCurrent(this)">Share this painting</button>
     </div>
   </div>
 </div>
@@ -2399,6 +2420,7 @@
 
   let activeFilter = 'All';
   let galleryPaintings = [];
+  let allGalleryPaintings = []; // unfiltered, so a painting's link is the same whichever filter tab is open
   let lbImages = [];
   let lbImgIdx = 0;
 
@@ -2508,6 +2530,7 @@
 
     const allLoaded = (await getPaintings()).filter(p => p.status !== 'Private');
     const source = allLoaded.length > 0 ? allLoaded : fallback;
+    allGalleryPaintings = source;
 
     let filtered;
     if (activeFilter === 'Available') {
@@ -2559,9 +2582,12 @@
     initScrollReveal('.gallery-item');
   }
 
-  function openPainting(id) {
-    const p = galleryPaintings.find(x => x.id === id);
+  function openPainting(id, opts = {}) {
+    const list = opts.list || galleryPaintings;
+    const p = list.find(x => x.id === id) || galleryPaintings.find(x => x.id === id);
     if (!p) return;
+    if (!opts.fromRoute) setRoute(`/collection/${paintingSlug(p, opts.list || allGalleryPaintings)}`, { title: p.title });
+    else document.title = `${p.title} · ${SITE_TITLE}`;
 
     const dims = (p.width && p.height) ? `${p.width} × ${p.height} cm` : '';
     const parts = [p.medium, dims, p.year].filter(Boolean);
@@ -2620,9 +2646,14 @@
     ).join('');
   }
 
-  function closeLightbox() {
-    document.getElementById('lightbox').style.display = 'none';
+  function closeLightbox(opts = {}) {
+    const lb = document.getElementById('lightbox');
+    const wasOpen = lb.style.display !== 'none';
+    lb.style.display = 'none';
     document.body.style.overflow = '';
+    if (wasOpen && !opts.fromRoute && location.pathname.startsWith('/collection/')) {
+      setRoute('/collection', { title: SECTION_TITLES.collection, replace: true });
+    }
   }
 
   function inquirePainting(title, price) {
@@ -2729,7 +2760,7 @@
       const meta = `${p.medium ? p.medium + ' · ' : ''}${dims}${p.year}`;
       const safeTitle = p.title.replace(/'/g, "\\'");
       const rawPrice = (p.price && !p.hidePrice) ? p.price : '';
-      return `<div class="avail-card" onclick="showSection('collection')">
+      return `<div class="avail-card" onclick="openPaintingFromHome('${p.id}')">
         <div class="avail-card-img-wrap">
           <img class="avail-card-img" src="${p.imageData}" alt="${p.title}" loading="lazy">
         </div>
@@ -2759,7 +2790,7 @@
     };
     const cards = prints.map((pr, i) => {
       const from = lowest(pr);
-      return `<div class="home-print-card" onclick="openPrintFromHome(${i})">
+      return `<div class="home-print-card" onclick="openPrintFromHome('${pr.title.replace(/'/g, "\\'")}')">
         <div class="home-print-card-img">${pr.imageData ? `<img src="${pr.imageData}" alt="${pr.title}, fine art print" loading="lazy">` : ''}</div>
         <p class="home-print-card-title">${pr.title}</p>
         ${from ? `<p class="home-print-card-price">from $${from.toLocaleString()}</p>` : ''}
@@ -2777,9 +2808,16 @@
     initScrollReveal('.home-print-card');
   }
 
-  function openPrintFromHome(i) {
-    printSelectedIndex = i;
-    showSection('prints');
+  function openPrintFromHome(title) {
+    goToPrint(title);
+  }
+
+  async function openPaintingFromHome(id) {
+    const all = (await getPaintings()).filter(p => p.status !== 'Private');
+    const p = all.find(x => x.id === id);
+    if (!p) return showSection('collection');
+    showSection('collection', { fromRoute: true });
+    openPainting(id, { list: all });
   }
 
   async function getPrintsPublic() {
@@ -2886,6 +2924,11 @@
       return;
     }
 
+    if (pendingPrintSlug) {
+      const idx = purchasablePrints.findIndex(pr => slugify(pr.title) === pendingPrintSlug);
+      if (idx >= 0) { printSelectedIndex = idx; document.title = `${purchasablePrints[idx].title} · ${SITE_TITLE}`; }
+      pendingPrintSlug = null;
+    }
     if (printSelectedIndex >= purchasablePrints.length) printSelectedIndex = 0;
     printSelectedSize = PRINT_SIZES[0];
 
@@ -2962,11 +3005,14 @@
       <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:10px">Shipping isn't included in the price above. The cost is calculated based on your location, and I'll share the final price with you once your order is placed.</p>
       <p style="font-size:11.5px;color:var(--brown-light);line-height:1.6;margin-bottom:22px">Sizes are approximate. Since some paintings are square rather than a standard rectangle, final print dimensions may be adjusted slightly to preserve the original proportions.</p>
       <button class="btn-order" style="width:100%;padding:15px 22px" onclick="openOrderModal('${pr.id}', '${printSelectedSize}')">Order This Print →</button>
+      <button class="share-link-btn" onclick="shareCurrent(this)">Share this print</button>
     `;
   }
 
   function printsSelectPrint(i) {
     printSelectedIndex = i;
+    const pr = purchasablePrints[i];
+    if (pr) setRoute(`/prints/${slugify(pr.title)}`, { title: pr.title, replace: true });
     printSelectedSize = PRINT_SIZES[0];
     renderPrintSelector();
   }
@@ -3283,7 +3329,8 @@
     });
   }
 
-  function showSection(id) {
+  function showSection(id, opts = {}) {
+    if (!opts.fromRoute) setRoute(id === 'home' ? '/' : `/${id}`, { title: SECTION_TITLES[id] });
     document.querySelectorAll('section').forEach(s => {
       s.classList.remove('active');
       s.style.display = 'none';
@@ -3329,6 +3376,80 @@
     document.getElementById('nav-overlay').classList.toggle('open', open);
     document.body.style.overflow = open ? 'hidden' : '';
   }
+  // ── SHAREABLE LINKS ──
+  // Every page, painting and print has its own URL (e.g. /prints/tarboosh-daze),
+  // served by the rewrite in vercel.json. showSection()/openPainting()/printsSelectPrint()
+  // keep the address bar in sync; applyRoute() opens whatever a shared link points to.
+  const SECTION_IDS = ['home', 'about', 'collection', 'prints', 'commission', 'contact'];
+  const SECTION_TITLES = { home: '', about: 'About', collection: 'Collection', prints: 'Prints', commission: 'Commission', contact: 'Contact' };
+  const SITE_TITLE = 'Myriam Kayali Art';
+
+  function slugify(text) {
+    return String(text || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled';
+  }
+  // Paintings can share a title ("Untitled"), so duplicates get their id appended.
+  function paintingSlug(p, all) {
+    const base = slugify(p.title);
+    const dupes = (all || []).filter(x => slugify(x.title) === base).length;
+    return dupes > 1 ? `${base}-${p.id}` : base;
+  }
+  function findBySlug(list, slug, slugFn) {
+    return list.find(x => slugFn(x, list) === slug) || list.find(x => x.id === slug) || null;
+  }
+
+  function setRoute(path, { title, replace } = {}) {
+    document.title = title ? `${title} · ${SITE_TITLE}` : SITE_TITLE;
+    if (location.pathname === path) return;
+    try { history[replace ? 'replaceState' : 'pushState']({ path }, '', path); } catch {}
+  }
+
+  let pendingPrintSlug = null;
+
+  async function applyRoute() {
+    const parts = location.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    const section = SECTION_IDS.includes(parts[0]) ? parts[0] : 'home';
+    const item = parts[1] || null;
+
+    if (section !== 'collection' || !item) closeLightbox({ fromRoute: true });
+    if (section === 'prints') pendingPrintSlug = item;
+    const alreadyShowing = document.getElementById(section)?.classList.contains('active');
+    if (!(alreadyShowing && section === 'collection' && item)) showSection(section, { fromRoute: true });
+    document.title = SECTION_TITLES[section] ? `${SECTION_TITLES[section]} · ${SITE_TITLE}` : SITE_TITLE;
+
+    if (section === 'collection' && item) {
+      const loaded = (await getPaintings()).filter(p => p.status !== 'Private');
+      const all = loaded.length > 0 ? loaded : fallback; // same source the gallery uses
+      const p = findBySlug(all, item, paintingSlug);
+      if (p) openPainting(p.id, { fromRoute: true, list: all });
+    }
+  }
+  window.addEventListener('popstate', applyRoute);
+
+  function goToPrint(title) {
+    pendingPrintSlug = slugify(title);
+    showSection('prints', { fromRoute: true });
+    setRoute(`/prints/${pendingPrintSlug}`, { title });
+  }
+
+  // Share the current page: native share sheet on phones, copy link elsewhere.
+  async function shareCurrent(btn) {
+    const url = location.href;
+    try {
+      if (navigator.share) { await navigator.share({ title: document.title, url }); return; }
+      await navigator.clipboard.writeText(url);
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // user closed the share sheet
+      window.prompt('Copy this link:', url);
+      return;
+    }
+    if (btn) {
+      const old = btn.innerHTML;
+      btn.innerHTML = 'Link copied ✓';
+      setTimeout(() => { btn.innerHTML = old; }, 1800);
+    }
+  }
+
   function closeMobileNav() {
     document.getElementById('nav-links').classList.remove('open');
     document.getElementById('nav-burger').classList.remove('open');
@@ -3336,7 +3457,7 @@
     document.body.style.overflow = '';
   }
 
-  showSection('home');
+  applyRoute();
   renderHome();
   renderAvailableStrip();
   renderHomePrints();

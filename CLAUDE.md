@@ -117,6 +117,16 @@ The admin Dashboard screen (`showScreen('dashboard')`) tracks studio finances an
 - **Required Vercel env vars**: `RESEND_API_KEY` (from resend.com — also requires verifying myriamkay.art's DNS with Resend before it can send from your own domain), `RESEND_FROM_EMAIL` (e.g. `Myriam Kayali Art <orders@myriamkay.art>`, defaults to that if unset — will fail to actually deliver until the domain is verified), `NOTIFY_EMAIL` (where new-order alerts go — if unset, that email is simply skipped, the client confirmation still sends).
 - **Admin Orders tab** (`showScreen('orders')`, `renderOrders()`): one row per order — client info, shipping address, print/size, price × qty, date, an editable status dropdown, and a payment-link input + "Send payment link to client" button.
 
+## Shareable links (URL routing) — index.html + vercel.json
+
+Every page and item has its own URL: `/about`, `/collection`, `/prints`, `/commission`, `/contact`, `/collection/<painting-slug>`, `/prints/<print-slug>`. `vercel.json` rewrites every path except `/api/`, `/images/` and `admin*` to `index.html`; `applyRoute()` reads `location.pathname` on load and on back/forward (`popstate`) and opens the right section, painting lightbox or selected print.
+
+- `showSection(id)` pushes the section URL unless called with `{ fromRoute: true }` (used by the router itself). `openPainting()` pushes `/collection/<slug>`, `closeLightbox()` replaces it with `/collection`, `printsSelectPrint()` replaces with `/prints/<slug>`.
+- Slugs come from titles (`slugify()`). Paintings with duplicate titles get `-<id>` appended (`paintingSlug()`, computed over the full unfiltered list so links don't change with the filter tab). A raw id also resolves.
+- Because pages can load at nested paths, **asset paths in index.html must be absolute** (`/images/...`, `/api/...`), never relative.
+- "Share this painting" / "Share this print" buttons call `shareCurrent()` (native share sheet on phones, copy link on desktop).
+- Link previews (WhatsApp/Instagram cards) are still the site-wide ones from index.html's head; per-artwork preview images would need server-rendered meta tags.
+
 ## Blob storage access — lib/blob.js
 
 Every `/api` function reads and writes its JSON through `lib/blob.js` (`readJson`, `writeJson`, `setPublicCache`), never through `list()`. `list()` is a Vercel Blob **Advanced Operation** and the free tier allows only 2,000/month; calling it on every page view got the store paused for 30 days in Sept 2026. Rules:
