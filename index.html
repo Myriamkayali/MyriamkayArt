@@ -1223,11 +1223,10 @@
     z-index: 300;
     width: 148px;
     height: 148px;
-    cursor: grab;
-    touch-action: none;
+    cursor: pointer;
     user-select: none;
+    transition: left 0.65s cubic-bezier(.22,1,.36,1), top 0.65s cubic-bezier(.22,1,.36,1);
   }
-  .vinyl-player.dragging { cursor: grabbing; transition: none !important; }
   .vinyl-disc {
     position: absolute;
     inset: 0;
@@ -1691,7 +1690,7 @@
     <svg class="vinyl-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
   </div>
   <div class="vinyl-arm"></div>
-  <p class="vinyl-tooltip">Fairuz &middot; click to listen &middot; drag to move</p>
+  <p class="vinyl-tooltip">Fairuz &middot; click to listen</p>
 </div>
 <div style="position:fixed;bottom:0;left:0;width:2px;height:2px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1;">
   <div id="yt-audio-mount"></div>
@@ -2866,56 +2865,30 @@
     else ytPlayer.playVideo();
   }
 
-  // ── Vinyl drag-to-move ──
-  (function initVinylDrag() {
+  // ── Vinyl: playfully dodges to a new spot on hover (desktop only) ──
+  (function initVinylDodge() {
     const vinyl = document.getElementById('vinyl-player');
     if (!vinyl) return;
-    let dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+    const canHover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-    function pointerPos(e) {
-      return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
-    }
-
-    function dragStart(e) {
-      const p = pointerPos(e);
+    function moveToRandomSpot() {
       const rect = vinyl.getBoundingClientRect();
-      vinyl.style.left = rect.left + 'px';
-      vinyl.style.top = rect.top + 'px';
-      vinyl.style.right = 'auto';
-      dragging = true; moved = false;
-      startX = p.x; startY = p.y; startLeft = rect.left; startTop = rect.top;
-      vinyl.classList.add('dragging');
-    }
-
-    function dragMove(e) {
-      if (!dragging) return;
-      const p = pointerPos(e);
-      const dx = p.x - startX, dy = p.y - startY;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
-      if (!moved) return;
-      e.preventDefault();
+      if (!vinyl.style.left) { vinyl.style.left = rect.left + 'px'; vinyl.style.top = rect.top + 'px'; vinyl.style.right = 'auto'; }
       const w = vinyl.offsetWidth, h = vinyl.offsetHeight;
-      let left = startLeft + dx, top = startTop + dy;
-      left = Math.max(4, Math.min(window.innerWidth - w - 4, left));
-      top = Math.max(4, Math.min(window.innerHeight - h - 4, top));
+      const margin = 24, navH = 90;
+      const maxLeft = Math.max(margin, window.innerWidth - w - margin);
+      const maxTop = Math.max(navH, window.innerHeight - h - margin);
+      const left = margin + Math.random() * (maxLeft - margin);
+      const top = navH + Math.random() * (maxTop - navH);
       vinyl.style.left = left + 'px';
       vinyl.style.top = top + 'px';
     }
 
-    function dragEnd() {
-      if (!dragging) return;
-      dragging = false;
-      vinyl.classList.remove('dragging');
-      if (!moved) toggleVinylMusic();
+    if (canHover) {
+      vinyl.addEventListener('mouseenter', moveToRandomSpot);
     }
 
-    vinyl.addEventListener('mousedown', dragStart);
-    window.addEventListener('mousemove', dragMove);
-    window.addEventListener('mouseup', dragEnd);
-    vinyl.addEventListener('touchstart', dragStart, { passive: true });
-    window.addEventListener('touchmove', dragMove, { passive: false });
-    window.addEventListener('touchend', dragEnd);
-
+    vinyl.addEventListener('click', toggleVinylMusic);
     vinyl.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleVinylMusic(); }
     });
