@@ -330,10 +330,34 @@
   }
   .polaroid--small { padding: 10px 10px 34px; }
   .polaroid--large { width: min(100%, 420px); }
-  /* A third polaroid tucks under the left side */
-  .polaroid--third { align-self: flex-start; margin-top: -90px; margin-left: -12px; margin-right: 0; }
   /* Artwork is shown whole, never cropped */
   .polaroid--artwork img { aspect-ratio: auto; }
+
+  /* Story chapter: small snapshots placed next to each part of the text */
+  .about-chapter.about-chapter--story { display: block; }
+  .story-row {
+    display: grid;
+    grid-template-columns: 6fr 5fr;
+    gap: 70px;
+    align-items: center;
+    margin-bottom: 64px;
+  }
+  .story-row:last-child { margin-bottom: 0; }
+  .story-row .about-text { padding-top: 0; }
+  .story-snaps {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .polaroid.polaroid--mini {
+    width: 180px;
+    padding: 9px 9px 30px;
+  }
+  .polaroid--mini img { aspect-ratio: auto; }
+  .story-snaps .polaroid--mini + .polaroid--mini { margin-left: -18px; margin-top: 28px; }
+  .story-snaps .polaroid--mini:nth-child(3) { margin-top: 8px; }
+  .polaroid--mini::before { width: 56px; height: 18px; top: -9px; }
 
   .about-heading {
     font-family: 'Fraunces', serif;
@@ -1435,7 +1459,10 @@
     .about-polaroids .polaroid { width: min(78%, 300px); padding: 10px 10px 34px; }
     .about-polaroids .polaroid--small { width: min(46%, 180px); align-self: flex-end; margin: 0 0 -18px -18%; }
     .about-polaroids .polaroid--large { width: min(84%, 340px); }
-    .about-polaroids .polaroid--third { width: min(40%, 160px); margin: 0 0 -18px -14%; }
+    .story-row { grid-template-columns: 1fr; gap: 28px; margin-bottom: 48px; }
+    .story-snaps { flex-wrap: nowrap; }
+    .polaroid.polaroid--mini { width: auto; flex: 1 1 0; max-width: 170px; min-width: 0; padding: 7px 7px 24px; }
+    .story-snaps .polaroid--mini + .polaroid--mini { margin-left: -10px; margin-top: 18px; }
     #collection { padding: calc(var(--nav-h) + 40px) 16px 60px; }
     .gallery-grid { grid-template-columns: repeat(2,1fr); }
     #prints { padding: 100px 24px 60px; }
@@ -1923,29 +1950,44 @@
     </div>
   </article>
 
-  <article class="about-chapter">
-    <div class="about-polaroids">
-      <figure class="polaroid tilt-r">
-        <img src="images/about/03-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy">
-      </figure>
-      <figure class="polaroid polaroid--small tilt-l">
-        <img src="images/about/03b-studio.jpg" alt="Myriam painting at an easel in her first studio" loading="lazy">
-      </figure>
-      <figure class="polaroid polaroid--small polaroid--third tilt-r">
-        <img src="images/about/03c-elevator.jpg" alt="Elevator mirror selfie with a brown leather backpack" loading="lazy">
-      </figure>
+  <article class="about-chapter about-chapter--story">
+    <h3 class="about-heading">It didn't start as a <em>career.</em></h3>
+
+    <div class="story-row">
+      <div class="about-text">
+        <p>I've always loved making things.</p>
+        <p>As a kid, I'd spend hours drawing, building little projects, or noticing tiny details that most people walked right past.</p>
+      </div>
+      <div class="story-snaps">
+        <figure class="polaroid polaroid--mini tilt-l"><img src="images/about/03a-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03b-teen.jpg" alt="Teenage Myriam taking an elevator mirror selfie with a brown backpack" loading="lazy"></figure>
+      </div>
     </div>
-    <div class="about-text">
-      <h3 class="about-heading">It didn't start as a <em>career.</em></h3>
-      <p>I've always loved making things.</p>
-      <p>As a kid, I'd spend hours drawing, building little projects, or noticing tiny details that most people walked right past.</p>
-      <p>Then life happened.</p>
-      <p class="about-lines">The Beirut explosion.<br>Covid.<br>An economic crisis.<br>Graduating into uncertainty.</p>
-      <p>Like so many Lebanese, I was trying to understand a world that suddenly felt unfamiliar.</p>
-      <p>Painting slowly became my way back.</p>
-      <p class="about-lines">I bought bigger canvases.<br>Turned on music.<br>Lost track of time.</p>
-      <p>For the first time in a long while, everything became quiet. I wasn't painting to create beautiful artwork. I was simply trying to make sense of everything around me.</p>
-      <p class="about-pull">Painting became the one place where everything slowed down.</p>
+
+    <div class="story-row">
+      <div class="about-text">
+        <p>Then life happened.</p>
+        <p class="about-lines">The Beirut explosion.<br>Covid.<br>An economic crisis.<br>Graduating into uncertainty.</p>
+        <p>Like so many Lebanese, I was trying to understand a world that suddenly felt unfamiliar.</p>
+      </div>
+      <div class="story-snaps">
+        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03c-flag.jpg" alt="Myriam in a face mask holding a Lebanese flag in front of a Red Cross ambulance" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-l"><img src="images/about/03d-protest.jpg" alt="Night crowd with Lebanese flags in downtown Beirut" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03e-sketches.jpg" alt="Pencil sketches of buildings and cityscapes spread on a bed" loading="lazy"></figure>
+      </div>
+    </div>
+
+    <div class="story-row">
+      <div class="about-text">
+        <p>Painting slowly became my way back.</p>
+        <p class="about-lines">I bought bigger canvases.<br>Turned on music.<br>Lost track of time.</p>
+        <p>For the first time in a long while, everything became quiet. I wasn't painting to create beautiful artwork. I was simply trying to make sense of everything around me.</p>
+        <p class="about-pull">Painting became the one place where everything slowed down.</p>
+      </div>
+      <div class="story-snaps">
+        <figure class="polaroid polaroid--mini tilt-l"><img src="images/about/03f-canvas.jpg" alt="Elevator mirror selfie holding a large blank canvas" loading="lazy"></figure>
+        <figure class="polaroid polaroid--mini tilt-r"><img src="images/about/03g-studio.jpg" alt="Myriam painting at an easel in her studio" loading="lazy"></figure>
+      </div>
     </div>
   </article>
 
