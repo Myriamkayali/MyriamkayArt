@@ -289,7 +289,7 @@
     margin: 0;
     width: min(100%, 360px);
     background: #fff;
-    padding: 14px 14px 0;
+    padding: 14px 14px 48px;
     box-shadow: 0 2px 4px rgba(30,15,7,0.06), 0 18px 38px rgba(30,15,7,0.16);
     transition: transform 0.45s cubic-bezier(.22,1,.36,1), box-shadow 0.45s ease;
     position: relative;
@@ -300,14 +300,6 @@
     aspect-ratio: 4 / 5;
     object-fit: cover;
     background: var(--cream-dark);
-  }
-  .polaroid figcaption {
-    font-family: 'Caveat', cursive;
-    font-size: 24px;
-    color: var(--umber);
-    text-align: center;
-    padding: 12px 6px 18px;
-    line-height: 1.1;
   }
   /* A strip of tape on top */
   .polaroid::before {
@@ -336,8 +328,12 @@
     margin-right: -12px;
     z-index: 1;
   }
-  .polaroid--small figcaption { font-size: 20px; padding: 8px 4px 12px; }
+  .polaroid--small { padding: 10px 10px 34px; }
   .polaroid--large { width: min(100%, 420px); }
+  /* A third polaroid tucks under the left side */
+  .polaroid--third { align-self: flex-start; margin-top: -90px; margin-left: -12px; margin-right: 0; }
+  /* Artwork is shown whole, never cropped */
+  .polaroid--artwork img { aspect-ratio: auto; }
 
   .about-heading {
     font-family: 'Fraunces', serif;
@@ -1436,10 +1432,10 @@
     .about-chapter, .about-chapter:nth-child(even) { grid-template-columns: 1fr; gap: 40px; margin-bottom: 96px; }
     .about-chapter:nth-child(even) .about-polaroids { order: 0; }
     .about-polaroids { position: relative; top: auto; flex-direction: row; justify-content: center; padding: 0 8px; }
-    .about-polaroids .polaroid { width: min(78%, 300px); padding: 10px 10px 0; }
+    .about-polaroids .polaroid { width: min(78%, 300px); padding: 10px 10px 34px; }
     .about-polaroids .polaroid--small { width: min(46%, 180px); align-self: flex-end; margin: 0 0 -18px -18%; }
     .about-polaroids .polaroid--large { width: min(84%, 340px); }
-    .polaroid figcaption { font-size: 20px; padding: 8px 4px 12px; }
+    .about-polaroids .polaroid--third { width: min(40%, 160px); margin: 0 0 -18px -14%; }
     #collection { padding: calc(var(--nav-h) + 40px) 16px 60px; }
     .gallery-grid { grid-template-columns: repeat(2,1fr); }
     #prints { padding: 100px 24px 60px; }
@@ -1904,18 +1900,16 @@
      Story chapters: text on one side, polaroids on the other (sides alternate).
      First polaroid in a group is the large one; a second one overlaps it, smaller.
      To swap a photo, replace the file in images/about/ keeping the same name
-     (any aspect ratio works). Captions are the <figcaption> under each image. -->
+     (any aspect ratio works). -->
 <section id="about">
 
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid tilt-l">
         <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel, palette in hand" loading="eager">
-        <figcaption>paint everywhere, as usual</figcaption>
       </figure>
       <figure class="polaroid polaroid--small tilt-r">
         <img src="images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="eager">
-        <figcaption>by day</figcaption>
       </figure>
     </div>
     <div class="about-text">
@@ -1933,7 +1927,12 @@
     <div class="about-polaroids">
       <figure class="polaroid tilt-r">
         <img src="images/about/03-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy">
-        <figcaption>where it all started</figcaption>
+      </figure>
+      <figure class="polaroid polaroid--small tilt-l">
+        <img src="images/about/03b-studio.jpg" alt="Myriam painting at an easel in her first studio" loading="lazy">
+      </figure>
+      <figure class="polaroid polaroid--small polaroid--third tilt-r">
+        <img src="images/about/03c-elevator.jpg" alt="Elevator mirror selfie with a brown leather backpack" loading="lazy">
       </figure>
     </div>
     <div class="about-text">
@@ -1954,11 +1953,9 @@
     <div class="about-polaroids">
       <figure class="polaroid tilt-l">
         <img src="images/about/07-beirut.jpg" alt="Old Beirut house with arched windows and a tree budding with new leaves" loading="lazy">
-        <figcaption>old Beirut</figcaption>
       </figure>
       <figure class="polaroid polaroid--small tilt-r">
         <img src="images/about/04-roots.jpg" alt="Traditional Lebanese stone house with a red tiled roof against the mountains" loading="lazy">
-        <figcaption>home</figcaption>
       </figure>
     </div>
     <div class="about-text">
@@ -1978,11 +1975,9 @@
     <div class="about-polaroids">
       <figure class="polaroid tilt-r">
         <img src="images/about/06-home.jpg" alt="Friends around a coffee table with a Monopoly game, maté, tea and snacks" loading="lazy">
-        <figcaption>always around the table</figcaption>
       </figure>
       <figure class="polaroid polaroid--small tilt-l">
         <img src="images/about/05-rituals.jpg" alt="Street seller in a red fez pouring a drink from a golden jug for a child" loading="lazy">
-        <figcaption>the little rituals</figcaption>
       </figure>
     </div>
     <div class="about-text">
@@ -1998,9 +1993,8 @@
 
   <article class="about-chapter">
     <div class="about-polaroids">
-      <figure class="polaroid polaroid--large tilt-l">
-        <img src="images/about/08-slow.jpg" alt="Sunlit corner with books under arched windows looking onto a yellow Beirut building" loading="lazy">
-        <figcaption>a feeling of home</figcaption>
+      <figure class="polaroid polaroid--large polaroid--artwork tilt-l">
+        <img src="images/about/08-painting.jpg" alt="Myriam's acrylic painting of friends playing a Lebanese themed Monopoly game around a coffee table" loading="lazy">
       </figure>
     </div>
     <div class="about-text">
@@ -2020,7 +2014,6 @@
     <div class="about-polaroids">
       <figure class="polaroid polaroid--large tilt-r">
         <img src="images/about/09-next.jpg" alt="The Art Times newspaper featuring Myriam Kayali's art, next to a cappuccino and maamoul" loading="lazy">
-        <figcaption>coffee, maamoul &amp; a little news</figcaption>
       </figure>
     </div>
     <div class="about-text">
