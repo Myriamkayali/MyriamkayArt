@@ -330,6 +330,8 @@
   }
   .polaroid--small { padding: 10px 10px 34px; }
   .polaroid--large { width: min(100%, 420px); }
+  /* A third, smaller polaroid tucks under the left side */
+  .polaroid--small.polaroid--tuck { align-self: flex-start; margin-top: -150px; margin-left: -16px; margin-right: 0; z-index: 2; }
   /* Artwork is shown whole, never cropped */
   .polaroid--artwork img { aspect-ratio: auto; }
 
@@ -1458,6 +1460,7 @@
     .about-polaroids { position: relative; top: auto; flex-direction: row; justify-content: center; padding: 0 8px; }
     .about-polaroids .polaroid { width: min(78%, 300px); padding: 10px 10px 34px; }
     .about-polaroids .polaroid--small { width: min(46%, 180px); align-self: flex-end; margin: 0 0 -18px -18%; }
+    .about-polaroids .polaroid--small.polaroid--tuck { width: min(38%, 150px); align-self: flex-start; margin: 30px 0 0 -12%; }
     .about-polaroids .polaroid--large { width: min(84%, 340px); }
     .story-row { grid-template-columns: 1fr; gap: 28px; margin-bottom: 48px; }
     .story-snaps { flex-wrap: nowrap; }
@@ -1998,6 +2001,9 @@
       </figure>
       <figure class="polaroid polaroid--small tilt-r">
         <img src="images/about/04-roots.jpg" alt="Traditional Lebanese stone house with a red tiled roof against the mountains" loading="lazy">
+      </figure>
+      <figure class="polaroid polaroid--small polaroid--tuck tilt-l2">
+        <img src="images/about/04b-table.jpg" alt="Lebanese breakfast spread with hummus, foul, labneh, eggs, olives and fresh vegetables" loading="lazy">
       </figure>
     </div>
     <div class="about-text">
