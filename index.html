@@ -327,12 +327,17 @@
     box-shadow: 0 4px 8px rgba(30,15,7,0.08), 0 26px 50px rgba(30,15,7,0.2);
     z-index: 2;
   }
-  /* Stacked polaroids overlap a little, like they were tossed on a table */
-  .about-polaroids .polaroid + .polaroid { margin-top: -48px; }
-  .about-polaroids .polaroid:nth-child(2) { align-self: flex-end; width: min(88%, 320px); }
-  .about-polaroids .polaroid:nth-child(3) { align-self: flex-start; width: min(88%, 320px); }
-  .about-polaroids--three .polaroid { width: min(80%, 300px); }
-  .about-polaroids--three .polaroid:first-child { align-self: flex-start; }
+  /* One large polaroid, with an optional smaller one overlapping its corner */
+  .about-polaroids .polaroid:first-child:not(:last-child) { align-self: flex-start; }
+  .polaroid--small {
+    width: min(58%, 230px);
+    align-self: flex-end;
+    margin-top: -120px;
+    margin-right: -12px;
+    z-index: 1;
+  }
+  .polaroid--small figcaption { font-size: 20px; padding: 8px 4px 12px; }
+  .polaroid--large { width: min(100%, 420px); }
 
   .about-heading {
     font-family: 'Fraunces', serif;
@@ -350,6 +355,14 @@
     line-height: 1.45;
     color: var(--terracotta);
     margin: 28px 0;
+  }
+  .about-text p.about-lines {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    line-height: 1.7;
+    color: var(--umber);
+    padding-left: 18px;
+    border-left: 1px solid var(--terracotta);
   }
   .about-ctas {
     display: flex;
@@ -1424,9 +1437,8 @@
     .about-chapter:nth-child(even) .about-polaroids { order: 0; }
     .about-polaroids { position: relative; top: auto; flex-direction: row; justify-content: center; padding: 0 8px; }
     .about-polaroids .polaroid { width: min(78%, 300px); padding: 10px 10px 0; }
-    .about-polaroids .polaroid + .polaroid { margin-top: 36px; margin-left: -22%; }
-    .about-polaroids--three .polaroid { width: min(56%, 220px); }
-    .about-polaroids--three .polaroid + .polaroid { margin-left: -16%; }
+    .about-polaroids .polaroid--small { width: min(46%, 180px); align-self: flex-end; margin: 0 0 -18px -18%; }
+    .about-polaroids .polaroid--large { width: min(84%, 340px); }
     .polaroid figcaption { font-size: 20px; padding: 8px 4px 12px; }
     #collection { padding: calc(var(--nav-h) + 40px) 16px 60px; }
     .gallery-grid { grid-template-columns: repeat(2,1fr); }
@@ -1890,6 +1902,7 @@
 
 <!-- ══ ABOUT ══
      Story chapters: text on one side, polaroids on the other (sides alternate).
+     First polaroid in a group is the large one; a second one overlaps it, smaller.
      To swap a photo, replace the file in images/about/ keeping the same name
      (any aspect ratio works). Captions are the <figcaption> under each image. -->
 <section id="about">
@@ -1897,10 +1910,10 @@
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid tilt-l">
-        <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel in a garden, palette in hand" loading="eager">
+        <img src="images/about/01-easel.jpg" alt="Myriam painting at an easel, palette in hand" loading="eager">
         <figcaption>paint everywhere, as usual</figcaption>
       </figure>
-      <figure class="polaroid tilt-r">
+      <figure class="polaroid polaroid--small tilt-r">
         <img src="images/about/02-everyday.jpg" alt="Mirror selfie with headphones, a laptop and a work lanyard" loading="eager">
         <figcaption>by day</figcaption>
       </figure>
@@ -1908,8 +1921,10 @@
     <div class="about-text">
       <p class="section-eyebrow">About me</p>
       <h2 class="section-title">Hi, I'm <em>Myriam.</em></h2>
-      <p>I'm a Lebanese artist based in Beirut, but painting isn't my full time job.</p>
-      <p>By day, I work as a technical consultant in a fintech company. By night (and every free moment I can find), you'll usually find me in my studio with a large canvas, acrylic paint everywhere, and music playing in the background.</p>
+      <p>Most mornings you'll find me behind a laptop, headphones on, working as a technical consultant in fintech.</p>
+      <p>By evening, everything changes.</p>
+      <p>The laptop closes, music starts playing, paint ends up on my hands (and usually everywhere else), and my studio becomes my favourite place to disappear for a few hours.</p>
+      <p>Painting was never supposed to become my career. It simply became the place where I felt most like myself.</p>
       <p class="about-pull">Art became the balance I didn't know I needed.</p>
     </div>
   </article>
@@ -1918,94 +1933,104 @@
     <div class="about-polaroids">
       <figure class="polaroid tilt-r">
         <img src="images/about/03-childhood.jpg" alt="Myriam as a little girl drawing in Microsoft Paint on an old computer" loading="lazy">
-        <figcaption>my first studio</figcaption>
+        <figcaption>where it all started</figcaption>
       </figure>
     </div>
     <div class="about-text">
       <h3 class="about-heading">It didn't start as a <em>career.</em></h3>
-      <p>Growing up, I was always creative. I loved drawing, making things with my hands, and paying attention to the little details that most people walk past.</p>
-      <p>But painting became something much deeper after one of the hardest periods in Lebanon's history.</p>
-      <p>The Beirut explosion, the economic crisis, Covid, and graduating into so much uncertainty all happened within a short period of time. Like many Lebanese, I was trying to make sense of a world that suddenly felt unfamiliar.</p>
+      <p>I've always loved making things.</p>
+      <p>As a kid, I'd spend hours drawing, building little projects, or noticing tiny details that most people walked right past.</p>
+      <p>Then life happened.</p>
+      <p class="about-lines">The Beirut explosion.<br>Covid.<br>An economic crisis.<br>Graduating into uncertainty.</p>
+      <p>Like so many Lebanese, I was trying to understand a world that suddenly felt unfamiliar.</p>
+      <p>Painting slowly became my way back.</p>
+      <p class="about-lines">I bought bigger canvases.<br>Turned on music.<br>Lost track of time.</p>
+      <p>For the first time in a long while, everything became quiet. I wasn't painting to create beautiful artwork. I was simply trying to make sense of everything around me.</p>
       <p class="about-pull">Painting became the one place where everything slowed down.</p>
-      <p>I started buying bigger canvases, putting on music, and spending hours completely lost in the process. It wasn't about creating beautiful paintings anymore. It became a way to process emotions, feel grounded, and find a sense of calm.</p>
     </div>
   </article>
 
   <article class="about-chapter">
-    <div class="about-polaroids about-polaroids--three">
+    <div class="about-polaroids">
       <figure class="polaroid tilt-l">
+        <img src="images/about/07-beirut.jpg" alt="Old Beirut house with arched windows and a tree budding with new leaves" loading="lazy">
+        <figcaption>old Beirut</figcaption>
+      </figure>
+      <figure class="polaroid polaroid--small tilt-r">
         <img src="images/about/04-roots.jpg" alt="Traditional Lebanese stone house with a red tiled roof against the mountains" loading="lazy">
         <figcaption>home</figcaption>
-      </figure>
-      <figure class="polaroid tilt-r">
-        <img src="images/about/05-rituals.jpg" alt="Street seller in a red fez pouring a drink from a golden jug for a child" loading="lazy">
-        <figcaption>the little rituals</figcaption>
-      </figure>
-      <figure class="polaroid tilt-l2">
-        <img src="images/about/06-home.jpg" alt="Friends around a coffee table with a Monopoly game, maté, tea and snacks" loading="lazy">
-        <figcaption>always around the table</figcaption>
       </figure>
     </div>
     <div class="about-text">
       <h3 class="about-heading">Why <em>Lebanon?</em></h3>
-      <p>People often ask why so much of my work is inspired by Lebanon.</p>
+      <p>People often ask why Lebanon appears in so much of my work.</p>
       <p>The answer is simple.</p>
       <p class="about-pull">It's home.</p>
-      <p>It's the smell of rain on Beirut's streets, family gatherings that somehow always end around the table, old cafés, childhood snacks, backgammon games, balconies, conversations over coffee, and the ordinary moments we rarely think to preserve.</p>
-      <p>Those are the memories that shaped me.</p>
-      <p>As cities modernize and traditions slowly disappear, I find myself wanting to hold onto them before they're forgotten.</p>
-      <p>Painting has become my way of doing that.</p>
+      <p>It's the smell of rain on Beirut's streets. Family gathered around a table. Backgammon games that somehow last for hours.</p>
+      <p class="about-lines">Old cafés.<br>Balconies.<br>The snacks we grew up eating.</p>
+      <p>The little things that quietly become part of who we are.</p>
+      <p>As cities change and traditions slowly disappear, I find myself wanting to hold onto these moments before they become memories.</p>
+      <p>Painting is how I do that.</p>
     </div>
   </article>
 
   <article class="about-chapter">
     <div class="about-polaroids">
       <figure class="polaroid tilt-r">
-        <img src="images/about/07-beirut.jpg" alt="Old Beirut house with arched windows and a tree budding with new leaves" loading="lazy">
-        <figcaption>a walk through Beirut</figcaption>
+        <img src="images/about/06-home.jpg" alt="Friends around a coffee table with a Monopoly game, maté, tea and snacks" loading="lazy">
+        <figcaption>always around the table</figcaption>
+      </figure>
+      <figure class="polaroid polaroid--small tilt-l">
+        <img src="images/about/05-rituals.jpg" alt="Street seller in a red fez pouring a drink from a golden jug for a child" loading="lazy">
+        <figcaption>the little rituals</figcaption>
       </figure>
     </div>
     <div class="about-text">
       <h3 class="about-heading">Where inspiration <em>comes from</em></h3>
       <p>Some paintings begin with a memory.</p>
-      <p>Others start with a walk through Beirut, a conversation, an old photograph, or something so ordinary that most people wouldn't notice it.</p>
-      <p>Lately, I've also been exploring what happens when nostalgia meets popular culture, reimagining iconic movie scenes with Lebanese traditions, food, and everyday objects.</p>
-      <p>It's my way of asking a simple question:</p>
-      <p class="about-pull">What if these stories had happened in Lebanon?</p>
+      <p>Others begin with a conversation. An old family photograph. A walk through Beirut. Or something so ordinary that most people wouldn't notice it twice.</p>
+      <p>Lately I've been asking myself a different question.</p>
+      <p class="about-pull">What if some of our favourite films had happened in Lebanon?</p>
+      <p>That's where my latest collection began. Taking familiar movie scenes and quietly replacing them with Lebanese traditions, food, objects, and memories.</p>
+      <p>Because nostalgia isn't only found in the past. Sometimes it's created by seeing something familiar in a completely new way.</p>
     </div>
   </article>
 
   <article class="about-chapter">
     <div class="about-polaroids">
-      <figure class="polaroid tilt-l">
+      <figure class="polaroid polaroid--large tilt-l">
         <img src="images/about/08-slow.jpg" alt="Sunlit corner with books under arched windows looking onto a yellow Beirut building" loading="lazy">
         <figcaption>a feeling of home</figcaption>
       </figure>
     </div>
     <div class="about-text">
       <h3 class="about-heading">About my <em>paintings</em></h3>
-      <p>I work primarily with acrylic on canvas.</p>
-      <p>I love building texture by hand, layering paint, and creating pieces that reward a second look. Many of my paintings include small details that Lebanese viewers immediately recognize: objects from childhood, familiar foods, or subtle cultural references that quietly tell a bigger story.</p>
-      <p>Whether I'm painting an old Beirut building or a modern street, what I'm really painting is a feeling.</p>
-      <p class="about-pull">A feeling of comfort.<br>A feeling of home.</p>
+      <p>I work almost entirely with acrylic.</p>
+      <p>I love building texture by hand, layering paint until every surface feels like it has lived a little.</p>
+      <p>Many of my paintings include small details that Lebanese viewers recognize instantly.</p>
+      <p class="about-lines">A snack.<br>A building.<br>A game.<br>A coffee cup.</p>
+      <p>Tiny references that quietly tell a much bigger story.</p>
+      <p>Whether I'm painting an old Beirut building or imagining a Hollywood scene in Lebanon, I'm always chasing the same feeling.</p>
+      <p class="about-pull">Not accuracy. Belonging.</p>
+      <p>A feeling of comfort. A feeling of home.</p>
     </div>
   </article>
 
   <article class="about-chapter">
     <div class="about-polaroids">
-      <figure class="polaroid tilt-r">
+      <figure class="polaroid polaroid--large tilt-r">
         <img src="images/about/09-next.jpg" alt="The Art Times newspaper featuring Myriam Kayali's art, next to a cappuccino and maamoul" loading="lazy">
         <figcaption>coffee, maamoul &amp; a little news</figcaption>
       </figure>
     </div>
     <div class="about-text">
       <h3 class="about-heading">Why I <em>paint</em></h3>
-      <p>I don't paint to recreate the past exactly as it was.</p>
-      <p>I paint to preserve the emotions attached to it.</p>
-      <p>Every painting becomes a small archive of memories, my own, but hopefully yours too.</p>
-      <p>If someone stands in front of one of my paintings and suddenly remembers a place, a person, or a moment they hadn't thought about in years, then I've done what I set out to do.</p>
+      <p>I don't paint to recreate the past exactly as it was. Memories are never that simple.</p>
+      <p>I paint to preserve the feeling they leave behind.</p>
+      <p>Every painting becomes a small archive of moments. Some are mine. Some might become yours.</p>
+      <p>If someone stands in front of one of my paintings years from now and suddenly remembers a place, a person, a meal, or a version of home they hadn't thought about in years… then I've painted exactly what I hoped to.</p>
       <div class="about-quote">
-        <blockquote>“I'm not trying to paint Lebanon as it was. I'm trying to paint how it felt.”</blockquote>
+        <blockquote>“I'm not trying to paint Lebanon as it was.<br>I'm trying to paint how it felt.”</blockquote>
       </div>
       <div class="about-ctas">
         <a class="btn-primary" onclick="showSection('collection')">See the Collection</a>
