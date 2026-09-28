@@ -1,7 +1,6 @@
 const { readJson } = require('../lib/blob');
+const { verifyPin, pinFromRequest } = require('../lib/auth');
 
-const CONFIG_PATH = 'mk-data/config.json';
-const DEFAULT_PIN = '1234';
 
 function isoDate(d) { return d.toISOString().slice(0, 10); }
 
@@ -38,11 +37,9 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const pin = req.query?.pin;
-    const config = await readJson(CONFIG_PATH, { fresh: true });
-    const validPin = config?.pin || DEFAULT_PIN;
-    if (!pin) return res.status(401).json({ error: 'PIN missing' });
-    if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+    const pin = pinFromRequest(req); // header, never the URL
+    const auth = await verifyPin(req, pin);
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

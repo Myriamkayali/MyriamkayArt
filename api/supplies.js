@@ -1,8 +1,7 @@
 const { readJson, writeJson } = require('../lib/blob');
+const { verifyPin, pinFromRequest } = require('../lib/auth');
 
 const SUPPLIES_PATH = 'mk-data/supplies.json';
-const CONFIG_PATH   = 'mk-data/config.json';
-const DEFAULT_PIN   = '1234';
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -24,17 +23,16 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       res.setHeader('Cache-Control', 'no-store');
+      const auth = await verifyPin(req, pinFromRequest(req)); // business data: admin only
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
       const supplies = await readJson(SUPPLIES_PATH, { fresh: true });
       return res.status(200).json(supplies || []);
     }
 
     if (req.method === 'POST') {
       const { supplies, pin } = await parseBody(req);
-      const config   = await readJson(CONFIG_PATH, { fresh: true });
-      const validPin = config?.pin || DEFAULT_PIN;
-
-      if (!pin) return res.status(401).json({ error: 'PIN missing' });
-      if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+      const auth = await verifyPin(req, pinFromRequest(req, { pin }));
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
       if (!Array.isArray(supplies)) return res.status(400).json({ error: 'Invalid data — expected array' });
 
       await writeJson(SUPPLIES_PATH, supplies);

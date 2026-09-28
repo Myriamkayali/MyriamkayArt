@@ -135,6 +135,14 @@ Every page and item has its own URL: `/about`, `/collection`, `/prints`, `/commi
 - "Share this painting" / "Share this print" buttons call `shareCurrent()` (native share sheet on phones, copy link on desktop).
 - Link previews (WhatsApp/Instagram cards) are still the site-wide ones from index.html's head; per-artwork preview images would need server-rendered meta tags.
 
+## Admin auth — lib/auth.js
+
+Every PIN check goes through `verifyPin(req, pin)` in `lib/auth.js` (never compare against `config.pin` inline). After 8 wrong PINs from one IP in 15 minutes that IP is locked out for 15 minutes; the lock is saved in private `mk-data/auth.json` (written only when a lock starts, so failed guesses can't run up storage operations). Admin requests send the PIN in an `x-admin-pin` header (`pinFromRequest()`), never in a URL; older POST endpoints still also accept `pin` in the JSON body.
+
+- `GET /api/paintings` and `/api/prints` return **public fields only** (`publicPainting()` / `publicPrint()`): no cost estimates, revenue, sold dates, `base_price` or per-size costs; a hidden price is blanked and `Private` items are omitted. The admin gets full records via `?admin=1` + PIN header (always `no-store`, so it never shares the edge cache with the public response).
+- `GET /api/expenses`, `/api/supplies`, `/api/settings`, `/api/orders`, `/api/traffic` and `POST /api/upload` all require the PIN.
+- admin.html only marks a collection loaded after a successful read (`loaded`, `adminGetJson()`); `savePaintings/Prints/Expenses/Supplies` refuse to save before that, so a failed load can never overwrite data with an empty list.
+
 ## Blob storage access — lib/blob.js
 
 **Private data:** the Blob store is public (anyone with a file's URL can read it), so `mk-data/config.json` (admin PIN), `orders.json` (customer PII), `expenses.json`, `supplies.json` and `settings.json` are stored at `mk-private/<secret>/<name>.json` instead (`PRIVATE_FILES` / `storagePath()` in `lib/blob.js`). `<secret>` is an HMAC of the server-only `BLOB_READ_WRITE_TOKEN`, or `PRIVATE_DATA_KEY` if set; store contents can't be listed without the token. Callers still pass the logical `mk-data/...` path. On first use per cold start, any of these files still at its old public path is copied to the private path and the public copy deleted. **If the Blob token is ever rotated, set `PRIVATE_DATA_KEY` to the old secret first or the private files will read as empty.** `/api/upload` requires the admin PIN in an `x-admin-pin` header.
@@ -143,7 +151,7 @@ Every `/api` function reads and writes its JSON through `lib/blob.js` (`readJson
 
 - Reads fetch the blob's public URL directly (store base URL derived from `BLOB_READ_WRITE_TOKEN`, or `BLOB_PUBLIC_BASE_URL` if set). A missing file returns `null`; any other failure **throws** (flagged `storageUnavailable`) so a failed read is never treated as empty and written back over real data, and the PIN never silently falls back to the default.
 - Use `{ fresh: true }` before any read-modify-write, for PIN/config checks, and for admin reads. Public reads use the CDN copy.
-- Public GETs (`/api/paintings`, `/api/prints`, `/api/exhibition`) call `setPublicCache()`: edge-cached for 60s (`s-maxage=60, stale-while-revalidate=600`). admin.html requests them with `?fresh=1`, which bypasses that cache so edits always start from the latest data. Error responses are always `no-store`.
+- Public GETs (`/api/paintings`, `/api/prints`, `/api/exhibition`) call `setPublicCache()`: edge-cached for 60s (`s-maxage=60, stale-while-revalidate=600`). admin.html requests paintings/prints with `?admin=1` (PIN-protected, full data) and exhibition with `?fresh=1`; both bypass the edge cache so edits always start from the latest data. Error responses are always `no-store`.
 
 ## Deployment
 

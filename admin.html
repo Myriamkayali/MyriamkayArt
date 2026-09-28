@@ -1029,19 +1029,41 @@ let additionalImages = [];
 let confirmCallback = null;
 
 // ── DATA LAYER ───────────────────────────────────
+// Admin reads send the PIN in a header (never in the URL). A collection only counts
+// as loaded after a successful read: saving whole lists before that could overwrite
+// real data with an empty list, so save*() refuses until load*() has succeeded.
+const loaded = { paintings: false, prints: false, expenses: false, supplies: false };
+
+async function adminGetJson(url) {
+  const res = await fetch(url, { headers: { 'x-admin-pin': currentAdminPin || '' } });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || data === null || (data && data.error)) {
+    throw new Error((data && data.error) || `Could not load data (${res.status}).`);
+  }
+  return data;
+}
+
+function refuseUnloadedSave(key, label) {
+  if (loaded[key]) return false;
+  showToast(`Your ${label} didn't load, so saving is blocked to protect your data. Please refresh the page.`, 'error');
+  return true;
+}
 function getPaintings() { return paintingsCache || []; }
 
 async function loadPaintings() {
   try {
-    const res = await fetch('/api/paintings?fresh=1');
-    paintingsCache = await res.json();
-  } catch {
+    const data = await adminGetJson('/api/paintings?admin=1');
+    paintingsCache = Array.isArray(data) ? data : [];
+    loaded.paintings = Array.isArray(data);
+  } catch (e) {
     paintingsCache = paintingsCache || [];
+    showToast(e.message, 'error');
   }
   updateBadge();
 }
 
 async function savePaintings(paintings) {
+  if (refuseUnloadedSave('paintings', 'paintings')) return false;
   // Strip any remaining base64 imageData to keep payload small
   const clean = paintings.map(p => ({
     ...p,
@@ -1073,14 +1095,17 @@ function getExpenses() { return expensesCache || []; }
 
 async function loadExpenses() {
   try {
-    const res = await fetch('/api/expenses');
-    expensesCache = await res.json();
-  } catch {
+    const data = await adminGetJson('/api/expenses');
+    expensesCache = Array.isArray(data) ? data : [];
+    loaded.expenses = Array.isArray(data);
+  } catch (e) {
     expensesCache = expensesCache || [];
+    showToast(e.message, 'error');
   }
 }
 
 async function saveExpenses(expenses) {
+  if (refuseUnloadedSave('expenses', 'expenses')) return false;
   expensesCache = expenses;
   try {
     const res = await fetch('/api/expenses', {
@@ -1105,14 +1130,17 @@ function getSupplies() { return suppliesCache || []; }
 
 async function loadSupplies() {
   try {
-    const res = await fetch('/api/supplies');
-    suppliesCache = await res.json();
-  } catch {
+    const data = await adminGetJson('/api/supplies');
+    suppliesCache = Array.isArray(data) ? data : [];
+    loaded.supplies = Array.isArray(data);
+  } catch (e) {
     suppliesCache = suppliesCache || [];
+    showToast(e.message, 'error');
   }
 }
 
 async function saveSupplies(supplies) {
+  if (refuseUnloadedSave('supplies', 'supplies')) return false;
   suppliesCache = supplies;
   try {
     const res = await fetch('/api/supplies', {
@@ -1149,10 +1177,11 @@ function getSettings() { return settingsCache || DEFAULT_SETTINGS; }
 
 async function loadSettings() {
   try {
-    const res = await fetch('/api/settings');
-    settingsCache = await res.json();
-  } catch {
+    const data = await adminGetJson('/api/settings');
+    settingsCache = data;
+  } catch (e) {
     settingsCache = settingsCache || DEFAULT_SETTINGS;
+    showToast(e.message, 'error');
   }
 }
 
@@ -1181,14 +1210,17 @@ function getPrints() { return printsCache || []; }
 
 async function loadPrints() {
   try {
-    const res = await fetch('/api/prints?fresh=1');
-    printsCache = await res.json();
-  } catch {
+    const data = await adminGetJson('/api/prints?admin=1');
+    printsCache = Array.isArray(data) ? data : [];
+    loaded.prints = Array.isArray(data);
+  } catch (e) {
     printsCache = printsCache || [];
+    showToast(e.message, 'error');
   }
 }
 
 async function savePrints(prints) {
+  if (refuseUnloadedSave('prints', 'prints')) return false;
   const clean = prints.map(pr => ({
     ...pr,
     imageData: pr.imageData && pr.imageData.startsWith('data:') ? null : pr.imageData,
@@ -1275,7 +1307,7 @@ function getOrders() { return ordersCache || []; }
 
 async function loadOrders() {
   try {
-    const res = await fetch(`/api/orders?pin=${encodeURIComponent(currentAdminPin || '')}`);
+    const res = await fetch('/api/orders', { headers: { 'x-admin-pin': currentAdminPin || '' } });
     ordersCache = await res.json();
     if (!Array.isArray(ordersCache)) ordersCache = [];
   } catch {
@@ -1328,7 +1360,7 @@ async function sendPaymentLinkEmail(orderId) {
 let trafficCache = null;
 async function loadTraffic() {
   try {
-    const res = await fetch(`/api/traffic?pin=${encodeURIComponent(currentAdminPin || '')}`);
+    const res = await fetch('/api/traffic', { headers: { 'x-admin-pin': currentAdminPin || '' } });
     trafficCache = await res.json();
   } catch {
     trafficCache = { configured: false, error: 'Could not reach traffic analytics.' };
@@ -1370,7 +1402,8 @@ async function checkPin() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'verify', pin: currentPin }),
     });
-    const { valid } = await res.json();
+    const { valid, error } = await res.json();
+    if (error) showToast(error, 'error'); // e.g. locked out after too many wrong PINs
     if (valid) {
       currentAdminPin = currentPin;
       document.getElementById('pin-screen').style.display = 'none';

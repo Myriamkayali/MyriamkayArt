@@ -1,8 +1,7 @@
 const { readJson, writeJson, setPublicCache } = require('../lib/blob');
+const { verifyPin, pinFromRequest } = require('../lib/auth');
 
 const PAINTINGS_PATH = 'mk-data/paintings.json';
-const CONFIG_PATH    = 'mk-data/config.json';
-const DEFAULT_PIN    = '1234';
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -15,6 +14,14 @@ async function parseBody(req) {
   });
 }
 
+// Only what the public site shows. Cost estimates, revenue and sold dates stay
+// admin-only, and a price marked hidden is not sent at all.
+function publicPainting(p) {
+  const { costEstimate, revenueReceived, soldDate, ...rest } = p || {};
+  if (rest.hidePrice) rest.price = '';
+  return rest;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -23,18 +30,23 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const fresh = setPublicCache(req, res); // public page views hit the edge cache; admin passes ?fresh=1
-      const paintings = await readJson(PAINTINGS_PATH, { fresh });
+      // Admin: ?admin=1 plus the PIN header gets the full records (costs, revenue),
+      // fresh and never cached. Everyone else gets public fields only, edge-cached.
+      if (req.query && req.query.admin) {
+        res.setHeader('Cache-Control', 'no-store');
+        const auth = await verifyPin(req, pinFromRequest(req));
+        if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+        return res.status(200).json((await readJson(PAINTINGS_PATH, { fresh: true })) || []);
+      }
+      const fresh = setPublicCache(req, res);
+      const paintings = (await readJson(PAINTINGS_PATH, { fresh }) || []).filter(p => p && p.status !== 'Private').map(publicPainting);
       return res.status(200).json(paintings || []);
     }
 
     if (req.method === 'POST') {
       const { paintings, pin } = await parseBody(req);
-      const config   = await readJson(CONFIG_PATH, { fresh: true });
-      const validPin = config?.pin || DEFAULT_PIN;
-
-      if (!pin) return res.status(401).json({ error: 'PIN missing' });
-      if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+      const auth = await verifyPin(req, pinFromRequest(req, { pin }));
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
       if (!Array.isArray(paintings)) return res.status(400).json({ error: 'Invalid data — expected array' });
 
       await writeJson(PAINTINGS_PATH, paintings);

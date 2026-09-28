@@ -1,8 +1,5 @@
 const { put } = require('@vercel/blob');
-const { readJson } = require('../lib/blob');
-
-const CONFIG_PATH = 'mk-data/config.json';
-const DEFAULT_PIN = '1234';
+const { verifyPin, pinFromRequest } = require('../lib/auth');
 
 async function bufferBody(req) {
   return new Promise((resolve, reject) => {
@@ -20,9 +17,8 @@ module.exports = async function handler(req, res) {
 
   // Only the admin may upload: otherwise anyone could put files in the store.
   try {
-    const config = await readJson(CONFIG_PATH, { fresh: true });
-    const validPin = config?.pin || DEFAULT_PIN;
-    if (req.headers['x-admin-pin'] !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+    const auth = await verifyPin(req, pinFromRequest(req));
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
   } catch (e) {
     console.error('Upload auth error:', e);
     return res.status(503).json({ error: 'Storage is unavailable right now. Please try again later.' });

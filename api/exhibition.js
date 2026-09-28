@@ -1,8 +1,7 @@
 const { readJson, writeJson, setPublicCache } = require('../lib/blob');
+const { verifyPin, pinFromRequest } = require('../lib/auth');
 
 const EXHIBITION_PATH = 'mk-data/exhibition.json';
-const CONFIG_PATH     = 'mk-data/config.json';
-const DEFAULT_PIN     = '1234';
 
 const DEFAULT_EXHIBITION = {
   title: 'A Taste of Home',
@@ -47,11 +46,8 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'POST') {
       const { data, pin } = await parseBody(req);
-      const config   = await readJson(CONFIG_PATH, { fresh: true });
-      const validPin = config?.pin || DEFAULT_PIN;
-
-      if (!pin) return res.status(401).json({ error: 'PIN missing' });
-      if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+      const auth = await verifyPin(req, pinFromRequest(req, { pin }));
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
       if (!data || typeof data !== 'object') return res.status(400).json({ error: 'Invalid data — expected object' });
 
       await writeJson(EXHIBITION_PATH, data);

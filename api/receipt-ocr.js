@@ -1,8 +1,7 @@
 const { readJson } = require('../lib/blob');
+const { verifyPin, pinFromRequest } = require('../lib/auth');
 const Anthropic = require('@anthropic-ai/sdk');
 
-const CONFIG_PATH = 'mk-data/config.json';
-const DEFAULT_PIN = '1234';
 
 // Costs real money per call (Claude API, billed to your own ANTHROPIC_API_KEY) —
 // see CLAUDE.md for setup. Not part of any free tier.
@@ -56,10 +55,8 @@ module.exports = async function handler(req, res) {
   try {
     const { imageBase64, mediaType, pin } = await parseBody(req);
 
-    const config   = await readJson(CONFIG_PATH, { fresh: true });
-    const validPin = config?.pin || DEFAULT_PIN;
-    if (!pin) return res.status(401).json({ error: 'PIN missing' });
-    if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+    const auth = await verifyPin(req, pinFromRequest(req, { pin }));
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
     if (!imageBase64) return res.status(400).json({ error: 'No image provided' });
     if (!process.env.ANTHROPIC_API_KEY) {

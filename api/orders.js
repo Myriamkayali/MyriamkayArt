@@ -1,9 +1,8 @@
 const { readJson, writeJson } = require('../lib/blob');
+const { verifyPin, pinFromRequest } = require('../lib/auth');
 
 const ORDERS_PATH = 'mk-data/orders.json';
 const PRINTS_PATH = 'mk-data/prints.json';
-const CONFIG_PATH = 'mk-data/config.json';
-const DEFAULT_PIN = '1234';
 
 // Automatic order emails (alert to Myriam + client confirmation) are OFF for now:
 // orders are followed up on WhatsApp instead. To turn them back on, finish the
@@ -108,11 +107,9 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const pin = req.query?.pin;
-      const config = await readJson(CONFIG_PATH, { fresh: true });
-      const validPin = config?.pin || DEFAULT_PIN;
-      if (!pin) return res.status(401).json({ error: 'PIN missing' });
-      if (pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+      const pin = pinFromRequest(req); // header, never the URL
+      const auth = await verifyPin(req, pin);
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
       res.setHeader('Cache-Control', 'no-store');
       const orders = await readJson(ORDERS_PATH, { fresh: true });
       return res.status(200).json(orders || []);
@@ -192,10 +189,8 @@ module.exports = async function handler(req, res) {
     }
 
     // ── Everything below is admin-only ──
-    const config = await readJson(CONFIG_PATH, { fresh: true });
-    const validPin = config?.pin || DEFAULT_PIN;
-    if (!body.pin) return res.status(401).json({ error: 'PIN missing' });
-    if (body.pin !== validPin) return res.status(401).json({ error: 'Invalid PIN' });
+    const auth = await verifyPin(req, pinFromRequest(req, body));
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
     const orders = (await readJson(ORDERS_PATH, { fresh: true })) || [];
 

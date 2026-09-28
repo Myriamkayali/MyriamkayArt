@@ -1,7 +1,7 @@
-const { readJson, writeJson } = require('../lib/blob');
+const { writeJson } = require('../lib/blob');
+const { verifyPin } = require('../lib/auth');
 
 const CONFIG_PATH = 'mk-data/config.json';
-const DEFAULT_PIN = '1234';
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -16,33 +16,29 @@ async function parseBody(req) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  res.setHeader('Cache-Control', 'no-store');
 
   const { action, pin, currentPin, newPin } = await parseBody(req);
-  let config;
+
   try {
-    config = await readJson(CONFIG_PATH, { fresh: true });
+    if (action === 'verify') {
+      const auth = await verifyPin(req, pin);
+      if (auth.status === 429) return res.status(429).json({ valid: false, error: auth.error });
+      return res.status(200).json({ valid: auth.ok });
+    }
+
+    if (action === 'change') {
+      const auth = await verifyPin(req, currentPin);
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.status === 429 ? auth.error : 'Current PIN is incorrect.' });
+      if (!newPin || !/^\d{4}$/.test(newPin)) return res.status(400).json({ error: 'PIN must be exactly 4 digits.' });
+      await writeJson(CONFIG_PATH, { ...(auth.config || {}), pin: newPin });
+      return res.status(200).json({ ok: true });
+    }
+
+    return res.status(400).json({ error: 'Invalid action' });
   } catch (e) {
     // Never fall back to the default PIN just because storage couldn't be read.
     console.error('pin handler error:', e);
     return res.status(503).json({ error: 'Storage is unavailable right now. Please try again later.' });
   }
-  const validPin = config?.pin || DEFAULT_PIN;
-
-  if (action === 'verify') {
-    return res.status(200).json({ valid: pin === validPin });
-  }
-
-  if (action === 'change') {
-    if (currentPin !== validPin) return res.status(401).json({ error: 'Current PIN is incorrect.' });
-    if (!newPin || !/^\d{4}$/.test(newPin)) return res.status(400).json({ error: 'PIN must be exactly 4 digits.' });
-    try {
-      await writeJson(CONFIG_PATH, { ...(config || {}), pin: newPin });
-    } catch (e) {
-      console.error('pin handler error:', e);
-      return res.status(503).json({ error: 'Could not save the new PIN. Please try again later.' });
-    }
-    return res.status(200).json({ ok: true });
-  }
-
-  return res.status(400).json({ error: 'Invalid action' });
 };
