@@ -137,6 +137,8 @@ Every page and item has its own URL: `/about`, `/collection`, `/prints`, `/commi
 
 ## Blob storage access — lib/blob.js
 
+**Private data:** the Blob store is public (anyone with a file's URL can read it), so `mk-data/config.json` (admin PIN), `orders.json` (customer PII), `expenses.json`, `supplies.json` and `settings.json` are stored at `mk-private/<secret>/<name>.json` instead (`PRIVATE_FILES` / `storagePath()` in `lib/blob.js`). `<secret>` is an HMAC of the server-only `BLOB_READ_WRITE_TOKEN`, or `PRIVATE_DATA_KEY` if set; store contents can't be listed without the token. Callers still pass the logical `mk-data/...` path. On first use per cold start, any of these files still at its old public path is copied to the private path and the public copy deleted. **If the Blob token is ever rotated, set `PRIVATE_DATA_KEY` to the old secret first or the private files will read as empty.** `/api/upload` requires the admin PIN in an `x-admin-pin` header.
+
 Every `/api` function reads and writes its JSON through `lib/blob.js` (`readJson`, `writeJson`, `setPublicCache`), never through `list()`. `list()` is a Vercel Blob **Advanced Operation** and the free tier allows only 2,000/month; calling it on every page view got the store paused for 30 days in Sept 2026. Rules:
 
 - Reads fetch the blob's public URL directly (store base URL derived from `BLOB_READ_WRITE_TOKEN`, or `BLOB_PUBLIC_BASE_URL` if set). A missing file returns `null`; any other failure **throws** (flagged `storageUnavailable`) so a failed read is never treated as empty and written back over real data, and the PIN never silently falls back to the default.

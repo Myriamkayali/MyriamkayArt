@@ -2572,7 +2572,7 @@ async function applyCrop() {
     const res = await fetch('/api/upload', {
       method: 'POST',
       body: blob,
-      headers: { 'content-type': 'image/jpeg', 'x-filename': encodeURIComponent('painting.jpg') },
+      headers: { 'x-admin-pin': currentAdminPin || '', 'content-type': 'image/jpeg', 'x-filename': encodeURIComponent('painting.jpg') },
     });
     if (!res.ok) {
       const { error } = await res.json().catch(() => ({}));
@@ -2650,7 +2650,7 @@ async function uploadBase64IfNeeded(dataOrUrl) {
     const uploadRes = await fetch('/api/upload', {
       method: 'POST',
       body: blob,
-      headers: { 'content-type': blob.type, 'x-filename': encodeURIComponent('painting.' + ext) },
+      headers: { 'x-admin-pin': currentAdminPin || '', 'content-type': blob.type, 'x-filename': encodeURIComponent('painting.' + ext) },
     });
     if (!uploadRes.ok) throw new Error('base64 upload failed');
     const { url } = await uploadRes.json();
