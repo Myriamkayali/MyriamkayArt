@@ -2339,6 +2339,7 @@ function updatePrintTotals() {
 function handlePrintFile(input) {
   const file = input.files[0];
   if (!file) return;
+  if (rejectHeic(file, input)) return;
   const reader = new FileReader();
   reader.onload = e => openCropModal(e.target.result, 'print');
   reader.readAsDataURL(file);
@@ -2506,9 +2507,22 @@ function previewUrl(url) {
 let cropperInstance = null;
 let cropTarget = null;
 
+// HEIC/HEIF (iPhone photos) only display in Safari, so they must never reach the site.
+// The crop step re-saves as JPEG, but Chrome/Edge/Firefox can't even open a HEIC to crop it.
+function isHeicFile(file) {
+  return /image\/hei[cf]/i.test(file.type || '') || /\.hei[cf]$/i.test(file.name || '');
+}
+function rejectHeic(file, input) {
+  if (!isHeicFile(file)) return false;
+  showToast('This photo is HEIC (iPhone format), which most browsers can\'t show. Open it in Photos and export as JPEG, or upload it from Safari.', 'error');
+  if (input) input.value = '';
+  return true;
+}
+
 function handleFile(input) {
   const file = input.files[0];
   if (!file) return;
+  if (rejectHeic(file, input)) return;
   const reader = new FileReader();
   reader.onload = e => openCropModal(e.target.result, 'main');
   reader.readAsDataURL(file);
@@ -2616,6 +2630,7 @@ function removeImage() {
 function handleAdditionalFile(input) {
   const file = input.files[0];
   if (!file) return;
+  if (rejectHeic(file, input)) return;
   const reader = new FileReader();
   reader.onload = e => openCropModal(e.target.result, 'additional');
   reader.readAsDataURL(file);
@@ -2654,6 +2669,7 @@ async function savePainting() {
   const categories = [...document.querySelectorAll('#category-checkboxes input:checked')].map(i => i.value);
   const urlInput = document.getElementById('url-input');
   if (urlInput && urlInput.value.trim().startsWith('http')) imageData = urlInput.value.trim();
+  if (imageData && /\.hei[cf](\?|$)/i.test(imageData)) { showToast('That image is HEIC, which most browsers can\'t show. Please upload a JPEG instead.', 'error'); return; }
 
   // Migrate any base64 images to Blob before saving
   if (imageData && imageData.startsWith('data:')) {
@@ -4002,6 +4018,7 @@ function moveExhibitionImage(idx, dir) {
 function handleExhibitionFile(input) {
   const file = input.files[0];
   if (!file) return;
+  if (rejectHeic(file, input)) return;
   const reader = new FileReader();
   reader.onload = e => openCropModal(e.target.result, 'exhibition');
   reader.readAsDataURL(file);
@@ -4010,6 +4027,7 @@ function handleExhibitionFile(input) {
 function handlePressImageFile(input) {
   const file = input.files[0];
   if (!file) return;
+  if (rejectHeic(file, input)) return;
   const reader = new FileReader();
   reader.onload = e => openCropModal(e.target.result, 'press-image');
   reader.readAsDataURL(file);

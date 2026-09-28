@@ -117,9 +117,17 @@ The admin Dashboard screen (`showScreen('dashboard')`) tracks studio finances an
 - **Required Vercel env vars**: `RESEND_API_KEY` (from resend.com — also requires verifying myriamkay.art's DNS with Resend before it can send from your own domain), `RESEND_FROM_EMAIL` (e.g. `Myriam Kayali Art <orders@myriamkay.art>`, defaults to that if unset — will fail to actually deliver until the domain is verified), `NOTIFY_EMAIL` (where new-order alerts go — if unset, that email is simply skipped, the client confirmation still sends).
 - **Admin Orders tab** (`showScreen('orders')`, `renderOrders()`): one row per order — client info, shipping address, print/size, price × qty, date, an editable status dropdown, and a payment-link input + "Send payment link to client" button.
 
+## Image delivery — /media proxy (index.html + vercel.json)
+
+The public site never loads images straight from `*.public.blob.vercel-storage.com`. `vercel.json` rewrites `/media/<file>.(jpg|png|webp|gif|avif)` to the Blob store, and index.html maps every Blob image URL to `/media/...` via `mediaUrl()` / `mapMedia()` (defined in an early `<script>` in `<head>`): hardcoded `src`s are written as `/media/...`, and `getPaintings()`, `getPrintsPublic()` and `getExhibition()` pass their API data through `mapMedia()`. A capture-phase `error` listener retries any failed `/media/` image once from the Blob domain directly.
+
+Why: images served from the storage domain broke on some laptops while phones were fine. Serving them from the site's own domain avoids networks/filters that block the storage domain and any error responses cached during the Sept 2026 store pause. Admin data keeps the real Blob URLs (index.html only rewrites for display, never writes back).
+
+HEIC/HEIF images only render in Safari. Admin upload handlers reject them (`rejectHeic()`), as does a pasted `.heic` URL; the crop step always re-encodes to JPEG.
+
 ## Shareable links (URL routing) — index.html + vercel.json
 
-Every page and item has its own URL: `/about`, `/collection`, `/prints`, `/commission`, `/contact`, `/collection/<painting-slug>`, `/prints/<print-slug>`. `vercel.json` rewrites every path except `/api/`, `/images/` and `admin*` to `index.html`; `applyRoute()` reads `location.pathname` on load and on back/forward (`popstate`) and opens the right section, painting lightbox or selected print.
+Every page and item has its own URL: `/about`, `/collection`, `/prints`, `/commission`, `/contact`, `/collection/<painting-slug>`, `/prints/<print-slug>`. `vercel.json` rewrites every path except `/api/`, `/images/`, `/media/` and `admin*` to `index.html`; `applyRoute()` reads `location.pathname` on load and on back/forward (`popstate`) and opens the right section, painting lightbox or selected print.
 
 - `showSection(id)` pushes the section URL unless called with `{ fromRoute: true }` (used by the router itself). `openPainting()` pushes `/collection/<slug>`, `closeLightbox()` replaces it with `/collection`, `printsSelectPrint()` replaces with `/prints/<slug>`.
 - Slugs come from titles (`slugify()`). Paintings with duplicate titles get `-<id>` appended (`paintingSlug()`, computed over the full unfiltered list so links don't change with the filter tab). A raw id also resolves.

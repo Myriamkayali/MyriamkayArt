@@ -1,5 +1,9 @@
 {
   "rewrites": [
-    { "source": "/((?!api/|images/|admin).*)", "destination": "/index.html" }
+    {
+      "source": "/media/:file(.+\\.(?:jpe?g|JPE?G|png|PNG|webp|WEBP|gif|GIF|avif|AVIF))",
+      "destination": "https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/:file"
+    },
+    { "source": "/((?!api/|images/|media/|admin).*)", "destination": "/index.html" }
   ]
 }
