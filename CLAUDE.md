@@ -52,6 +52,8 @@ All data persists in `localStorage`. No backend or server.
 
 ### index.html — Public Website
 
+**Home hero** is centred text above a rolodex ring of paintings (`buildRing()` / `ringFrame()` / `initRingInput()` in index.html): 22 cards (the public paintings with images, featured first, repeated to fill) around a tipped wheel, depth-sorted into `z-index` every frame, spinning at an idle 0.0045 rad/frame and thrown with momentum on drag. Tapping a card (no drag) opens that painting; the caption under the ring names the front card. The loop pauses when the tab is hidden or another section is showing; `prefers-reduced-motion` stops the idle spin.
+
 Single-page app with section-based navigation. `showSection(name)` hides all sections and reveals the target one. Gallery pulls from `localStorage` and falls back to 7 hardcoded default paintings if empty.
 
 Sections: Home, About, Collection, Prints, Commission, Contact.
