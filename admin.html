@@ -819,6 +819,18 @@ body {
     border-color: var(--terra); color: var(--terra-light);
   }
   .crop-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Collections screen */
+  .btn-sm { padding: 6px 10px; font-size: 11px; }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .collection-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+  .collection-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--border); background: var(--surface); }
+  .collection-order { display: flex; gap: 4px; }
+  .collection-name { flex: 1 1 200px; min-width: 0; }
+  .collection-count { font-size: 12px; color: var(--cream-dim); min-width: 78px; }
+  .collection-delete:hover { color: #e74c3c; border-color: rgba(231,76,60,0.4); }
+  .collection-add { display: flex; gap: 10px; flex-wrap: wrap; }
+  .collection-add .form-input { flex: 1 1 240px; }
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -914,6 +926,13 @@ body {
         <circle cx="8" cy="8" r="7"/><line x1="8" y1="4" x2="8" y2="12"/><line x1="4" y1="8" x2="12" y2="8"/>
       </svg>
       Add Painting
+    </div>
+    <div class="nav-item" onclick="showScreen('collections')" id="nav-collections">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4.5h12M2 8h12M2 11.5h12"/>
+        <circle cx="4.5" cy="4.5" r="0.6" fill="currentColor"/><circle cx="4.5" cy="8" r="0.6" fill="currentColor"/><circle cx="4.5" cy="11.5" r="0.6" fill="currentColor"/>
+      </svg>
+      Collections
     </div>
 
     <div class="nav-item" onclick="showScreen('exhibition')" id="nav-exhibition">
@@ -1083,6 +1102,39 @@ async function savePaintings(paintings) {
       showToast(data.error || `Save failed (${res.status}).`, 'error');
       return false;
     }
+    return true;
+  } catch (e) {
+    showToast(e.message || 'Failed to save. Check your connection.', 'error');
+    return false;
+  }
+}
+
+// ── COLLECTIONS ──
+// Names of painting collections, in the order the public Collection page shows them.
+let collectionsCache = null;
+const DEFAULT_COLLECTIONS = ['Beirut Diaries', 'On the Line', 'Mixed Arts', 'Landscape & Abstract', 'Commission', 'Home Premiere'];
+function getCollections() { return collectionsCache || DEFAULT_COLLECTIONS; }
+
+async function loadCollections() {
+  try {
+    const res = await fetch('/api/collections?fresh=1');
+    const data = await res.json();
+    collectionsCache = Array.isArray(data) ? data : DEFAULT_COLLECTIONS.slice();
+  } catch {
+    collectionsCache = collectionsCache || DEFAULT_COLLECTIONS.slice();
+  }
+}
+
+async function saveCollections(list) {
+  try {
+    const res = await fetch('/api/collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-pin': currentAdminPin || '' },
+      body: JSON.stringify({ collections: list }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { showToast(data.error || `Save failed (${res.status}).`, 'error'); return false; }
+    collectionsCache = data.collections || list;
     return true;
   } catch (e) {
     showToast(e.message || 'Failed to save. Check your connection.', 'error');
@@ -1408,7 +1460,7 @@ async function checkPin() {
       currentAdminPin = currentPin;
       document.getElementById('pin-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
-      await loadPaintings();
+      await Promise.all([loadPaintings(), loadCollections()]);
       showScreen('list');
     } else {
       for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.add('error');
@@ -1443,12 +1495,12 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 // ── NAVIGATION ──────────────────────────────────────────
 function showScreen(name) {
   closeAdminSidebar();
-  ['list','add','settings','exhibition','dashboard','supplies','pricing','prints','orders'].forEach(n => {
+  ['list','add','collections','settings','exhibition','dashboard','supplies','pricing','prints','orders'].forEach(n => {
     const el = document.getElementById('nav-' + n);
     if (el) el.classList.toggle('active', n === name || (n === 'prints' && name === 'print-add'));
   });
 
-  const titles = { list: 'All Paintings', add: 'Add New Painting', settings: 'Settings', exhibition: 'Exhibition', dashboard: 'Dashboard', supplies: 'Art Supplies', pricing: 'Pricing Calculator', prints: 'Prints', 'print-add': 'Add New Print', orders: 'Orders' };
+  const titles = { list: 'All Paintings', add: 'Add New Painting', collections: 'Collections', settings: 'Settings', exhibition: 'Exhibition', dashboard: 'Dashboard', supplies: 'Art Supplies', pricing: 'Pricing Calculator', prints: 'Prints', 'print-add': 'Add New Print', orders: 'Orders' };
   document.getElementById('screen-title').textContent = titles[name] || 'Dashboard';
 
   const area = document.getElementById('topbar-actions');
@@ -1466,7 +1518,7 @@ function showScreen(name) {
     area.innerHTML = '';
   }
 
-  const render = { list: renderList, add: renderForm, settings: renderSettings, exhibition: renderExhibitionScreen, dashboard: renderDashboard, supplies: renderSupplies, pricing: renderPricingCalculator, prints: renderPrintsList, 'print-add': renderPrintForm, orders: renderOrders };
+  const render = { list: renderList, add: renderForm, collections: renderCollections, settings: renderSettings, exhibition: renderExhibitionScreen, dashboard: renderDashboard, supplies: renderSupplies, pricing: renderPricingCalculator, prints: renderPrintsList, 'print-add': renderPrintForm, orders: renderOrders };
   if (render[name]) { render[name](); }
 }
 
@@ -1545,7 +1597,7 @@ function renderList() {
 // ── FORM ──────────────────────────────────────────
 function renderForm() {
   let p = {
-    title: '', year: new Date().getFullYear(), medium: '', category: 'Portrait', width: '', height: '',
+    title: '', year: new Date().getFullYear(), medium: '', category: [], width: '', height: '',
     price: '', description: '', featured: false, available: true, hidePrice: false, soldDate: '',
     costEstimate: { canvasCost: '', materialCost: '', varnishToolsCost: '', packagingShippingCost: '', framingCost: '', total: 0 },
     revenueReceived: '', imageData: null,
@@ -1597,7 +1649,7 @@ function renderForm() {
         <div class="form-group full">
           <label class="form-label">Collections (select all that apply)</label>
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="category-checkboxes">
-            ${['Beirut Diaries','On the Line','Mixed Arts','Landscape & Abstract','Commission'].map(c => {
+            ${[...getCollections(), ...(Array.isArray(p.category) ? p.category : [p.category]).filter(c => c && !getCollections().includes(c))].map(c => {
               const checked = Array.isArray(p.category) ? p.category.includes(c) : p.category === c;
               return `<label style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border:1px solid ${checked ? 'var(--terra)' : 'var(--border)'};cursor:pointer;font-size:12px;color:var(--cream-dim);transition:all 0.15s;user-select:none" onclick="toggleCategory(event, this)">
                 <input type="checkbox" value="${c}" ${checked ? 'checked' : ''} style="display:none">
@@ -2771,6 +2823,116 @@ function cancelEdit() {
   showScreen('list');
 }
 
+// ── COLLECTIONS SCREEN ──────────────────────────────
+function paintingsInCollection(name) {
+  return getPaintings().filter(p => (Array.isArray(p.category) ? p.category : [p.category]).includes(name));
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+async function renderCollections() {
+  if (!collectionsCache) await loadCollections();
+  const list = getCollections();
+  const rows = list.map((name, i) => {
+    const count = paintingsInCollection(name).length;
+    return `
+      <div class="collection-row">
+        <div class="collection-order">
+          <button class="btn btn-ghost btn-sm" onclick="moveCollection(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Move up">&uarr;</button>
+          <button class="btn btn-ghost btn-sm" onclick="moveCollection(${i}, 1)" ${i === list.length - 1 ? 'disabled' : ''} title="Move down">&darr;</button>
+        </div>
+        <input class="form-input collection-name" id="col-name-${i}" value="${escapeHtml(name)}" maxlength="40">
+        <span class="collection-count">${count} painting${count === 1 ? '' : 's'}</span>
+        <button class="btn btn-ghost btn-sm" onclick="renameCollection(${i})">Save name</button>
+        <button class="btn btn-ghost btn-sm collection-delete" onclick="confirmDeleteCollection(${i})">Delete</button>
+      </div>`;
+  }).join('');
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="settings-section" style="max-width:760px">
+      <h3>Collections</h3>
+      <p style="font-size:13px;color:var(--cream-dim);margin-bottom:20px;line-height:1.7">
+        These are the collections you can put paintings in (Add / Edit Painting) and the tabs on the
+        website's Collection page, in this order. A collection with no paintings yet stays hidden on the
+        website until you add one.
+      </p>
+      <div class="collection-list">${rows || '<p style="color:var(--cream-dim);font-size:13px">No collections yet.</p>'}</div>
+      <div class="collection-add">
+        <input class="form-input" id="col-new" placeholder="New collection name, e.g. Home Premiere" maxlength="40"
+          onkeydown="if(event.key==='Enter')addCollection()">
+        <button class="btn btn-primary" onclick="addCollection()">+ Add Collection</button>
+      </div>
+    </div>`;
+}
+
+async function addCollection() {
+  const input = document.getElementById('col-new');
+  const name = (input.value || '').trim().replace(/\s+/g, ' ');
+  if (!name) { showToast('Type a name for the collection first.', 'error'); return; }
+  if (getCollections().some(c => c.toLowerCase() === name.toLowerCase())) { showToast('That collection already exists.', 'error'); return; }
+  if (await saveCollections([...getCollections(), name])) {
+    showToast(`"${name}" added. You can now pick it when adding a painting.`, 'success');
+    renderCollections();
+  }
+}
+
+async function moveCollection(i, dir) {
+  const list = getCollections().slice();
+  const j = i + dir;
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  if (await saveCollections(list)) renderCollections();
+}
+
+async function renameCollection(i) {
+  const list = getCollections().slice();
+  const oldName = list[i];
+  const newName = (document.getElementById(`col-name-${i}`).value || '').trim().replace(/\s+/g, ' ');
+  if (!newName || newName === oldName) return;
+  if (list.some((c, k) => k !== i && c.toLowerCase() === newName.toLowerCase())) { showToast('Another collection already has that name.', 'error'); return; }
+  list[i] = newName;
+  if (!(await saveCollections(list))) return;
+  // Move every painting in the old collection to the new name.
+  const affected = paintingsInCollection(oldName).length;
+  if (affected) {
+    const updated = getPaintings().map(p => {
+      const cats = Array.isArray(p.category) ? p.category : [p.category];
+      return cats.includes(oldName) ? { ...p, category: cats.map(c => c === oldName ? newName : c) } : p;
+    });
+    if (!(await savePaintings(updated))) return;
+  }
+  showToast(`Renamed to "${newName}"${affected ? ` (${affected} painting${affected === 1 ? '' : 's'} updated)` : ''}.`, 'success');
+  renderCollections();
+}
+
+function confirmDeleteCollection(i) {
+  const name = getCollections()[i];
+  const count = paintingsInCollection(name).length;
+  document.querySelector('#confirm-modal .modal-title').textContent = 'Delete Collection?';
+  document.getElementById('confirm-body').textContent = count
+    ? `"${name}" will be removed. Its ${count} painting${count === 1 ? '' : 's'} will stay in your gallery, just no longer in this collection.`
+    : `"${name}" will be removed.`;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('confirm-ok').onclick = () => { deleteCollection(i); closeModal(); };
+}
+
+async function deleteCollection(i) {
+  const list = getCollections().slice();
+  const [name] = list.splice(i, 1);
+  if (!(await saveCollections(list))) return;
+  if (paintingsInCollection(name).length) {
+    const updated = getPaintings().map(p => {
+      const cats = Array.isArray(p.category) ? p.category : [p.category];
+      return cats.includes(name) ? { ...p, category: cats.filter(c => c !== name) } : p;
+    });
+    await savePaintings(updated);
+  }
+  showToast(`"${name}" deleted.`, 'error');
+  renderCollections();
+}
+
 // ── DELETE ──────────────────────────────────────────
 function confirmDelete(id, title) {
   document.getElementById('confirm-body').textContent = `"${title}" will be permanently removed from your gallery.`;
@@ -2798,6 +2960,7 @@ async function movePainting(id, dir) {
 
 function closeModal() {
   document.getElementById('confirm-modal').classList.remove('open');
+  document.querySelector('#confirm-modal .modal-title').textContent = 'Delete Painting?'; // reset after other uses
 }
 
 // ── DASHBOARD ──────────────────────────────────────────

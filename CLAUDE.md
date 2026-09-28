@@ -58,7 +58,7 @@ Single-page app with section-based navigation. `showSection(name)` hides all sec
 
 Sections: Home, About, Collection, Prints, Commission, Contact.
 
-Filter tabs in the Collection section filter by `category` field.
+Filter tabs in the Collection section filter by `category` field (an array of collection names). **Collections are data, not code:** the list lives in `mk-data/collections.json` via `api/collections.js` (public GET, PIN-protected POST; defaults to Beirut Diaries, On the Line, Mixed Arts, Landscape & Abstract, Commission, Home Premiere until first saved). The admin's **Collections** screen (`renderCollections()`) adds, renames (also renaming it on every painting), reorders and deletes (removing it from paintings) collections; the Add/Edit Painting checkboxes come from the same list. On the public site `renderFilterTabs()` shows "All", "Available" and every collection that has at least one painting, in list order, and the "All" view groups paintings in that same order.
 
 ### admin.html — Studio Dashboard
 

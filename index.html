@@ -2381,14 +2381,10 @@
       <p class="section-eyebrow">Artworks</p>
       <h2 class="section-title">The <em>Collection</em></h2>
     </div>
-    <div class="filter-tabs">
+    <!-- "All" and "Available" are fixed; collection tabs come from /api/collections (renderFilterTabs) -->
+    <div class="filter-tabs" id="filter-tabs">
       <button class="filter-tab active">All</button>
       <button class="filter-tab">Available</button>
-      <button class="filter-tab">Beirut Diaries</button>
-      <button class="filter-tab">On the Line</button>
-      <button class="filter-tab">Mixed Arts</button>
-      <button class="filter-tab">Landscape & Abstract</button>
-      <button class="filter-tab">Commission</button>
     </div>
   </div>
 
@@ -2740,15 +2736,46 @@
     </div>`;
   }
 
+  // Collection names in display order (managed in the admin's Collections screen).
+  const DEFAULT_COLLECTIONS = ['Beirut Diaries', 'On the Line', 'Mixed Arts', 'Landscape & Abstract', 'Commission', 'Home Premiere'];
+  let collectionsPromise = null;
+  function getCollections() {
+    if (!collectionsPromise) {
+      collectionsPromise = fetch('/api/collections')
+        .then(r => r.json())
+        .then(d => Array.isArray(d) ? d : DEFAULT_COLLECTIONS)
+        .catch(() => DEFAULT_COLLECTIONS);
+    }
+    return collectionsPromise;
+  }
+
+  // Tabs for collections that currently have at least one painting.
+  function renderFilterTabs(collections, paintings) {
+    const wrap = document.getElementById('filter-tabs');
+    if (!wrap) return;
+    const used = new Set(paintings.flatMap(p => Array.isArray(p.category) ? p.category : [p.category]));
+    const names = ['All', 'Available', ...collections.filter(c => used.has(c))];
+    wrap.innerHTML = names.map(n => {
+      const b = document.createElement('button');
+      b.className = 'filter-tab' + (n === activeFilter ? ' active' : '');
+      b.dataset.filter = n;
+      b.textContent = n;
+      return b.outerHTML;
+    }).join('');
+  }
+
   async function renderGallery(filter) {
     activeFilter = filter || activeFilter;
     const container = document.getElementById('gallery-grid');
     if (!container) return;
     container.innerHTML = `<p style="color:var(--brown-light);font-family:'Hanken Grotesk',sans-serif;font-size:13px;padding:40px 0;">Loading…</p>`;
 
-    const allLoaded = (await getPaintings()).filter(p => p.status !== 'Private');
+    const [loadedPaintings, collections] = await Promise.all([getPaintings(), getCollections()]);
+    const allLoaded = loadedPaintings.filter(p => p.status !== 'Private');
     const source = allLoaded.length > 0 ? allLoaded : fallback;
     allGalleryPaintings = source;
+    if (!['All', 'Available'].includes(activeFilter) && !collections.includes(activeFilter)) activeFilter = 'All';
+    renderFilterTabs(collections, source);
 
     let filtered;
     if (activeFilter === 'Available') {
@@ -2776,7 +2803,7 @@
     }
 
     if (activeFilter === 'All') {
-      const categoryOrder = ['On the Line', 'Beirut Diaries', 'Mixed Arts', 'Landscape & Abstract', 'Commission'];
+      const categoryOrder = collections; // same order as the tabs
       const groups = new Map();
       filtered.forEach((p, i) => {
         const cat = Array.isArray(p.category) ? (p.category[0] || 'Other') : (p.category || 'Other');
@@ -3573,12 +3600,12 @@
     nav.classList.toggle('scrolled', window.scrollY > 20);
   });
 
-  document.querySelectorAll('.filter-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-      this.classList.add('active');
-      renderGallery(this.textContent.trim()); // async, intentionally not awaited
-    });
+  // One delegated handler, since collection tabs are rendered dynamically.
+  document.getElementById('filter-tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab) return;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t === tab));
+    renderGallery(tab.dataset.filter || tab.textContent.trim()); // async, intentionally not awaited
   });
 
   document.querySelectorAll('.size-tag').forEach(tag => {
