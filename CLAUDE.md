@@ -52,7 +52,7 @@ All data persists in `localStorage`. No backend or server.
 
 ### index.html — Public Website
 
-**Home hero** is centred text above a rolodex ring of paintings (`buildRing()` / `ringFrame()` / `initRingInput()` in index.html): 22 cards (the public paintings with images, featured first, repeated to fill) around a tipped wheel, depth-sorted into `z-index` every frame, spinning at an idle 0.0045 rad/frame and thrown with momentum on drag. Tapping a card (no drag) opens that painting; the caption under the ring names the front card. The loop pauses when the tab is hidden or another section is showing; `prefers-reduced-motion` stops the idle spin.
+**Home hero** is centred text (one-line heading, refined `.hero-cta` primary + `.hero-link` text-link secondary) above a rolodex ring (`buildRing()` / `sizeRing()` / `ringFrame()` / `initRingInput()` in index.html). The ring shows **featured paintings only**, each once (falls back to all paintings only if none are featured; max 22). Its radius tightens when there are few paintings so they still overlap, and `sizeRing()` sets the stage height to fit the ring exactly. Cards are depth-sorted into `z-index` every frame, spin at an idle 0.0045 rad/frame (0.0016 while a mouse hovers), are thrown with momentum on drag, and lift on hover. Tapping a card opens that painting; the caption names the front card. The loop pauses when the tab is hidden or another section is showing; `prefers-reduced-motion` stops the idle spin. The vinyl player is a small (88px, 64px on phones) fixed detail in the bottom-right corner.
 
 Single-page app with section-based navigation. `showSection(name)` hides all sections and reveals the target one. Gallery pulls from `localStorage` and falls back to 7 hardcoded default paintings if empty.
 

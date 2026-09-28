@@ -211,13 +211,66 @@
 
   /* Hero: centred text above a rolodex ring of paintings */
   .hero--ring { display: block; min-height: 0; }
-  .hero--ring .hero-text { align-items: center; text-align: center; padding: 64px 24px 0; }
-  .hero--ring .hero-sub { margin: 0 auto 32px; max-width: 520px; }
-  .hero--ring .hero-buttons { justify-content: center; }
+  .hero--ring .hero-text { align-items: center; text-align: center; padding: 44px 24px 0; }
+  .hero--ring .hero-eyebrow { margin-bottom: 16px; }
+  .hero--ring .hero-title {
+    font-size: clamp(30px, 3.5vw, 50px);   /* ~25% smaller; the artwork leads */
+    max-width: 980px;
+    margin-bottom: 16px;
+  }
+  .hero--ring .hero-sub { margin: 0 auto 28px; max-width: 620px; font-size: 16px; line-height: 1.75; }
+  .hero--ring .hero-buttons { justify-content: center; align-items: center; gap: 14px 36px; }
+
+  /* Hero CTAs: a refined solid primary and a light text-link secondary */
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 30px;
+    background: var(--umber);
+    color: var(--cream);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(30, 15, 7, 0.12);
+    transition: background 0.35s ease, transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
+  }
+  .hero-cta:hover { background: #3A2215; transform: translateY(-1px); box-shadow: 0 10px 24px rgba(30, 15, 7, 0.18); }
+  .hero-cta-arrow { display: inline-block; transition: transform 0.35s cubic-bezier(.22,1,.36,1); }
+  .hero-cta:hover .hero-cta-arrow { transform: translateX(4px); }
+  .hero-link {
+    position: relative;
+    padding: 6px 0;
+    color: var(--brown-mid);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  .hero-link::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0.3);
+    transform-origin: left center;
+    opacity: 0.6;
+    transition: transform 0.45s cubic-bezier(.22,1,.36,1), opacity 0.3s ease;
+  }
+  .hero-link:hover { color: var(--terracotta); }
+  .hero-link:hover::after { transform: scaleX(1); opacity: 1; }
   .ring-stage {
     position: relative;
-    height: clamp(360px, 64vh, 660px);
-    margin-top: 28px;
+    height: var(--ring-h, 560px);   /* sized by sizeRing() to fit the ring exactly */
+    margin-top: 12px;
     overflow: hidden;
     touch-action: pan-y;      /* vertical swipes still scroll the page on phones */
     cursor: grab;
@@ -227,15 +280,17 @@
   .ring-stage.dragging { cursor: grabbing; }
   .ring-card {
     position: absolute;
-    left: 50%; top: 50%;
+    left: 50%; top: var(--ring-cy, 50%);
     width: var(--ring-card-w, 200px);
     aspect-ratio: 4 / 5;
-    border-radius: 6px;
+    border-radius: 4px;
     overflow: hidden;
     background: var(--cream-dark);
-    box-shadow: 0 14px 34px rgba(30, 15, 7, 0.22);
+    box-shadow: 0 2px 6px rgba(30, 15, 7, 0.06), 0 18px 40px rgba(30, 15, 7, 0.16);
+    transition: box-shadow 0.4s ease;
     will-change: transform, opacity, filter;
   }
+  .ring-card.is-hover { box-shadow: 0 4px 10px rgba(30, 15, 7, 0.08), 0 28px 56px rgba(30, 15, 7, 0.22); }
   .ring-card img {
     width: 100%; height: 100%;
     object-fit: cover;
@@ -245,7 +300,7 @@
   }
   .ring-caption {
     position: absolute;
-    left: 0; right: 0; bottom: 14px;
+    left: 0; right: 0; bottom: 10px;
     z-index: 100;
     text-align: center;
     font-family: 'Fraunces', serif;
@@ -1405,11 +1460,11 @@
   /* ── FLOATING VINYL MUSIC PLAYER ── */
   .vinyl-player {
     position: fixed;
-    top: 160px;
-    right: 40px;
+    bottom: 28px;
+    right: 28px;
     z-index: 300;
-    width: 148px;
-    height: 148px;
+    width: 88px;
+    height: 88px;
     cursor: grab;
     user-select: none;
     touch-action: none;
@@ -1470,7 +1525,7 @@
   .vinyl-arm {
     position: absolute;
     top: -10px; right: 6px;
-    width: 5px; height: 62px;
+    width: 4px; height: 38px;
     background: linear-gradient(var(--brown-light), var(--umber));
     border-radius: 3px;
     transform-origin: top center;
@@ -1502,7 +1557,7 @@
     box-shadow: 0 2px 10px rgba(30, 15, 7, 0.12);
     font-family: 'Fraunces', serif;
     font-style: italic;
-    font-size: 13px;
+    font-size: 11.5px;
     letter-spacing: 0.01em;
     transition: opacity 0.25s;
     pointer-events: none;
@@ -1511,9 +1566,9 @@
   .vinyl-player.on-left .vinyl-tooltip { right: auto; left: 0; }
 
   @media (max-width: 600px) {
-    .vinyl-player { width: 100px; height: 100px; top: auto; bottom: 24px; right: 20px; }
-    .vinyl-arm { height: 40px; }
-    .vinyl-tooltip { font-size: 12px; bottom: calc(100% + 8px); }
+    .vinyl-player { width: 64px; height: 64px; bottom: 18px; right: 16px; }
+    .vinyl-arm { height: 28px; top: -7px; right: 4px; width: 3px; }
+    .vinyl-tooltip { font-size: 10.5px; bottom: calc(100% + 6px); padding: 3px 10px; }
   }
 
   /* ── RESPONSIVE ── */
@@ -2045,11 +2100,11 @@
   <div class="hero hero--ring">
     <div class="hero-text">
       <p class="hero-eyebrow">Contemporary Paintings Rooted in Memory</p>
-      <h1 class="hero-title">Stories of home,<br>told through <em>paint</em></h1>
+      <h1 class="hero-title">Stories of home, told through <em>paint</em></h1>
       <p class="hero-sub">Paintings inspired by memory, place, and everyday rituals. Contemporary art rooted in the Levant, nostalgia, and the sacred in the mundane.</p>
       <div class="hero-buttons">
-        <a class="btn-primary" onclick="showSection('collection')">View Collection</a>
-        <a class="btn-secondary" onclick="showSection('commission')">Commission a Work</a>
+        <a class="hero-cta" onclick="showSection('collection')">View Collection <span class="hero-cta-arrow" aria-hidden="true">&rarr;</span></a>
+        <a class="hero-link" onclick="showSection('commission')">Commission a Painting</a>
       </div>
     </div>
     <!-- Rolodex ring of paintings, built by buildRing() from the paintings data -->
@@ -2501,45 +2556,48 @@
   }
 
   // ── HERO RING ──
-  // Cards seated edge-out around a tipped wheel (a rolodex), spinning slowly and
-  // thrown with momentum on drag. One requestAnimationFrame loop drives everything.
-  const RING_COUNT = 22;
+  // Featured paintings seated edge-out around a tipped wheel (a rolodex), spinning
+  // slowly and thrown with momentum on drag. One requestAnimationFrame loop drives it.
+  // Each painting appears once; with few paintings the wheel tightens instead of repeating.
+  const RING_MAX = 22;
   const RING_TAU = Math.PI * 2;
-  const RING_IDLE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.0045;
+  const RING_REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const RING_IDLE = RING_REDUCED ? 0 : 0.0045;
+  const RING_IDLE_HOVER = RING_REDUCED ? 0 : 0.0016; // slows while a mouse rests on it
   let ring = null;
 
   function buildRing(paintings) {
     const stage = document.getElementById('ring-stage');
     if (!stage) return;
     const withImg = paintings.filter(p => p.imageData && p.status !== 'Private');
-    const source = [...withImg.filter(p => p.featured), ...withImg.filter(p => !p.featured)];
-    if (ring && ring.sourceKey === source.map(p => p.id).join(',')) return; // already showing these
+    const featured = withImg.filter(p => p.featured);
+    // Featured only; fall back to all paintings only if none are featured, so the hero is never empty.
+    const source = (featured.length ? featured : withImg).slice(0, RING_MAX);
+    const key = source.map(p => p.id).join(',');
+    if (ring && ring.sourceKey === key) return; // already showing these
 
     stage.querySelectorAll('.ring-card').forEach(el => el.remove());
-    const cards = [];
-    for (let i = 0; i < RING_COUNT; i++) {
-      const p = source.length ? source[i % source.length] : null;
+    const cards = source.map((p, i) => {
       const el = document.createElement('div');
-      el.className = 'ring-card' + (p ? '' : ' ' + gpColors[i % gpColors.length]);
-      if (p) {
-        const img = document.createElement('img');
-        img.src = p.imageData;
-        img.alt = p.title || '';
-        img.draggable = false;
-        img.decoding = 'async';
-        el.appendChild(img);
-        el.dataset.id = p.id;
-      }
+      el.className = 'ring-card';
+      const img = document.createElement('img');
+      img.src = p.imageData;
+      img.alt = p.title || '';
+      img.draggable = false;
+      img.decoding = 'async';
+      el.appendChild(img);
+      el.dataset.id = p.id;
       stage.appendChild(el);
-      cards.push({ el, i, p, z: 0 });
-    }
+      return { el, i, p, z: 0, lift: 0, hover: false };
+    });
 
     const prev = ring;
     ring = {
       stage, cards,
-      sourceKey: source.map(p => p.id).join(','),
+      sourceKey: key,
       rotation: prev ? prev.rotation : 0,
       vel: RING_IDLE,
+      idle: RING_IDLE,
       dragging: false, lastX: 0, startX: 0, moved: false, downCard: null,
       R: 0, front: null,
     };
@@ -2548,13 +2606,22 @@
     if (!ringRaf) ringRaf = requestAnimationFrame(ringFrame);
   }
 
+  // Size the wheel and fit the stage tightly around it (no empty band underneath).
   function sizeRing() {
     if (!ring) return;
-    const w = ring.stage.clientWidth, h = ring.stage.clientHeight;
-    const m = Math.min(w, h);
-    ring.R = 0.62 * m;
-    const factor = w < 600 ? 0.42 : 0.34; // bigger cards on phones
-    ring.stage.style.setProperty('--ring-card-w', Math.max(96, Math.min(240, m * factor)) + 'px');
+    const w = ring.stage.clientWidth;
+    const n = Math.max(ring.cards.length, 1);
+    const m = Math.min(w, window.innerHeight * 0.62);
+    const cardW = Math.max(110, Math.min(300, m * (w < 600 ? 0.46 : 0.44)));
+    const cardH = cardW * 1.25;
+    // Fewer paintings -> tighter wheel, so neighbours still overlap like a rolodex.
+    ring.R = 0.62 * m * Math.max(0.85, Math.min(1, n / 12));
+    const tilt = ring.R * 0.42;
+    const top = tilt + cardH * 1.24 / 2 + 22;    // front cards: up to ~1.22x plus hover lift
+    const bottom = tilt + cardH * 0.55 / 2 + 40; // back cards + caption
+    ring.stage.style.setProperty('--ring-card-w', cardW.toFixed(0) + 'px');
+    ring.stage.style.setProperty('--ring-cy', top.toFixed(0) + 'px');
+    ring.stage.style.setProperty('--ring-h', (top + bottom).toFixed(0) + 'px');
   }
   window.addEventListener('resize', sizeRing);
 
@@ -2566,7 +2633,7 @@
 
     if (!ring.dragging) {
       ring.rotation += ring.vel;
-      ring.vel += (RING_IDLE - ring.vel) * 0.02; // a throw decays into the resting spin
+      ring.vel += (ring.idle - ring.vel) * 0.02; // a throw decays into the resting spin
     }
 
     const R = ring.R, n = ring.cards.length;
@@ -2575,10 +2642,12 @@
       const sa = Math.sin(a), ca = Math.cos(a);
       const x = sa * R;
       const z = ca * R;
-      const y = -ca * R * 0.42;            // the tilt: y comes from z
-      const depth = (z / R + 1) / 2;       // 0 at the back, 1 at the front
+      const y = -ca * R * 0.42;                // the tilt: y comes from z
+      const depth = (z / R + 1) / 2;           // 0 at the back, 1 at the front
+      const scale = 0.55 + depth * 0.55 + 0.12 * Math.pow(depth, 8); // extra presence for the front painting
+      c.lift += ((c.hover && !ring.dragging ? -10 : 0) - c.lift) * 0.15;
       c.z = z;
-      c.el.style.transform = `translate(-50%,-50%) translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) rotate(${(sa * 14).toFixed(2)}deg) scale(${(0.55 + depth * 0.55).toFixed(3)})`;
+      c.el.style.transform = `translate(-50%,-50%) translate3d(${x.toFixed(1)}px,${(y + c.lift).toFixed(1)}px,0) rotate(${(sa * 10).toFixed(2)}deg) scale(${scale.toFixed(3)})`;
       c.el.style.opacity = (0.30 + depth * 0.70).toFixed(3);
       c.el.style.filter = `brightness(${(0.5 + depth * 0.7).toFixed(3)})`;
     }
@@ -2591,7 +2660,7 @@
     if (front && front.p !== ring.front) {
       ring.front = front.p;
       const cap = document.getElementById('ring-caption');
-      if (cap) cap.textContent = front.p ? [front.p.title, front.p.year].filter(Boolean).join(', ') : '';
+      if (cap) cap.textContent = [front.p.title, front.p.year].filter(Boolean).join(', ');
     }
   }
 
@@ -2622,6 +2691,18 @@
       if (open && !ring.moved && ring.downCard && ring.downCard.dataset.id) openPaintingFromHome(ring.downCard.dataset.id);
       ring.downCard = null;
     };
+    // Mouse hover: lift the card under the pointer and slow the spin.
+    stage.addEventListener('pointerover', e => {
+      if (!ring || e.pointerType !== 'mouse') return;
+      const el = e.target.closest('.ring-card');
+      ring.cards.forEach(c => { c.hover = c.el === el; c.el.classList.toggle('is-hover', c.hover); });
+    });
+    stage.addEventListener('pointerenter', e => { if (ring && e.pointerType === 'mouse') ring.idle = RING_IDLE_HOVER; });
+    stage.addEventListener('pointerleave', () => {
+      if (!ring) return;
+      ring.idle = RING_IDLE;
+      ring.cards.forEach(c => { c.hover = false; c.el.classList.remove('is-hover'); });
+    });
     stage.addEventListener('pointerup', release(true));
     stage.addEventListener('pointercancel', release(false)); // e.g. the page started scrolling
   }
