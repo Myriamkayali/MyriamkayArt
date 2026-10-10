@@ -1,5 +1,9 @@
-const { readJson, writeJson } = require('../lib/blob');
+const { readJson, updateJson } = require('../lib/blob');
 const { verifyPin, pinFromRequest } = require('../lib/auth');
+const {
+  EDITION_SIZES, SOLD_STATUSES, isLimitedEdition, reservationExpiry, holdsReservation,
+  editionState, nextEditionNumbers, formatEditionNumber,
+} = require('../lib/editions');
 
 const ORDERS_PATH = 'mk-data/orders.json';
 const PRINTS_PATH = 'mk-data/prints.json';
@@ -8,6 +12,8 @@ const PRINTS_PATH = 'mk-data/prints.json';
 // orders are followed up on WhatsApp instead. To turn them back on, finish the
 // Resend setup (see CLAUDE.md) and set ORDER_EMAILS_ENABLED=true in Vercel.
 const ORDER_EMAILS_ENABLED = process.env.ORDER_EMAILS_ENABLED === 'true';
+
+const ORDER_STATUSES = ['New', 'Link Sent', 'Paid', 'Shipped', 'Completed', 'Cancelled'];
 
 const SIZE_DIMENSIONS = { A1: '60×85cm', A2: '42×60cm', A3: '30×42cm', A4: '21×30cm' };
 function sizeLabel(size) {
@@ -23,6 +29,10 @@ async function parseBody(req) {
       catch { resolve({}); }
     });
   });
+}
+
+function httpError(status, message, extra = {}) {
+  return Object.assign(new Error(message), { httpStatus: status }, extra);
 }
 
 function isValidEmail(email) {
@@ -57,7 +67,12 @@ function orderLinesHtml(order) {
   const priceLine = order.price > 0
     ? `Quantity: ${order.quantity} × ${fmtMoney(order.price)}. Total: ${fmtMoney(order.price * order.quantity)}`
     : `Quantity: ${order.quantity}, price to be confirmed`;
-  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` · ${sizeLabel(order.printSize)}` : ''}<br>${priceLine}</p>`;
+  const editionLine = order.limitedEdition
+    ? ((order.editionNumbers || []).length
+      ? `<br>Edition no. ${order.editionNumbers.map(n => formatEditionNumber(n, order.editionTotal)).join(', ')}`
+      : `<br>Limited edition of ${order.editionTotal}, signed and numbered`)
+    : '';
+  return `<p><strong>${order.printTitle}</strong>${order.printSize ? ` · ${sizeLabel(order.printSize)}` : ''}<br>${priceLine}${editionLine}</p>`;
 }
 
 function notifyMyriamEmailHtml(order) {
@@ -99,6 +114,59 @@ function paymentLinkEmailHtml(order) {
     </div>`;
 }
 
+// The print an order belongs to, falling back to what the order itself recorded
+// in case the print was since deleted.
+function printForOrder(prints, order) {
+  return (prints || []).find(p => p.id === order.printId)
+    || { id: order.printId, editionTotal: order.editionTotal };
+}
+
+// Start (or restart) an unpaid order's hold on its share of the edition.
+function renewReservation(order, orders, print, now) {
+  if (!holdsReservation(order, now)) {
+    const state = editionState(print, orders, { now, excludeOrderId: order.id });
+    const qty = Number(order.quantity) || 1;
+    if (state.available < qty) {
+      throw httpError(409, `This order's hold has expired and the edition no longer has room for it (${state.available} left).`);
+    }
+  }
+  order.reservedUntil = reservationExpiry(now);
+}
+
+// Status changes for a limited edition order. Edition numbers are assigned on the
+// move to Paid and are permanent: they're never taken back or reissued.
+function applyEditionStatus(order, next, orders, print, now) {
+  const hasNumbers = (order.editionNumbers || []).length > 0;
+  if (order.paymentStatus === 'Cancelled') {
+    throw httpError(400, 'This order was cancelled and its reservation released. Place a new order instead.');
+  }
+  if (next === 'Cancelled') {
+    order.paymentStatus = 'Cancelled';
+    order.cancelledAt = new Date(now).toISOString();
+    return;
+  }
+  if (SOLD_STATUSES.includes(next)) {
+    if (!hasNumbers) {
+      const qty = Number(order.quantity) || 1;
+      const state = editionState(print, orders, { now, excludeOrderId: order.id });
+      const numbers = state.available >= qty ? nextEditionNumbers(state, qty) : null;
+      if (!numbers) {
+        throw httpError(409, `The edition is full, so this order can't be marked paid (${state.available} left). Its hold may have expired.`);
+      }
+      order.editionNumbers = numbers;
+      order.paidAt = new Date(now).toISOString();
+    }
+    order.paymentStatus = next;
+    return;
+  }
+  // Back to an unpaid status.
+  if (hasNumbers) {
+    throw httpError(400, 'This order already has its edition number, so it can\'t go back to unpaid. Cancel it instead if needed.');
+  }
+  renewReservation(order, orders, print, now);
+  order.paymentStatus = next;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -107,6 +175,20 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      // Public: how many prints are left in each limited edition. Counts only,
+      // nothing about who ordered. Edge-cached briefly; orders are always checked
+      // against live data when placed.
+      if (req.query && req.query.availability) {
+        const [prints, orders] = await Promise.all([readJson(PRINTS_PATH), readJson(ORDERS_PATH)]);
+        const out = {};
+        (prints || []).filter(p => p && p.status !== 'Private' && isLimitedEdition(p)).forEach(p => {
+          const { total, available } = editionState(p, orders || []);
+          out[p.id] = { total, available };
+        });
+        res.setHeader('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=30');
+        return res.status(200).json(out);
+      }
+
       const pin = pinFromRequest(req); // header, never the URL
       const auth = await verifyPin(req, pin);
       if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
@@ -116,6 +198,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    res.setHeader('Cache-Control', 'no-store');
 
     const body = await parseBody(req);
 
@@ -135,19 +218,30 @@ module.exports = async function handler(req, res) {
       const qty = Math.max(1, parseInt(quantity) || 1);
 
       const prints = (await readJson(PRINTS_PATH, { fresh: true })) || [];
-      const print = prints.find(p => p.id === printId);
+      const print = prints.find(p => p.id === printId && p.status !== 'Private');
       if (!print) return res.status(404).json({ error: 'That print could not be found.' });
+      const limited = isLimitedEdition(print);
 
       const sizeOption = (print.sizeOptions || []).find(o => o.size === size) || { size };
-      const editionSize = Number(sizeOption.editionSize) || 0;
-      const numberSold = Number(sizeOption.numberSold) || 0;
-      if (editionSize > 0 && (editionSize - numberSold) <= 0) {
-        return res.status(400).json({ error: 'That size is sold out.' });
+      if (limited) {
+        if (print.status === 'Sold Out') {
+          return res.status(409).json({ error: 'This edition has sold out.', available: 0, soldOut: true });
+        }
+        if (!EDITION_SIZES.includes(size) || !(Number(sizeOption.display_price) > 0)) {
+          return res.status(400).json({ error: 'That size isn\'t available for this print.' });
+        }
+      } else {
+        const editionSize = Number(sizeOption.editionSize) || 0;
+        const numberSold = Number(sizeOption.numberSold) || 0;
+        if (editionSize > 0 && (editionSize - numberSold) <= 0) {
+          return res.status(400).json({ error: 'That size is sold out.' });
+        }
       }
 
+      const now = Date.now();
       const order = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-        createdAt: new Date().toISOString(),
+        id: now.toString(36) + Math.random().toString(36).slice(2, 7),
+        createdAt: new Date(now).toISOString(),
         printId: print.id,
         printTitle: print.title,
         printSize: size,
@@ -164,11 +258,30 @@ module.exports = async function handler(req, res) {
         shippingPostalCode: String(shippingPostalCode).trim(),
         paymentLink: '',
         paymentStatus: 'New',
+        ...(limited ? {
+          limitedEdition: true,
+          editionTotal: Number(print.editionTotal),
+          editionNumbers: [], // assigned when the order is marked Paid
+          reservedUntil: reservationExpiry(now),
+        } : {}),
       };
 
-      const orders = (await readJson(ORDERS_PATH, { fresh: true })) || [];
-      orders.unshift(order);
-      await writeJson(ORDERS_PATH, orders);
+      // Checked and saved in one conditional write, so two customers can never
+      // both get the last print of an edition.
+      const editionAvailable = await updateJson(ORDERS_PATH, current => {
+        const orders = current || [];
+        let left = null;
+        if (limited) {
+          const { available } = editionState(print, orders, { now });
+          if (available < qty) {
+            throw httpError(409, available > 0
+              ? `Only ${available} ${available === 1 ? 'print is' : 'prints are'} left in this edition.`
+              : 'This edition has just sold out.', { available });
+          }
+          left = available - qty;
+        }
+        return { data: [order, ...orders], result: left };
+      });
 
       // Order is already saved at this point — email failures below must never fail the request.
       const emailResults = { notifySent: false, confirmationSent: false, emailError: null };
@@ -185,42 +298,85 @@ module.exports = async function handler(req, res) {
         emailResults.emailError = e.message;
       }
 
-      return res.status(200).json({ ok: true, orderId: order.id, ...emailResults });
+      return res.status(200).json({
+        ok: true, orderId: order.id, reservedUntil: order.reservedUntil || null,
+        ...(limited ? { editionAvailable, editionTotal: order.editionTotal } : {}), ...emailResults,
+      });
     }
 
     // ── Everything below is admin-only ──
     const auth = await verifyPin(req, pinFromRequest(req, body));
     if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
-    const orders = (await readJson(ORDERS_PATH, { fresh: true })) || [];
-
     if (body.action === 'update') {
-      const idx = orders.findIndex(o => o.id === body.orderId);
-      if (idx === -1) return res.status(404).json({ error: 'Order not found.' });
-      const allowed = ['paymentStatus', 'paymentLink'];
-      allowed.forEach(f => {
-        if (body.patch && body.patch[f] !== undefined) orders[idx][f] = body.patch[f];
+      const patch = body.patch || {};
+      if (patch.paymentStatus !== undefined && !ORDER_STATUSES.includes(patch.paymentStatus)) {
+        return res.status(400).json({ error: 'Unknown status.' });
+      }
+      let prints = null;
+      const order = await updateJson(ORDERS_PATH, async current => {
+        const orders = current || [];
+        const idx = orders.findIndex(o => o.id === body.orderId);
+        if (idx === -1) throw httpError(404, 'Order not found.');
+        const order = { ...orders[idx] };
+        const now = Date.now();
+
+        if (patch.paymentLink !== undefined) order.paymentLink = String(patch.paymentLink);
+        const statusChange = patch.paymentStatus !== undefined && patch.paymentStatus !== order.paymentStatus;
+        if (order.limitedEdition && (statusChange || body.renewReservation)) {
+          prints = prints || (await readJson(PRINTS_PATH, { fresh: true })) || [];
+          const print = printForOrder(prints, order);
+          if (statusChange) applyEditionStatus(order, patch.paymentStatus, orders, print, now);
+          else if (order.paymentStatus === 'Cancelled' || (order.editionNumbers || []).length) {
+            throw httpError(400, 'Only unpaid orders have a hold to extend.');
+          } else renewReservation(order, orders, print, now);
+        } else if (statusChange) {
+          order.paymentStatus = patch.paymentStatus;
+        }
+
+        orders[idx] = order;
+        return { data: orders, result: order };
       });
-      await writeJson(ORDERS_PATH, orders);
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, order });
     }
 
     if (body.action === 'send-payment-link') {
-      const idx = orders.findIndex(o => o.id === body.orderId);
-      if (idx === -1) return res.status(404).json({ error: 'Order not found.' });
-      const order = orders[idx];
+      const orders = (await readJson(ORDERS_PATH, { fresh: true })) || [];
+      const order = orders.find(o => o.id === body.orderId);
+      if (!order) return res.status(404).json({ error: 'Order not found.' });
       if (!order.paymentLink) return res.status(400).json({ error: 'Add a payment link before sending.' });
 
       await sendEmail({ to: order.clientEmail, subject: 'Payment link for your order', html: paymentLinkEmailHtml(order) });
-      order.paymentStatus = 'Link Sent';
-      await writeJson(ORDERS_PATH, orders);
-      return res.status(200).json({ ok: true });
+
+      // Sending the link restarts an unpaid limited edition order's hold.
+      let prints = null;
+      const updated = await updateJson(ORDERS_PATH, async current => {
+        const orders = current || [];
+        const idx = orders.findIndex(o => o.id === body.orderId);
+        if (idx === -1) throw httpError(404, 'Order not found.');
+        const o = { ...orders[idx] };
+        const unpaid = o.paymentStatus === 'New' || o.paymentStatus === 'Link Sent';
+        if (!unpaid) return { result: o }; // already paid or cancelled: leave the status alone
+        if (o.limitedEdition) {
+          prints = prints || (await readJson(PRINTS_PATH, { fresh: true })) || [];
+          try { renewReservation(o, orders, printForOrder(prints, o), Date.now()); }
+          catch (e) { console.error('hold not renewed:', e.message); } // email already went out; keep the old hold
+        }
+        o.paymentStatus = 'Link Sent';
+        orders[idx] = o;
+        return { data: orders, result: o };
+      });
+      return res.status(200).json({ ok: true, order: updated });
     }
 
     return res.status(400).json({ error: 'Unknown action.' });
   } catch (e) {
-    console.error('orders handler error:', e);
-    if (e.storageUnavailable) {
+    res.setHeader('Cache-Control', 'no-store');
+    if (!e.httpStatus) console.error('orders handler error:', e); // sold out etc. are expected, not errors
+    if (e.httpStatus) {
+      return res.status(e.httpStatus).json({ error: e.message, ...(e.available !== undefined ? { available: e.available, soldOut: e.available === 0 } : {}) });
+    }
+    if (e.storageUnavailable || e.storageBusy) {
       return res.status(503).json({ error: "Orders can't be placed right now. Please try again in a little while, or message me on Instagram @myriamkay.art." });
     }
     const status = e.missingConfig ? 200 : 500;

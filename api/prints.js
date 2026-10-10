@@ -16,6 +16,7 @@ async function parseBody(req) {
 
 // Only what the public site shows: the charged price (display_price) and edition
 // counts for sold-out status. base_price and every cost field stay admin-only.
+// Live limited edition availability comes from /api/orders?availability=1.
 function publicPrint(pr) {
   return {
     id: pr.id,
@@ -23,6 +24,7 @@ function publicPrint(pr) {
     description: pr.description,
     imageData: pr.imageData,
     status: pr.status,
+    editionTotal: Number(pr.editionTotal) || 0,
     sizeOptions: (pr.sizeOptions || []).map(o => ({
       size: o.size,
       display_price: o.display_price,

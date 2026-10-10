@@ -1367,12 +1367,72 @@ async function loadOrders() {
   }
 }
 
-async function updateOrder(orderId, patch) {
+// ── LIMITED EDITIONS ──
+// Display only. The server enforces the limit, holds reservations and assigns
+// edition numbers (lib/editions.js); these mirror its counting for the admin views.
+function isLimitedPrint(pr) { return Number(pr && pr.editionTotal) > 0; }
+function orderHoldsReservation(o) {
+  return o.limitedEdition && ['New', 'Link Sent'].includes(o.paymentStatus)
+    && !(o.editionNumbers || []).length && Date.parse(o.reservedUntil || 0) > Date.now();
+}
+function printEditionStats(pr, orders) {
+  const total = Number(pr.editionTotal) || 0;
+  const mine = (orders || []).filter(o => o.limitedEdition && o.printId === pr.id);
+  const issued = new Set();
+  mine.forEach(o => (o.editionNumbers || []).forEach(n => issued.add(n)));
+  const sold = mine.filter(o => ['Paid', 'Shipped', 'Completed'].includes(o.paymentStatus))
+    .reduce((n, o) => n + (o.editionNumbers || []).length, 0);
+  const reserved = mine.filter(orderHoldsReservation).reduce((n, o) => n + (Number(o.quantity) || 1), 0);
+  return { total, sold, reserved, retired: issued.size - sold, issued: issued.size, available: Math.max(0, total - issued.size - reserved) };
+}
+function fmtEditionNo(n, total) { return `${String(n).padStart(String(total).length, '0')}/${total}`; }
+
+// One-time setup for the Limited Edition Fine Art Prints collection.
+const LIMITED_EDITION_SETUP = {
+  titles: ['Tarboosh Daze', 'Castania Aalkhat', 'Fayrouz Calling', 'Beirut Over Coffee', 'Serving Breakfast', 'Cup From the Past'],
+  total: 20,
+  prices: { A2: 219, A1: 359 }, // USD, what clients pay
+};
+function limitedEditionSetupPending() {
+  return getPrints().filter(pr => LIMITED_EDITION_SETUP.titles.includes(pr.title) && !isLimitedPrint(pr));
+}
+function confirmLimitedEditionSetup() {
+  const pending = limitedEditionSetupPending();
+  if (!pending.length) return;
+  document.getElementById('confirm-body').textContent =
+    `${pending.map(p => p.title).join(', ')} will become limited editions of ${LIMITED_EDITION_SETUP.total} (shared across sizes), `
+    + `offered in A2 at $${LIMITED_EDITION_SETUP.prices.A2} and A1 at $${LIMITED_EDITION_SETUP.prices.A1}. A3 and A4 will no longer be offered. Cost fields are kept.`;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('confirm-ok').onclick = () => { closeModal(); applyLimitedEditionSetup(); };
+}
+async function applyLimitedEditionSetup() {
+  const { titles, total, prices } = LIMITED_EDITION_SETUP;
+  const updated = getPrints().map(pr => {
+    if (!titles.includes(pr.title) || isLimitedPrint(pr)) return pr;
+    const sizeOptions = PRINT_SIZE_NAMES.map(size => {
+      const o = { ...(findSizeOption(pr, size) || { size }) };
+      if (prices[size]) {
+        o.display_price = prices[size];                          // what the client pays
+        o.base_price = Math.round(prices[size] / 1.01 * 100) / 100; // excl. the 1% conversion markup, for margins
+      } else {
+        o.display_price = ''; o.base_price = '';                 // not offered
+      }
+      return o;
+    });
+    return { ...pr, editionTotal: total, sizeOptions };
+  });
+  if (await savePrints(updated)) {
+    showToast('Limited edition prints are set up.', 'success');
+    renderPrintsList();
+  }
+}
+
+async function updateOrder(orderId, patch, extra = {}) {
   try {
     const res = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', pin: currentAdminPin, orderId, patch }),
+      body: JSON.stringify({ action: 'update', pin: currentAdminPin, orderId, patch, ...extra }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -1380,7 +1440,7 @@ async function updateOrder(orderId, patch) {
       return false;
     }
     const order = getOrders().find(o => o.id === orderId);
-    if (order) Object.assign(order, patch);
+    if (order) Object.assign(order, data.order || patch); // the server's copy has any edition number it assigned
     return true;
   } catch (e) {
     showToast(e.message || 'Failed to save. Check your connection.', 'error');
@@ -1401,7 +1461,7 @@ async function sendPaymentLinkEmail(orderId) {
       return false;
     }
     const order = getOrders().find(o => o.id === orderId);
-    if (order) order.paymentStatus = 'Link Sent';
+    if (order) Object.assign(order, data.order || { paymentStatus: 'Link Sent' });
     return true;
   } catch (e) {
     showToast(e.message || 'Failed to send. Check your connection.', 'error');
@@ -2210,11 +2270,22 @@ let printImageData = null;
 
 async function renderPrintsList() {
   if (!printsCache) await loadPrints();
+  if (!ordersCache) await loadOrders();
   const prints = getPrints();
+  const orders = getOrders();
 
   const totalPrints = prints.length;
   let totalSold = 0, totalRemaining = 0, potentialRevenueRemaining = 0;
   prints.forEach(pr => {
+    if (isLimitedPrint(pr)) {
+      // One shared edition: what's left could sell in either size, so count it at the lower base price.
+      const st = printEditionStats(pr, orders);
+      const bases = ['A2', 'A1'].map(s => Number((findSizeOption(pr, s) || {}).base_price) || 0).filter(n => n > 0);
+      totalSold += st.sold;
+      totalRemaining += st.available + st.reserved;
+      potentialRevenueRemaining += (bases.length ? Math.min(...bases) : 0) * (st.available + st.reserved);
+      return;
+    }
     const m = computePrintMetrics(pr);
     totalSold += m.numberSold;
     totalRemaining += m.numberRemaining;
@@ -2224,7 +2295,14 @@ async function renderPrintsList() {
     }, 0);
   });
 
-  let html = `
+  const setupPending = limitedEditionSetupPending();
+  let html = setupPending.length ? `
+    <div class="dash-block" style="border-color:var(--terra);margin-bottom:24px">
+      <p class="dash-section-title">Limited Edition Fine Art Prints</p>
+      <p class="dash-section-sub" style="margin-bottom:14px">${setupPending.length} of the ${LIMITED_EDITION_SETUP.titles.length} collection prints aren't set up as limited editions yet, so they don't appear on the Prints page. Set them up as editions of ${LIMITED_EDITION_SETUP.total} (shared across sizes), in A2 at $${LIMITED_EDITION_SETUP.prices.A2} and A1 at $${LIMITED_EDITION_SETUP.prices.A1}.</p>
+      <button class="btn btn-primary" onclick="confirmLimitedEditionSetup()">Set Up Limited Editions</button>
+    </div>` : '';
+  html += `
     <div class="stats-row">
       <div class="stat-card">
         <p class="stat-label">Print Editions</p>
@@ -2258,12 +2336,13 @@ async function renderPrintsList() {
   } else {
     prints.forEach(pr => {
       const m = computePrintMetrics(pr);
+      const st = isLimitedPrint(pr) ? printEditionStats(pr, orders) : null;
       const imgHtml = pr.imageData
         ? `<img class="painting-card-img-inner" src="${pr.imageData}" alt="${pr.title}" style="width:100%;height:100%;object-fit:cover">`
         : `<div class="painting-card-img-placeholder">◻</div>`;
       const statusBadge = pr.status === 'Private'
         ? '<span class="pc-badge" style="background:rgba(244,237,224,0.05);color:var(--muted)">Private</span>'
-        : m.numberRemaining <= 0
+        : (st ? st.available <= 0 : m.numberRemaining <= 0)
           ? '<span class="pc-badge sold">Sold Out</span>'
           : '<span class="pc-badge avail">Available</span>';
 
@@ -2278,11 +2357,20 @@ async function renderPrintsList() {
           </div>
           <div class="painting-card-info">
             <p class="pc-title">${pr.title}</p>
+            ${st ? `
+            <p class="pc-meta">Limited edition of ${st.total} · A2 / A1</p>
+            <div class="pc-badges">
+              ${statusBadge}
+              <span class="pc-badge cat">${st.sold} sold</span>
+              ${st.reserved ? `<span class="pc-badge cat">${st.reserved} reserved</span>` : ''}
+              <span class="pc-badge cat">${st.available} left</span>
+              ${st.retired ? `<span class="pc-badge cat" title="Numbers from cancelled paid orders are never reissued">${st.retired} retired</span>` : ''}
+            </div>` : `
             <p class="pc-meta">${m.sizeCount} size${m.sizeCount === 1 ? '' : 's'} offered · Edition of ${m.editionSize}</p>
             <div class="pc-badges">
               ${statusBadge}
               <span class="pc-badge cat">${m.numberSold}/${m.editionSize} sold</span>
-            </div>
+            </div>`}
             <p style="font-size:11px;color:var(--terra-light);margin-top:8px">${m.minPrice ? `from ${fmtUSD(m.minPrice)}` : 'No price set'} · ${m.profitMargin.toFixed(0)}% best margin</p>
           </div>
         </div>`;
@@ -2369,6 +2457,11 @@ async function renderPrintForm() {
             ${['Available', 'Sold Out', 'Private'].map(s => `<option value="${s}" ${pr.status === s ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
         </div>
+        <div class="form-group">
+          <label class="form-label">Limited Edition Size</label>
+          <input class="form-input" id="pr-edition-total" type="number" min="0" value="${Number(pr.editionTotal) || ''}" placeholder="e.g. 20">
+          <p style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Total prints across all sizes: A2 and A1 share one numbered edition, and only those two sizes are offered. Leave empty for an open edition.</p>
+        </div>
       </div>
 
       <hr class="form-divider">
@@ -2452,8 +2545,19 @@ async function savePrint() {
     certificateCost: document.getElementById(`pr-${size}-certificate`).value || '',
   }));
 
+  const editionTotal = parseInt(document.getElementById('pr-edition-total').value) || 0;
   const prints = getPrints();
+  const existing = editingPrintId ? prints.find(p => p.id === editingPrintId) : null;
+  if (existing && isLimitedPrint(existing)) {
+    const st = printEditionStats(existing, getOrders());
+    if (editionTotal < st.issued + st.reserved) {
+      showToast(`This edition already has ${st.issued} numbered and ${st.reserved} reserved, so it can't be smaller than ${st.issued + st.reserved}.`, 'error');
+      return;
+    }
+  }
   const print = {
+    ...(existing || {}), // keep fields this form doesn't edit
+    editionTotal,
     id: editingPrintId || uid(),
     title,
     description: document.getElementById('pr-desc').value.trim(),
@@ -2502,14 +2606,49 @@ async function deletePrint(id) {
 }
 
 // ── ORDERS ──────────────────────────────────────────
-const ORDER_STATUS_OPTIONS = ['New', 'Link Sent', 'Paid', 'Shipped', 'Completed'];
+const ORDER_STATUS_OPTIONS = ['New', 'Link Sent', 'Paid', 'Shipped', 'Completed', 'Cancelled'];
+
+// Edition column: the number once paid, or the reservation while unpaid.
+function orderEditionHtml(o) {
+  if (!o.limitedEdition) return '<span style="color:var(--muted)">—</span>';
+  const nums = (o.editionNumbers || []).map(n => fmtEditionNo(n, o.editionTotal)).join(', ');
+  if (nums) {
+    return o.paymentStatus === 'Cancelled'
+      ? `<p style="color:var(--muted)">No. ${nums}</p><p style="font-size:11px;color:var(--muted)">retired, not reissued</p>`
+      : `<p style="color:var(--cream)">No. ${nums}</p>`;
+  }
+  if (o.paymentStatus === 'Cancelled') return '<p style="font-size:11px;color:var(--muted)">Released</p>';
+  const until = new Date(o.reservedUntil);
+  const active = orderHoldsReservation(o);
+  return `<p style="font-size:11px;color:${active ? 'var(--muted)' : '#e74c3c'}">${active ? 'Reserved until' : 'Hold expired'} ${until.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+    <button class="btn btn-ghost" style="margin-top:6px;padding:6px 10px;font-size:10px" onclick="renewOrderHold('${o.id}')">${active ? 'Extend hold' : 'Renew hold'}</button>`;
+}
+
+async function changeOrderStatus(orderId, status) {
+  const o = getOrders().find(x => x.id === orderId);
+  if (o && o.limitedEdition) {
+    const numbered = (o.editionNumbers || []).length > 0;
+    if (['Paid', 'Shipped', 'Completed'].includes(status) && !numbered
+      && !confirm(`Mark as ${status}? This permanently assigns the next edition number${(Number(o.quantity) || 1) > 1 ? 's' : ''} to this order.`)) return renderOrders();
+    if (status === 'Cancelled' && !confirm(numbered
+      ? 'Cancel this paid order? Its edition number will be retired and never reissued, so the edition gets one smaller.'
+      : 'Cancel this order? Its reserved print goes back on sale.')) return renderOrders();
+  }
+  await updateOrder(orderId, { paymentStatus: status });
+  renderOrders();
+}
+
+async function renewOrderHold(orderId) {
+  if (await updateOrder(orderId, {}, { renewReservation: true })) showToast('Hold extended.', 'success');
+  renderOrders();
+}
 
 async function renderOrders() {
   if (!ordersCache) await loadOrders();
   const orders = getOrders().slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
   const statusColor = (s) => ({
-    'New': '#e74c3c', 'Link Sent': '#e0a030', 'Paid': '#27ae60', 'Shipped': 'var(--terra-light)', 'Completed': 'var(--muted)',
+    'New': '#e74c3c', 'Link Sent': '#e0a030', 'Paid': '#27ae60', 'Shipped': 'var(--terra-light)', 'Completed': 'var(--muted)', 'Cancelled': 'var(--muted)',
   }[s] || 'var(--muted)');
 
   const rows = orders.length ? orders.map(o => `
@@ -2526,10 +2665,11 @@ async function renderOrders() {
         <p style="color:var(--cream)">${o.printTitle}</p>
         <p style="font-size:11px;color:var(--muted)">${o.printSize || ''}</p>
       </td>
+      <td style="min-width:130px">${orderEditionHtml(o)}</td>
       <td class="num">${fmtUSD(o.price)} × ${o.quantity}</td>
       <td>${o.createdAt ? formatDate(o.createdAt.slice(0, 10)) : '—'}</td>
       <td>
-        <select class="form-select" style="font-size:11px;padding:6px 24px 6px 8px;color:${statusColor(o.paymentStatus)}" onchange="updateOrder('${o.id}', { paymentStatus: this.value }).then(() => renderOrders())">
+        <select class="form-select" style="font-size:11px;padding:6px 24px 6px 8px;color:${statusColor(o.paymentStatus)}" onchange="changeOrderStatus('${o.id}', this.value)">
           ${ORDER_STATUS_OPTIONS.map(s => `<option value="${s}" ${o.paymentStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
         </select>
       </td>
@@ -2540,14 +2680,14 @@ async function renderOrders() {
         </div>
         <button class="btn btn-primary" style="margin-top:6px;padding:8px 12px;font-size:10px;width:100%" onclick="triggerSendPaymentLink('${o.id}')">Send payment link to client</button>
       </td>
-    </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px 0">No orders yet.</td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px 0">No orders yet.</td></tr>`;
 
   document.getElementById('content-area').innerHTML = `
     <div class="dash-block" style="overflow-x:auto">
       <p class="dash-section-title">Orders</p>
-      <p class="dash-section-sub">${orders.length} order${orders.length === 1 ? '' : 's'}. Update status as you invoice, collect payment, and ship — this is a tracking list only, no payment processing happens here.</p>
+      <p class="dash-section-sub">${orders.length} order${orders.length === 1 ? '' : 's'}. Update status as you invoice, collect payment, and ship — this is a tracking list only, no payment processing happens here. Limited edition orders hold their print while unpaid; marking one Paid assigns its edition number.</p>
       <table class="data-table">
-        <thead><tr><th>Client</th><th>Shipping</th><th>Print</th><th class="num">Price × Qty</th><th>Date</th><th>Status</th><th>Payment Link</th></tr></thead>
+        <thead><tr><th>Client</th><th>Shipping</th><th>Print</th><th>Edition</th><th class="num">Price × Qty</th><th>Date</th><th>Status</th><th>Payment Link</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
