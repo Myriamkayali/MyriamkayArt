@@ -1402,8 +1402,12 @@ function confirmLimitedEditionSetup() {
   document.getElementById('confirm-body').textContent =
     `${pending.map(p => p.title).join(', ')} will become limited editions of ${LIMITED_EDITION_SETUP.total} (shared across sizes), `
     + `offered in A2 at $${LIMITED_EDITION_SETUP.prices.A2} and A1 at $${LIMITED_EDITION_SETUP.prices.A1}. A3 and A4 will no longer be offered. Cost fields are kept.`;
+  document.querySelector('#confirm-modal .modal-title').textContent = 'Set Up Limited Editions?';
+  const ok = document.getElementById('confirm-ok');
+  ok.textContent = 'Set Up';
+  ok.className = 'btn btn-primary';
   document.getElementById('confirm-modal').classList.add('open');
-  document.getElementById('confirm-ok').onclick = () => { closeModal(); applyLimitedEditionSetup(); };
+  ok.onclick = () => { closeModal(); applyLimitedEditionSetup(); };
 }
 async function applyLimitedEditionSetup() {
   const { titles, total, prices } = LIMITED_EDITION_SETUP;
@@ -3101,6 +3105,9 @@ async function movePainting(id, dir) {
 function closeModal() {
   document.getElementById('confirm-modal').classList.remove('open');
   document.querySelector('#confirm-modal .modal-title').textContent = 'Delete Painting?'; // reset after other uses
+  const ok = document.getElementById('confirm-ok');
+  ok.textContent = 'Delete';
+  ok.className = 'btn btn-danger';
 }
 
 // ── DASHBOARD ──────────────────────────────────────────
