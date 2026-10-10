@@ -4,6 +4,24 @@
       "source": "/media/:file(.+\\.(?:jpe?g|JPE?G|png|PNG|webp|WEBP|gif|GIF|avif|AVIF))",
       "destination": "https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/:file"
     },
-    { "source": "/((?!api/|images/|media/|admin).*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/((?!api/|images/|media/|_vercel/|admin).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "images": {
+    "sizes": [
+      640
+    ],
+    "formats": [
+      "image/webp"
+    ],
+    "minimumCacheTTL": 2678400,
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "eahxvq5wimrwyuwv.public.blob.vercel-storage.com"
+      }
+    ]
+  }
 }

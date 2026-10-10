@@ -16,6 +16,13 @@
     var path = u.slice(BLOB_ORIGIN.length + 1);
     return /\.(jpe?g|png|webp|gif|avif)$/i.test(path.split('?')[0]) ? '/media/' + path : u;
   }
+  // A smaller copy of a stored image, resized and converted to WebP by Vercel's image
+  // CDN (made once, then cached). Allowed widths and the source host are set under
+  // "images" in vercel.json. Used where images show small, like the home wheel.
+  function resizedUrl(u, w) {
+    var m = /^\/media\/(.+)$/.exec(u || '');
+    return m ? '/_vercel/image?url=' + encodeURIComponent(BLOB_ORIGIN + '/' + m[1]) + '&w=' + w + '&q=75' : u;
+  }
   function mapMedia(v) {
     if (typeof v === 'string') return mediaUrl(v);
     if (Array.isArray(v)) return v.map(mapMedia);
@@ -26,11 +33,18 @@
     var img = e.target;
     if (!img || img.tagName !== 'IMG' || img.dataset.mediaRetried) return;
     var src = img.getAttribute('src') || '';
+    if (src.indexOf('/_vercel/image') === 0 && !img.dataset.resizeFailed) {
+      // Resizing unavailable: fall back to the normal image (which has its own retry below).
+      img.dataset.resizeFailed = '1';
+      img.src = mediaUrl(new URLSearchParams(src.split('?')[1]).get('url'));
+      return;
+    }
     if (src.indexOf('/media/') !== 0) return;
     img.dataset.mediaRetried = '1';
     img.src = BLOB_ORIGIN + '/' + src.slice(7);
   }, true);
 </script>
+<link rel="preload" href="/api/paintings" as="fetch" crossorigin="anonymous"><!-- the home wheel needs this first -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Hanken+Grotesk:wght@300..700&family=Caveat:wght@500&display=swap" rel="stylesheet">
@@ -2747,12 +2761,20 @@
   let lbPool = [];    // the paintings those ids come from
   let lbCurrentId = null;
 
-  async function getPaintings() {
-    try {
-      const res = await fetch('/api/paintings');
-      const data = await res.json();
-      return Array.isArray(data) ? mapMedia(data) : []; // an error response must not crash the gallery
-    } catch { return []; }
+  // One request shared by everything on the page (wheel, strips, gallery, Instagram
+  // grid), reused for a minute; started early by the <link rel="preload"> in <head>.
+  let paintingsPromise = null, paintingsAt = 0;
+  function getPaintings() {
+    if (!paintingsPromise || Date.now() - paintingsAt > 60000) {
+      paintingsAt = Date.now();
+      const p = fetch('/api/paintings')
+        .then(res => res.json())
+        .then(data => Array.isArray(data) ? mapMedia(data) : []) // an error response must not crash the gallery
+        .catch(() => []);
+      p.then(list => { if (!list.length && paintingsPromise === p) paintingsPromise = null; }); // don't keep a failure
+      paintingsPromise = p;
+    }
+    return paintingsPromise.then(list => list.slice());
   }
 
   // ── HERO RING ──
@@ -2777,13 +2799,15 @@
     if (ring && ring.sourceKey === key) return; // already showing these
 
     stage.querySelectorAll('.ring-card').forEach(el => el.remove());
-    ringThumbUrls.forEach(u => URL.revokeObjectURL(u));
-    ringThumbUrls = [];
     const cards = source.map((p, i) => {
       const el = document.createElement('div');
       el.className = 'ring-card';
       const img = document.createElement('img');
-      setRingImage(img, p.imageData);
+      // Cards are at most ~300px wide: a 640px WebP copy is a fraction of the full
+      // image's size, and also keeps graphics memory low so the wheel stays smooth.
+      // The paintings that start at the front load first.
+      img.fetchPriority = (i === 0 || i === 1 || i === source.length - 1) ? 'high' : 'low';
+      img.src = resizedUrl(p.imageData, 640);
       img.alt = p.title || '';
       img.draggable = false;
       img.decoding = 'async';
@@ -2809,36 +2833,6 @@
     sizeRing();
     if (!prev) initRingInput(stage);
     if (!ringRaf) ringRaf = requestAnimationFrame(ringFrame);
-  }
-
-  // Cards are at most ~300px wide, so each gets a small copy of its painting instead of
-  // the full image: 22 full-size images held as moving layers can exhaust graphics
-  // memory and leave the wheel stuttering until the page is reloaded.
-  const RING_THUMB_W = 640;
-  let ringThumbUrls = [];
-  function setRingImage(img, src) {
-    const full = new Image();
-    full.crossOrigin = 'anonymous'; // Blob allows CORS, so the canvas stays readable
-    full.onload = () => {
-      try {
-        const scale = RING_THUMB_W / full.naturalWidth;
-        if (scale >= 1) { img.src = src; return; }
-        const c = document.createElement('canvas');
-        c.width = RING_THUMB_W;
-        c.height = Math.round(full.naturalHeight * scale);
-        const ctx = c.getContext('2d');
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(full, 0, 0, c.width, c.height);
-        c.toBlob(b => {
-          if (!b) { img.src = src; return; }
-          const url = URL.createObjectURL(b);
-          ringThumbUrls.push(url);
-          img.src = url;
-        }, 'image/jpeg', 0.86);
-      } catch { img.src = src; }
-    };
-    full.onerror = () => { img.src = src; }; // the page's /media retry handles it from here
-    full.src = src;
   }
 
   // Size the wheel and fit the stage tightly around it (no empty band underneath).
