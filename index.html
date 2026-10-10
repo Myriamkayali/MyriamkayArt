@@ -1910,14 +1910,6 @@
     .lb-count { top: 22px; left: 18px; }
   }
 
-  /* Order confirmation: Instagram DM button */
-  .order-ig-btn {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    text-decoration: none;
-  }
 
   /* Home: about the artist teaser */
   .home-about-inner {
@@ -3928,11 +3920,8 @@
     </div>`;
   }
 
-  // Orders are followed up in Instagram DMs (brings clients to the Instagram account).
-  // Instagram links can't pre-fill a message, so the order details are copied to the
-  // clipboard when the client taps the button, and also shown on screen to copy by hand.
-  const MYRIAM_INSTAGRAM_DM = 'https://ig.me/m/myriamkay.art';
-
+  // Orders are followed up on WhatsApp: once an order is placed the client is taken
+  // straight to a chat with Myriam, with the full order already written in.
   function orderMessageText() {
     const { print, size, form, orderId } = orderState;
     const opt = orderSelectedOption();
@@ -3961,23 +3950,8 @@
     return lines;
   }
 
-  // Runs on the button tap (a user gesture, so the clipboard is allowed); the link
-  // itself then opens the Instagram chat.
-  function copyOrderForInstagram(btn) {
-    const text = orderMessageText();
-    const done = () => { const n = document.getElementById('ord-copied'); if (n) n.style.display = 'block'; };
-    try { navigator.clipboard.writeText(text).then(done).catch(() => {}); } catch {}
-  }
-
-  function orderInstagramHtml() {
-    const ig = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none"/></svg>';
-    return `
-      <a class="form-submit order-ig-btn" href="${MYRIAM_INSTAGRAM_DM}" target="_blank" rel="noopener" onclick="copyOrderForInstagram(this)">${ig} Message me on Instagram</a>
-      <p id="ord-copied" style="display:none;font-size:12px;color:var(--brown-mid);margin-top:10px">Your order details are copied. Just paste them into the chat.</p>
-      <details style="margin-top:14px;text-align:left">
-        <summary style="cursor:pointer;font-size:12px;color:var(--brown-light);text-align:center;letter-spacing:0.04em">Show my order details</summary>
-        <pre style="white-space:pre-wrap;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;color:var(--brown-mid);background:var(--cream-dark);padding:14px 16px;margin-top:10px;user-select:text;-webkit-user-select:text">${esc(orderMessageText())}</pre>
-      </details>`;
+  function orderWhatsAppUrl() {
+    return `https://wa.me/${MYRIAM_WHATSAPP}?text=${encodeURIComponent(orderMessageText())}`;
   }
 
   function orderSelectedOption() {
@@ -4079,23 +4053,12 @@
           <p>${form.country}</p>
         </div>
         <p id="ord-error" style="color:#c0392b;font-size:12px;margin-bottom:6px;display:none"></p>
-        <button class="form-submit" id="ord-submit-btn" onclick="submitOrder()">${isEditionPrint(print) ? 'Place Preorder' : 'Place Order'}</button>
+        <button class="form-submit" id="ord-submit-btn" onclick="submitOrder()">Place Order</button>
         <button onclick="orderPrevStep()" style="display:block;width:100%;text-align:center;background:none;border:none;color:var(--brown-light);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-top:14px;padding:8px;">← Back to edit</button>
       `;
       return;
     }
 
-    if (step === 3) {
-      body.innerHTML = `
-        <div style="text-align:center;padding:16px 0 4px">
-          <p style="font-family:'Fraunces',serif;font-size:30px;font-style:italic;color:var(--umber);margin-bottom:14px">${isEditionPrint(print) ? 'Preorder Received' : 'Order Received'}</p>
-          <p style="font-size:14px;color:var(--brown-mid);line-height:1.8;margin-bottom:18px">Thank you, ${esc((form.name || '').split(' ')[0] || 'there')}! Your ${isEditionPrint(print) ? 'preorder' : 'order'} for <strong>${esc(print.title)}</strong> (${sizeLabel(orderState.size)}) has been received.</p>
-          ${orderState.reservedUntil ? `<p style="font-size:13px;color:var(--brown-mid);line-height:1.8;margin-bottom:14px">Your print is reserved until ${new Date(orderState.reservedUntil).toLocaleString(undefined, { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })} while I confirm shipping to ${esc(form.country)} and send your payment link. Your edition number is assigned once payment is complete.</p>` : ''}
-          <p style="font-size:13px;color:var(--brown-light);line-height:1.8;margin-bottom:22px">${orderState.confirmationSent ? `A confirmation email is on its way to ${esc(form.email)}. ` : ''}Send your ${isEditionPrint(print) ? 'preorder' : 'order'} to me in an Instagram message so we can chat about shipping and payment. Tapping the button copies your order details, so you only need to paste them.</p>
-          ${orderInstagramHtml()}
-          <button onclick="closeOrderModal()" style="display:block;width:100%;text-align:center;background:none;border:none;color:var(--brown-light);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-top:14px;padding:8px;">Close</button>
-        </div>`;
-    }
   }
 
   function readOrderForm() {
@@ -4145,7 +4108,7 @@
 
   async function submitOrder() {
     const btn = document.getElementById('ord-submit-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; btn.style.opacity = '0.7'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening WhatsApp…'; btn.style.opacity = '0.7'; }
 
     const { print, form, size } = orderState;
     try {
@@ -4174,7 +4137,7 @@
         if (typeof data.available === 'number') editionAvailability[print.id] = { total: Number(print.editionTotal), available: data.available };
         const errEl = document.getElementById('ord-error');
         if (errEl) { errEl.textContent = data.error || 'This edition has just sold out.'; errEl.style.display = 'block'; }
-        if (btn) { btn.disabled = data.soldOut; btn.textContent = data.soldOut ? 'Edition Sold Out' : 'Place Preorder'; btn.style.opacity = data.soldOut ? '0.5' : '1'; }
+        if (btn) { btn.disabled = data.soldOut; btn.textContent = data.soldOut ? 'Edition Sold Out' : 'Place Order'; btn.style.opacity = data.soldOut ? '0.5' : '1'; }
         if (print.id === printDetailId) renderPrintBuyBox(print);
         return;
       }
@@ -4183,23 +4146,17 @@
       orderState.orderId = data.orderId || '';
       orderState.reservedUntil = data.reservedUntil || null;
       orderState.confirmationSent = !!data.confirmationSent;
-      orderState.step = 3;
-      renderOrderStep();
+      window.location.href = orderWhatsAppUrl(); // Place Order goes straight into the WhatsApp chat
       if (typeof data.editionAvailable === 'number') {
         // Update the counter behind the modal to include this reservation.
         editionAvailability[print.id] = { total: data.editionTotal, available: data.editionAvailable };
         if (print.id === printDetailId) renderPrintBuyBox(print);
       }
     } catch (e) {
-      // Still let the client reach Myriam: offer to send the same order on Instagram.
+      // Saving failed: still send the order to Myriam on WhatsApp so it isn't lost.
       orderState.orderId = '';
-      const errEl = document.getElementById('ord-error');
-      if (errEl) {
-        errEl.innerHTML = `${esc(e.message || 'Something went wrong placing your order.')} You can send your order to me on Instagram instead:`;
-        errEl.style.display = 'block';
-        errEl.insertAdjacentHTML('afterend', `<div style="margin:6px 0 14px">${orderInstagramHtml()}</div>`);
-      }
-      if (btn) { btn.disabled = false; btn.textContent = isEditionPrint(print) ? 'Place Preorder' : 'Place Order'; btn.style.opacity = '1'; }
+      window.location.href = orderWhatsAppUrl();
+      if (btn) { btn.disabled = false; btn.textContent = 'Place Order'; btn.style.opacity = '1'; }
     }
   }
 
