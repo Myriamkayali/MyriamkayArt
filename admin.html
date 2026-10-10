@@ -2777,16 +2777,22 @@ async function protectImage(source) {
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(source, 0, 0, w, h);
 
-  // Watermark: "© Myriam Kayali", small, bottom right, readable on light and dark paint.
-  const size = Math.max(14, Math.round(Math.max(w, h) * 0.024));
+  // Watermark: "© Myriam Kayali" across the centre, translucent so the painting still
+  // reads through it, and hard to crop out. Readable on light and dark paint.
+  let size = Math.max(18, Math.round(Math.min(w, h) * 0.075));
   try { await document.fonts.load(`italic 500 ${size}px "Cormorant Garamond"`); } catch {}
   ctx.font = `italic 500 ${size}px "Cormorant Garamond", Georgia, serif`;
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'alphabetic';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-  ctx.shadowBlur = Math.round(size * 0.3);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
-  ctx.fillText('© Myriam Kayali', w - Math.round(size * 0.8), h - Math.round(size * 0.7));
+  const maxText = w * 0.7; // keep it inside the image on narrow (portrait) paintings
+  if (ctx.measureText('© Myriam Kayali').width > maxText) {
+    size = Math.floor(size * maxText / ctx.measureText('© Myriam Kayali').width);
+    ctx.font = `italic 500 ${size}px "Cormorant Garamond", Georgia, serif`;
+  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+  ctx.shadowBlur = Math.round(size * 0.25);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
+  ctx.fillText('© Myriam Kayali', w / 2, h / 2);
 
   return new Promise((resolve, reject) =>
     canvas.toBlob(b => b ? resolve(b) : reject(new Error('Could not encode image.')), 'image/jpeg', 0.86));
@@ -2827,6 +2833,48 @@ const LEGACY_SITE_IMAGES = [
   'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/premiere-piece-3-toystory-7xZYwjfPd0XSjjW78liDtozgM9v4q5.jpg',
   'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg',
 ];
+// One-time redo (Oct 2026): the first protected copies had a corner watermark. Each
+// is remade from its still-existing original with the centred watermark, and both the
+// corner copy and the original are then deleted. Inert once those copies are gone.
+const WATERMARK_REDO = {
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-FOau16UyqdkE4bd69lo1g7V2rjCOir.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-jZ89BWZ9SoDt0LoMIvQW2px9CO0xNJ.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-5fFW3lgolbIOfFweOmxY02kuyEE4Kx.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-9fd5Ph0YcfCgE53H73at1Max0y9mh3.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-6F27rrN0ZkeZJiXKWCQoxDDofQ9wv6.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-1odwfVDJr8No8DWalAG5D4HzQvFZE5.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-MP2Tuv4Uj0uSd5iTQ2VekjArJCJqWF.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-XiJYVMGsMqyFEmMpRR2h0oKykrc3CB.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-WnIjxpKxeX6C80fsHgcQP3F9hrQPmm.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_1281-SHXWRp0tWygfC1S9NMcZUsw2ISDLmm.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-OSm1ojHp7MjlPAeySuCrj8zuQZrlHg.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-zjYZmWxf3aI2COThZbvpeBmq1vXWpY.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-j0QdBKegrRPiWkjz4Pj9IFIvZFN4BK.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-TqSt5wYqGealHVrm6XMAoxSoNNMFto.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-eSl035QnBhkFU9MUJboZucsstHlg63.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_7487.JPG',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-j2CxxHVBwHrDWYj4hJrCJdPggt35GL.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_6498-qNMyupOVZ9o3DLG7gK6btzrrK9teYp.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-9QZ7xJGUQEWD4NaKnjZWnSlpp7qYrW.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_7551-WjhFwbl5FqXiLfxPDK8KhEjAcAyPER.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-jEe6C43xFbmfqRzsRNVwewEQKTRx4V.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_6487-0d1dJvHlxTPsQVvDw9RmbgzQowvFBd.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-NP2MgF1WGQL8JKEmKvZtJVjd5oJfQ8.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_6486-Zod7NL5JAjNwusKIwYougELuNEPvFt.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-omK21PFYLaB5BtVwOl3txz2WuBpkEF.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_6612-qUABgsQld8JzVerYrA19eldgyArbTt.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-Xe4CMr8oQmpsYQoStaV1mxGfdRXyi5.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-fSIK6fuxKMeyOsJrnmnJ7E9NF6XSc3.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-wagyCp1tNBBJZxh2xMvV6tcefUqKgS.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_9956.heic',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-MYqnS3UWc5Gt7KDbij4Uo1I9mqceqn.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-QUT6K6rdU6Sy1HxsvJa2k1T6dGaQu6.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-ZOaQYHFOJiQLULrF1svsTrKAr4nIqc.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_4813-b43M5NGGaSe4JDeXwrvxPMHOKRVfy5.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-4whxiFgaKqXvP3aOlRAmXYeWvs29mB.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/4CB8B2F5-85DB-4F4C-9E00-EA7DF34A1C4B.JPG',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-QNkRnIF5aCmXy9Xdj6YcmFUirtkKxl.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/IMG_6438-kMQ3fjTW8rVwCV6zD3qAhljkXVCCl2.jpeg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-7VXaZc1MR9hsYaA8vtzKaxJYqCHhY8.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-RiItTf9MrtzYqgCivftmqrD8MJWV4c.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-2DwYKNPv4z1zpghWkjQxj6HOK09hC3.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-beirut_over_coffee-044Xk4Vbk6ZY9WpEWUJjHSdS00hWXJ.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-gc6py6q1B8OYTp9YCwB3z6kki4V5vO.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-fayrouz_calling-AlvSiJw4AJQ6O1PdQM1B4Z86JsQ5mG.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-FUC5lZYFtQBQmBLN9qFlAqZk7rmopC.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-tarboosh_daze-eSz7kRsQ5Wo55saht9p2oIRRl9L2M7.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-d64IKwXbQHFMo1WypWJRYdYu4lnzD2.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-serving_breakfast-g0CDEkL7fYZmMe5sxEi4VVuZspHUTb.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-EDe00jMdZaQPsEdse7cNak3mJftNAk.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-cup_from_the_past_new-smUD1lu5ZUhjeK3KjoKEOYtJHHCkWM.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-oexIfzcLYHxkKCOtYVzOD9PMDPg3eW.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/print-castania_aalkhat-GEbtcGkfGCyxJLi7vPl1CpLfr9yMId.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-AH3jMQBnao3dXu1LmAaJQWEOPTB2dH.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-kYAO8kqKiZlqVjdx4hDlt2VIlsdMaN.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-52yjI2ORdxS3WpIlieCnxiruCc0U3V.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-ERGczP452tpspKPDS0eUtTv1bPs4MO.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-LFLowWd7O32jGpNbklYGu4pt3JzHx1.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-vKE1kEuAt5wdEFnRMjGFf8XahSVDlc.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-wj69lsBAwTbdE0sNqXYxbwYf2fiG5d.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-psi9NDqOISlCb3PBOvf8oH7ftsIeia.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-wuFh40EsOSjA1cnTlXgJn8XRPnd5JR.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-IEFGcZCa63oibSF5qiWBFr3xSRBbEq.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-gjpaOUDL5gcK68pPxbDoAUdMROM0Lw.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-JUDl8EAtxq9TYO5nzcORMI7kTBR1AW.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-NLPH5WiAT07dabdwwruoW9ST03vtTA.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-17X5kxvMe8dh5mrXS5va2Mu9Ex1Ppc.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-WQXn8ZHr0v91XbG12dtUywxohPyuFb.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-FHK7mx7vLWLI8DrV7bfPfJZVa5N7ER.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-XhybDsbiUBfEbquQAXAoLlGtIVBWIp.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-1D2l3nnpaHktlgQMGayIFAOgfwwFXP.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/protected-artwork-p0DalmUN5S3afY0PO1gt34wp1sGhG1.jpg': 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/painting-Nc7M9w7WCcnBEA2uScLfHsaqUa27Ug.jpg',
+};
+
 const ORIGINALS_KEY = 'mk_image_originals'; // originals replaced on this device, awaiting deletion
 
 function pendingOriginals() {
@@ -2848,9 +2896,10 @@ async function collectImagesToProtect() {
   await loadExhibition();
   if (!loaded.paintings || !loaded.prints) throw new Error('Paintings or prints did not load. Refresh the page and try again.');
   const urls = new Set();
-  getPaintings().forEach(p => [p.imageData, ...(p.additionalImages || [])].forEach(u => needsProtection(u) && urls.add(u)));
-  getPrints().forEach(p => needsProtection(p.imageData) && urls.add(p.imageData));
-  if (exhibitionLoadedForEdit()) [...exhibitionData.images, exhibitionData.pressImageUrl].forEach(u => needsProtection(u) && urls.add(u));
+  const want = u => needsProtection(u) || !!WATERMARK_REDO[u];
+  getPaintings().forEach(p => [p.imageData, ...(p.additionalImages || [])].forEach(u => want(u) && urls.add(u)));
+  getPrints().forEach(p => want(p.imageData) && urls.add(p.imageData));
+  if (exhibitionLoadedForEdit()) [...exhibitionData.images, exhibitionData.pressImageUrl].forEach(u => want(u) && urls.add(u));
   return [...urls];
 }
 
@@ -2860,7 +2909,7 @@ function renderImageProtection(message = '') {
   const pending = pendingOriginals();
   host.innerHTML = `
     <p style="font-size:13px;color:var(--cream-dim);margin-bottom:16px;line-height:1.7">
-      New uploads are automatically saved at ${PUBLIC_IMAGE_MAX}px with a small "© Myriam Kayali" mark, so they look sharp on screens but are too small to print well.
+      New uploads are automatically saved at ${PUBLIC_IMAGE_MAX}px with a "© Myriam Kayali" watermark across the centre, so they look sharp on screens but are too small to print well.
       Use this once to do the same for images uploaded before.
     </p>
     ${message ? `<p style="font-size:13px;color:var(--cream);margin-bottom:16px;line-height:1.7">${message}</p>` : ''}
@@ -2887,7 +2936,8 @@ async function runImageProtection() {
     const b = document.getElementById('protect-btn');
     if (b) b.textContent = `Processing ${i + 1} of ${urls.length}…`;
     try {
-      const img = await loadImage(urls[i] + (urls[i].includes('?') ? '&' : '?') + 'v=protect'); // fresh, CORS-enabled copy
+      const src = WATERMARK_REDO[urls[i]] || urls[i]; // redo: start again from the full-size original
+      const img = await loadImage(src + (src.includes('?') ? '&' : '?') + 'v=protect'); // fresh, CORS-enabled copy
       map[urls[i]] = await uploadProtected(await protectImage(img));
     } catch (e) {
       failed.push(urls[i]);
@@ -2915,10 +2965,11 @@ async function runImageProtection() {
   }
 
   const replaced = Object.keys(map);
-  if (ok) setPendingOriginals([...new Set([...pendingOriginals(), ...replaced, ...LEGACY_SITE_IMAGES])]);
+  const redoOriginals = replaced.map(u => WATERMARK_REDO[u]).filter(Boolean);
+  if (ok) setPendingOriginals([...new Set([...pendingOriginals(), ...replaced, ...redoOriginals, ...LEGACY_SITE_IMAGES])]);
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   say(`${replaced.length} image${replaced.length === 1 ? '' : 's'} replaced with smaller, watermarked copies.`
-    + (failed.length ? ` ${failed.length} couldn't be opened${!isSafari && failed.some(u => /\.hei[cf]/i.test(u)) ? ' (iPhone HEIC photos only open in Safari: run this again from Safari)' : ''}; they were left as they are.` : '')
+    + (failed.length ? ` ${failed.length} couldn't be opened${!isSafari && failed.some(u => /\.hei[cf]/i.test(WATERMARK_REDO[u] || u)) ? ' (iPhone HEIC photos only open in Safari: run this again from Safari)' : ''}; they were left as they are.` : '')
     + (ok ? '' : ' Some changes did not save, so nothing will be deleted. Refresh and run it again.')
     + (ok && replaced.length ? ' Check the site, then delete the full-size originals.' : ''));
 }
