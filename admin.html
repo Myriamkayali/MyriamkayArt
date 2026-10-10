@@ -2757,6 +2757,200 @@ function handleFile(input) {
   reader.readAsDataURL(file);
 }
 
+// ── IMAGE PROTECTION ──────────────────────────────────────────
+// The Blob store is public, so whatever is uploaded can be downloaded. Every artwork
+// image therefore goes through protectImage() before upload: at most PUBLIC_IMAGE_MAX
+// px on its long side (sharp on screens, too small to print well) with a small
+// signature watermark baked in. Full-size files are never uploaded.
+const PUBLIC_IMAGE_MAX = 1200;
+const PROTECTED_PREFIX = 'protected-'; // file name marker for processed images
+const BLOB_HOST_RE = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//i;
+
+async function protectImage(source) {
+  const w0 = source.naturalWidth || source.width;
+  const h0 = source.naturalHeight || source.height;
+  const scale = Math.min(1, PUBLIC_IMAGE_MAX / Math.max(w0, h0));
+  const w = Math.round(w0 * scale), h = Math.round(h0 * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, 0, 0, w, h);
+
+  // Watermark: "© Myriam Kayali", small, bottom right, readable on light and dark paint.
+  const size = Math.max(14, Math.round(Math.max(w, h) * 0.024));
+  try { await document.fonts.load(`italic 500 ${size}px "Cormorant Garamond"`); } catch {}
+  ctx.font = `italic 500 ${size}px "Cormorant Garamond", Georgia, serif`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+  ctx.shadowBlur = Math.round(size * 0.3);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
+  ctx.fillText('© Myriam Kayali', w - Math.round(size * 0.8), h - Math.round(size * 0.7));
+
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error('Could not encode image.')), 'image/jpeg', 0.86));
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    if (/^https?:/i.test(src)) img.crossOrigin = 'anonymous'; // Blob allows CORS; keeps the canvas readable
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Could not open image.'));
+    img.src = src;
+  });
+}
+
+async function uploadProtected(blob) {
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: blob,
+    headers: { 'x-admin-pin': currentAdminPin || '', 'content-type': 'image/jpeg', 'x-filename': encodeURIComponent(PROTECTED_PREFIX + 'artwork.jpg') },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.url) throw new Error(data.error || 'Upload failed');
+  return data.url;
+}
+
+// A full-size image in our store that hasn't been through protectImage() yet.
+function needsProtection(url) {
+  if (typeof url !== 'string' || !BLOB_HOST_RE.test(url)) return false;
+  const path = url.replace(BLOB_HOST_RE, '').split('?')[0];
+  return !path.startsWith(PROTECTED_PREFIX) && !path.startsWith('mk-');
+}
+
+// Images that were part of the site's code before it switched to small,
+// watermarked copies (now served from /images/artwork/). Deleted with the rest.
+const LEGACY_SITE_IMAGES = [
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/premiere-piece-2-tiffanys-mjNHntaR24zQknubGVvNhwg14IblTr.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/premiere-piece-3-toystory-7xZYwjfPd0XSjjW78liDtozgM9v4q5.jpg',
+  'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg',
+];
+const ORIGINALS_KEY = 'mk_image_originals'; // originals replaced on this device, awaiting deletion
+
+function pendingOriginals() {
+  try { return JSON.parse(localStorage.getItem(ORIGINALS_KEY) || '[]'); } catch { return []; }
+}
+function setPendingOriginals(list) {
+  try { localStorage.setItem(ORIGINALS_KEY, JSON.stringify(list)); } catch {}
+}
+
+// Exhibition data only counts as loaded if it isn't the built-in default
+// (which is what the API returns when storage can't be read).
+function exhibitionLoadedForEdit() {
+  return exhibitionData && Array.isArray(exhibitionData.images) && exhibitionData.images.length > 0;
+}
+
+async function collectImagesToProtect() {
+  if (!loaded.paintings) await loadPaintings();
+  if (!loaded.prints) await loadPrints();
+  await loadExhibition();
+  if (!loaded.paintings || !loaded.prints) throw new Error('Paintings or prints did not load. Refresh the page and try again.');
+  const urls = new Set();
+  getPaintings().forEach(p => [p.imageData, ...(p.additionalImages || [])].forEach(u => needsProtection(u) && urls.add(u)));
+  getPrints().forEach(p => needsProtection(p.imageData) && urls.add(p.imageData));
+  if (exhibitionLoadedForEdit()) [...exhibitionData.images, exhibitionData.pressImageUrl].forEach(u => needsProtection(u) && urls.add(u));
+  return [...urls];
+}
+
+function renderImageProtection(message = '') {
+  const host = document.getElementById('image-protection');
+  if (!host) return;
+  const pending = pendingOriginals();
+  host.innerHTML = `
+    <p style="font-size:13px;color:var(--cream-dim);margin-bottom:16px;line-height:1.7">
+      New uploads are automatically saved at ${PUBLIC_IMAGE_MAX}px with a small "© Myriam Kayali" mark, so they look sharp on screens but are too small to print well.
+      Use this once to do the same for images uploaded before.
+    </p>
+    ${message ? `<p style="font-size:13px;color:var(--cream);margin-bottom:16px;line-height:1.7">${message}</p>` : ''}
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="protect-btn" onclick="runImageProtection()">1 · Make Smaller, Watermarked Copies</button>
+      ${pending.length ? `<button class="btn btn-danger" onclick="confirmDeleteOriginals()">2 · Delete ${pending.length} Full-Size Original${pending.length === 1 ? '' : 's'}</button>` : ''}
+    </div>`;
+}
+
+async function runImageProtection() {
+  const btn = document.getElementById('protect-btn');
+  const say = (msg) => renderImageProtection(msg);
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking images…'; }
+  let urls;
+  try { urls = await collectImagesToProtect(); }
+  catch (e) { say(e.message); return; }
+  if (!urls.length) {
+    say('All images on the site are already protected.' + (pendingOriginals().length ? ' The full-size originals are ready to delete.' : ''));
+    return;
+  }
+
+  const map = {}, failed = [];
+  for (let i = 0; i < urls.length; i++) {
+    const b = document.getElementById('protect-btn');
+    if (b) b.textContent = `Processing ${i + 1} of ${urls.length}…`;
+    try {
+      const img = await loadImage(urls[i] + (urls[i].includes('?') ? '&' : '?') + 'v=protect'); // fresh, CORS-enabled copy
+      map[urls[i]] = await uploadProtected(await protectImage(img));
+    } catch (e) {
+      failed.push(urls[i]);
+    }
+  }
+
+  // Point every painting, print and the exhibition at the new copies.
+  const swap = u => map[u] || u;
+  let ok = true;
+  const paintings = getPaintings().map(p => ({ ...p, imageData: swap(p.imageData), additionalImages: (p.additionalImages || []).map(swap) }));
+  if (paintings.some((p, i) => p.imageData !== getPaintings()[i].imageData || p.additionalImages.join() !== (getPaintings()[i].additionalImages || []).join())) {
+    ok = (await savePaintings(paintings)) && ok;
+  }
+  const prints = getPrints().map(p => ({ ...p, imageData: swap(p.imageData) }));
+  if (prints.some((p, i) => p.imageData !== getPrints()[i].imageData)) ok = (await savePrints(prints)) && ok;
+  if (exhibitionLoadedForEdit()) {
+    const ex = { ...exhibitionData, images: exhibitionData.images.map(swap), pressImageUrl: swap(exhibitionData.pressImageUrl) };
+    if (JSON.stringify(ex) !== JSON.stringify(exhibitionData)) {
+      const res = await fetch('/api/exhibition', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: ex, pin: currentAdminPin }),
+      }).catch(() => null);
+      if (res && res.ok) { exhibitionData = ex; exhibitionImages = ex.images.slice(); } else ok = false;
+    }
+  }
+
+  const replaced = Object.keys(map);
+  if (ok) setPendingOriginals([...new Set([...pendingOriginals(), ...replaced, ...LEGACY_SITE_IMAGES])]);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  say(`${replaced.length} image${replaced.length === 1 ? '' : 's'} replaced with smaller, watermarked copies.`
+    + (failed.length ? ` ${failed.length} couldn't be opened${!isSafari && failed.some(u => /\.hei[cf]/i.test(u)) ? ' (iPhone HEIC photos only open in Safari: run this again from Safari)' : ''}; they were left as they are.` : '')
+    + (ok ? '' : ' Some changes did not save, so nothing will be deleted. Refresh and run it again.')
+    + (ok && replaced.length ? ' Check the site, then delete the full-size originals.' : ''));
+}
+
+function confirmDeleteOriginals() {
+  const list = pendingOriginals();
+  if (!list.length) return;
+  document.querySelector('#confirm-modal .modal-title').textContent = 'Delete Full-Size Originals?';
+  document.getElementById('confirm-body').textContent =
+    `${list.length} full-size image files will be permanently deleted from your storage. The site already uses the smaller copies. `
+    + `Make sure you have your original photos saved elsewhere (phone, computer, printer), especially the files used to produce your prints. This cannot be undone.`;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('confirm-ok').onclick = async () => {
+    closeModal();
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'x-admin-pin': currentAdminPin || '', 'x-action': 'delete', 'content-type': 'application/json' },
+        body: JSON.stringify({ urls: list }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Delete failed (${res.status}).`);
+      const stillUsed = (data.skipped || []).filter(s => s.reason === 'still used on the site').map(s => s.url);
+      setPendingOriginals(stillUsed);
+      renderImageProtection(`${(data.deleted || []).length} full-size original${(data.deleted || []).length === 1 ? '' : 's'} deleted.`
+        + (stillUsed.length ? ` ${stillUsed.length} were kept because the site still uses them.` : ''));
+    } catch (e) {
+      renderImageProtection(e.message);
+    }
+  };
+}
+
 function openCropModal(dataUrl, target) {
   cropTarget = target;
   const img = document.getElementById('crop-img');
@@ -2785,7 +2979,7 @@ function setCropRatio(ratio) {
 async function applyCrop() {
   if (!cropperInstance) return;
   const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 2400, maxHeight: 2400 });
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+  const blob = await protectImage(canvas); // public copy: max 1200px + watermark
   const target = cropTarget;
   cancelCrop();
 
@@ -2798,16 +2992,7 @@ async function applyCrop() {
   }
 
   try {
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: blob,
-      headers: { 'x-admin-pin': currentAdminPin || '', 'content-type': 'image/jpeg', 'x-filename': encodeURIComponent('painting.jpg') },
-    });
-    if (!res.ok) {
-      const { error } = await res.json().catch(() => ({}));
-      throw new Error(error || 'Upload failed');
-    }
-    const { url } = await res.json();
+    const url = await uploadProtected(blob);
 
     if (target === 'main') {
       imageData = url;
@@ -2873,17 +3058,7 @@ function removeAdditionalImage(idx) {
 async function uploadBase64IfNeeded(dataOrUrl) {
   if (!dataOrUrl || !dataOrUrl.startsWith('data:')) return dataOrUrl;
   try {
-    const res = await fetch(dataOrUrl);
-    const blob = await res.blob();
-    const ext = blob.type.split('/')[1] || 'jpg';
-    const uploadRes = await fetch('/api/upload', {
-      method: 'POST',
-      body: blob,
-      headers: { 'x-admin-pin': currentAdminPin || '', 'content-type': blob.type, 'x-filename': encodeURIComponent('painting.' + ext) },
-    });
-    if (!uploadRes.ok) throw new Error('base64 upload failed');
-    const { url } = await uploadRes.json();
-    return url;
+    return await uploadProtected(await protectImage(await loadImage(dataOrUrl)));
   } catch {
     return dataOrUrl; // keep original on failure
   }
@@ -4128,12 +4303,18 @@ async function renderSettings() {
     </div>
 
     <div class="settings-section">
+      <h3>Protect Artwork Images</h3>
+      <div id="image-protection"></div>
+    </div>
+
+    <div class="settings-section">
       <h3>Danger Zone</h3>
       <p style="font-size:13px;color:var(--cream-dim);margin-bottom:20px;line-height:1.7">
         Clear all paintings from the gallery. This cannot be undone — export your data first.
       </p>
       <button class="btn btn-danger" onclick="clearAll()">Clear All Paintings</button>
     </div>`;
+  renderImageProtection();
 }
 
 async function saveBusinessAssumptions() {

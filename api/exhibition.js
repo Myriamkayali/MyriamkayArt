@@ -8,7 +8,7 @@ const DEFAULT_EXHIBITION = {
   subtitle: 'Exhibition, Dubai, 2025',
   description: 'A selection of works exploring memory, food, and the quiet persistence of everyday objects.',
   images: [],
-  pressImageUrl: 'https://eahxvq5wimrwyuwv.public.blob.vercel-storage.com/dubai-exhibit3-jzKsshrDr0JuPJxKbJVufD53hmM31q.jpg',
+  pressImageUrl: '/images/artwork/dubai-exhibit.jpg', // small, watermarked copy
   pressTitle: 'Myriam Kayali Paints a Love Letter to Beirut',
   pressSubtitle: 'Through colour, memory and emotion, the artist captures the city that continues to shape her.',
 };
