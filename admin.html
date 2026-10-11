@@ -2766,7 +2766,9 @@ const PUBLIC_IMAGE_MAX = 1200;
 const PROTECTED_PREFIX = 'protected-'; // file name marker for processed images
 const BLOB_HOST_RE = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//i;
 
-async function protectImage(source) {
+// watermark: false for photos that aren't artwork (exhibition / event photos):
+// still resized, no "© Myriam Kayali".
+async function protectImage(source, { watermark = true } = {}) {
   const w0 = source.naturalWidth || source.width;
   const h0 = source.naturalHeight || source.height;
   const scale = Math.min(1, PUBLIC_IMAGE_MAX / Math.max(w0, h0));
@@ -2776,6 +2778,10 @@ async function protectImage(source) {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(source, 0, 0, w, h);
+  if (!watermark) {
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('Could not encode image.')), 'image/jpeg', 0.86));
+  }
 
   // Watermark: "© Myriam Kayali" across the centre, translucent so the painting still
   // reads through it, and hard to crop out. Readable on light and dark paint.
@@ -2884,22 +2890,15 @@ function setPendingOriginals(list) {
   try { localStorage.setItem(ORIGINALS_KEY, JSON.stringify(list)); } catch {}
 }
 
-// Exhibition data only counts as loaded if it isn't the built-in default
-// (which is what the API returns when storage can't be read).
-function exhibitionLoadedForEdit() {
-  return exhibitionData && Array.isArray(exhibitionData.images) && exhibitionData.images.length > 0;
-}
-
 async function collectImagesToProtect() {
   if (!loaded.paintings) await loadPaintings();
   if (!loaded.prints) await loadPrints();
-  await loadExhibition();
   if (!loaded.paintings || !loaded.prints) throw new Error('Paintings or prints did not load. Refresh the page and try again.');
   const urls = new Set();
   const want = u => needsProtection(u) || !!WATERMARK_REDO[u];
   getPaintings().forEach(p => [p.imageData, ...(p.additionalImages || [])].forEach(u => want(u) && urls.add(u)));
   getPrints().forEach(p => want(p.imageData) && urls.add(p.imageData));
-  if (exhibitionLoadedForEdit()) [...exhibitionData.images, exhibitionData.pressImageUrl].forEach(u => want(u) && urls.add(u));
+  // Exhibition images are event photos: never watermarked, so not converted here.
   return [...urls];
 }
 
@@ -2953,17 +2952,6 @@ async function runImageProtection() {
   }
   const prints = getPrints().map(p => ({ ...p, imageData: swap(p.imageData) }));
   if (prints.some((p, i) => p.imageData !== getPrints()[i].imageData)) ok = (await savePrints(prints)) && ok;
-  if (exhibitionLoadedForEdit()) {
-    const ex = { ...exhibitionData, images: exhibitionData.images.map(swap), pressImageUrl: swap(exhibitionData.pressImageUrl) };
-    if (JSON.stringify(ex) !== JSON.stringify(exhibitionData)) {
-      const res = await fetch('/api/exhibition', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: ex, pin: currentAdminPin }),
-      }).catch(() => null);
-      if (res && res.ok) { exhibitionData = ex; exhibitionImages = ex.images.slice(); } else ok = false;
-    }
-  }
-
   const replaced = Object.keys(map);
   const redoOriginals = replaced.map(u => WATERMARK_REDO[u]).filter(Boolean);
   if (ok) setPendingOriginals([...new Set([...pendingOriginals(), ...replaced, ...redoOriginals, ...LEGACY_SITE_IMAGES])]);
@@ -3030,8 +3018,9 @@ function setCropRatio(ratio) {
 async function applyCrop() {
   if (!cropperInstance) return;
   const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 2400, maxHeight: 2400 });
-  const blob = await protectImage(canvas); // public copy: max 1200px + watermark
   const target = cropTarget;
+  // Public copy: max 1200px, watermarked unless it's an exhibition (event) photo.
+  const blob = await protectImage(canvas, { watermark: target !== 'exhibition' && target !== 'press-image' });
   cancelCrop();
 
   if (target === 'main') {
