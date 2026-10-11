@@ -2862,13 +2862,20 @@
   }
 
   // Size the wheel and fit the stage tightly around it (no empty band underneath).
-  let ringSizedWidth = 0;
+  let ringSizedWidth = 0, ringSizedHeight = 0;
   function sizeRing() {
     if (!ring) return;
     const w = ring.stage.clientWidth;
+    const vh = window.innerHeight;
+    // A tab opened or restored in the background (or a page still laying out) can
+    // report a zero size. Sizing from that collapses every card into one spot, so
+    // wait and try again on the next frame (ringFrame) instead.
+    if (w < 50 || vh < 100) { ring.needsSize = true; return; }
+    ring.needsSize = false;
     ringSizedWidth = w;
+    ringSizedHeight = vh;
     const n = Math.max(ring.cards.length, 1);
-    const m = Math.min(w, window.innerHeight * 0.62);
+    const m = Math.min(w, vh * 0.62);
     const cardW = Math.max(110, Math.min(300, m * (w < 600 ? 0.46 : 0.44)));
     const cardH = cardW * 1.25;
     // Fewer paintings -> tighter wheel, so neighbours still overlap like a rolodex.
@@ -2880,15 +2887,27 @@
     ring.stage.style.setProperty('--ring-cy', top.toFixed(0) + 'px');
     ring.stage.style.setProperty('--ring-h', (top + bottom).toFixed(0) + 'px');
   }
-  // Only re-size when the width changes: on phones the address bar showing/hiding while
-  // scrolling fires resize constantly, and re-sizing every card mid-scroll caused jank.
-  window.addEventListener('resize', () => { if (ring && ring.stage.clientWidth !== ringSizedWidth) sizeRing(); });
+  // Re-size when the width changes or the height changes a lot. Small height changes
+  // are the phone address bar showing/hiding while scrolling; re-sizing every card
+  // for those caused jank.
+  function maybeResizeRing() {
+    if (!ring) return;
+    const heightJump = Math.abs(window.innerHeight - ringSizedHeight) > ringSizedHeight * 0.25;
+    if (ring.needsSize || ring.stage.clientWidth !== ringSizedWidth || heightJump) sizeRing();
+  }
+  window.addEventListener('resize', maybeResizeRing);
+  window.addEventListener('pageshow', () => { if (ring) sizeRing(); }); // back/forward cache restore
+  if (window.ResizeObserver) {
+    const stage = document.getElementById('ring-stage');
+    if (stage) new ResizeObserver(maybeResizeRing).observe(stage);
+  }
 
   let ringRaf = null;
   function ringFrame() {
     ringRaf = requestAnimationFrame(ringFrame);
     if (!ring || document.hidden) { if (ring) ring.last = 0; return; }
     if (!document.getElementById('home').classList.contains('active')) { ring.last = 0; return; } // paused off the home page
+    if (ring.needsSize) { sizeRing(); if (ring.needsSize) return; } // still no real size to work with
 
     // Move by elapsed time, not per frame: same speed on 60Hz and 120Hz screens, and a
     // slow frame doesn't make the wheel visibly hitch. Capped so a pause can't jump it.
